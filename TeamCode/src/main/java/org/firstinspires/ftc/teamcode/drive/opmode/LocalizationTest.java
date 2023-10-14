@@ -22,6 +22,8 @@ public class LocalizationTest extends LinearOpMode {
 
         drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
+        telemetry.addLine("Initialized");
+        telemetry.update();
         waitForStart();
 
         while (!isStopRequested()) {
