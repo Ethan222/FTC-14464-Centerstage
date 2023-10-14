@@ -74,6 +74,8 @@ public class SampleMecanumDrive extends MecanumDrive {
     private DcMotorEx leftFront, leftRear, rightRear, rightFront;
     private List<DcMotorEx> motors;
 
+    private DcMotorEx arm;
+
     private IMU imu;
     private VoltageSensor batteryVoltageSensor;
 
@@ -104,6 +106,8 @@ public class SampleMecanumDrive extends MecanumDrive {
         leftRear = hardwareMap.get(DcMotorEx.class, "BL");
         rightRear = hardwareMap.get(DcMotorEx.class, "BR");
         rightFront = hardwareMap.get(DcMotorEx.class, "FR");
+
+        arm = hardwareMap.get(DcMotorEx.class, "arm");
 
         motors = Arrays.asList(leftFront, leftRear, rightRear, rightFront);
 
@@ -137,6 +141,14 @@ public class SampleMecanumDrive extends MecanumDrive {
                 follower, HEADING_PID, batteryVoltageSensor,
                 lastEncPositions, lastEncVels, lastTrackingEncPositions, lastTrackingEncVels
         );
+    }
+
+    public void setArmPower(double power) {
+        arm.setPower(power);
+    }
+
+    public double getArmPower() {
+        return arm.getPower();
     }
 
     public TrajectoryBuilder trajectoryBuilder(Pose2d startPose) {
