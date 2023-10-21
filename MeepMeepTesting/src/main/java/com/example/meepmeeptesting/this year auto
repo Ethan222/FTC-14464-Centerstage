@@ -1,0 +1,56 @@
+package com.example.meepmeeptesting;
+
+import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.acmerobotics.roadrunner.geometry.Vector2d;
+import com.noahbres.meepmeep.MeepMeep;
+import com.noahbres.meepmeep.core.colorscheme.scheme.ColorSchemeBlueDark;
+import com.noahbres.meepmeep.core.colorscheme.scheme.ColorSchemeBlueLight;
+import com.noahbres.meepmeep.core.colorscheme.scheme.ColorSchemeRedDark;
+import com.noahbres.meepmeep.roadrunner.DefaultBotBuilder;
+import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
+
+public class MeepMeepTesting {
+    public static void main(String[] args) {
+        MeepMeep meepMeep = new MeepMeep(600);
+
+        double forwardDistance = 26;
+        double waitTime = 1;
+        Vector2d backdropCoords = new Vector2d(50, -35);
+        RoadRunnerBotEntity leftBot = new DefaultBotBuilder(meepMeep)
+                // set to either red or blue alliance
+                .setColorScheme(new ColorSchemeRedDark())
+                // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
+                .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
+                .followTrajectorySequence(drive ->
+                        drive.trajectorySequenceBuilder(new Pose2d(-36, -61, Math.PI / 2))
+                                .forward(forwardDistance)
+                                .waitSeconds(waitTime)
+                                .lineToLinearHeading(new Pose2d(-39, -59, Math.PI))
+                                .build()
+                );
+
+        RoadRunnerBotEntity rightBot = new DefaultBotBuilder(meepMeep)
+                // set to either red or blue alliance
+                .setColorScheme(new ColorSchemeRedDark())
+                // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
+                .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
+                .followTrajectorySequence(drive ->
+                        drive.trajectorySequenceBuilder(new Pose2d(11, -61, Math.toRadians(90)))
+                                .forward(forwardDistance)
+                                .waitSeconds(waitTime)
+                                .turn(-Math.PI / 2)
+                                .lineTo(backdropCoords)
+                                .waitSeconds(waitTime)
+                                .strafeRight(23)
+                                .lineTo(new Vector2d(60, -60))
+                                .build()
+                );
+
+        meepMeep.setBackground(MeepMeep.Background.FIELD_CENTERSTAGE_OFFICIAL)
+                .setDarkMode(true)
+                .setBackgroundAlpha(0.95f)
+                .addEntity(leftBot)
+                .addEntity(rightBot)
+                .start();
+    }
+}
