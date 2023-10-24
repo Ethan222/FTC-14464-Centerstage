@@ -36,7 +36,7 @@ public class TeleOp extends LinearOpMode {
 
             drive.update();
 
-            if(gamepad2.right_stick_button)
+            if(gamepad1.right_stick_button)
                 drive.setArmPower(gamepad1.right_stick_y);
             else if(gamepad1.dpad_up)
                 drive.setArmPower(1);
