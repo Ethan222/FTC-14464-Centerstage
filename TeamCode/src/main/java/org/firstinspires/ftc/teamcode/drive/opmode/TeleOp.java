@@ -17,6 +17,9 @@ import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
 public class TeleOp extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
+        telemetry.addLine("Initializing...");
+        telemetry.update();
+
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -36,15 +39,36 @@ public class TeleOp extends LinearOpMode {
 
             drive.update();
 
-            if(gamepad1.right_stick_button)
+            // use the triggers to control the intake - right trigger intakes, left trigger outtakes
+            if(gamepad2.right_trigger > 0)
+                drive.intake(gamepad2.right_trigger);
+            else if(gamepad2.left_trigger > 0)
+                drive.outtake(gamepad2.left_trigger);
+            else if(gamepad1.right_trigger > 0)
+                drive.intake(gamepad1.right_trigger);
+            else if(gamepad1.left_trigger > 0)
+                drive.outtake(gamepad1.left_trigger);
+            else
+                drive.stopIntake();
+
+            // use the right stick or d-pad to control the arm
+            if(gamepad2.right_stick_y != 0)
+                drive.setArmPower(gamepad2.right_stick_y);
+            else if(gamepad2.dpad_up)
+                drive.armUp();
+            else if(gamepad2.dpad_down)
+                drive.armDown();
+            else if(gamepad1.right_stick_button)
                 drive.setArmPower(gamepad1.right_stick_y);
             else if(gamepad1.dpad_up)
-                drive.setArmPower(1);
+                drive.armUp();
             else if(gamepad1.dpad_down)
-                drive.setArmPower(-1);
+                drive.armDown();
             else
-                drive.setArmPower(0);
+                drive.stopArm();
 
+            telemetry.addLine("Use the triggers to control the intake and the right stick y or d-pad to control the arm");
+            telemetry.addData("Intake power", drive.getIntakePower());
             telemetry.addData("Arm power", drive.getArmPower());
             telemetry.update();
         }

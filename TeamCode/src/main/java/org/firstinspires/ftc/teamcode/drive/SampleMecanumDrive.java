@@ -74,7 +74,9 @@ public class SampleMecanumDrive extends MecanumDrive {
     private DcMotorEx leftFront, leftRear, rightRear, rightFront;
     private List<DcMotorEx> motors;
 
-    private DcMotorEx arm;
+    private DcMotorEx arm, intake;
+    private final double ARM_DEFAULT_SPEED = 1, ARM_MAX_SPEED = 1;
+    private final double INTAKE_DEFAULT_SPEED = .5, INTAKE_MAX_SPEED = .7;
 
     private IMU imu;
     private VoltageSensor batteryVoltageSensor;
@@ -108,6 +110,7 @@ public class SampleMecanumDrive extends MecanumDrive {
         rightFront = hardwareMap.get(DcMotorEx.class, "FR");
 
         arm = hardwareMap.get(DcMotorEx.class, "arm");
+        intake = hardwareMap.get(DcMotorEx.class, "intake");
 
         motors = Arrays.asList(leftFront, leftRear, rightRear, rightFront);
 
@@ -143,13 +146,51 @@ public class SampleMecanumDrive extends MecanumDrive {
         );
     }
 
-    public void setArmPower(double power) {
-        arm.setPower(power);
+    public void setArmPower(double power) { // positive is down, negative is up
+        arm.setPower(power * ARM_MAX_SPEED);
+    }
+
+    public void armUp(double power) {
+        setArmPower(-power);
+    }
+
+    public void armUp() {
+        armUp(ARM_DEFAULT_SPEED);
+    }
+
+    public void armDown(double power) {
+        setArmPower(power);
+    }
+
+    public void armDown() {
+        armDown(ARM_DEFAULT_SPEED);
+    }
+
+    public void stopArm() {
+        setArmPower(0);
     }
 
     public double getArmPower() {
         return arm.getPower();
     }
+
+    public void setIntakePower(double power) { // positive intakes, negative outtakes
+        intake.setPower(power * INTAKE_MAX_SPEED);
+    }
+
+    public void intake(double power) {
+        setIntakePower(power);
+    }
+
+    public void intake() { intake(INTAKE_DEFAULT_SPEED); }
+
+    public void outtake(double power) { setIntakePower(-power); }
+
+    public void outtake() { outtake(INTAKE_DEFAULT_SPEED); }
+
+    public void stopIntake() { setIntakePower(0); }
+
+    public double getIntakePower() { return intake.getPower(); }
 
     public TrajectoryBuilder trajectoryBuilder(Pose2d startPose) {
         return new TrajectoryBuilder(startPose, VEL_CONSTRAINT, ACCEL_CONSTRAINT);
