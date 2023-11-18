@@ -21,14 +21,11 @@
 
 package org.firstinspires.ftc.teamcode.drive.opmode.Auto;
 
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.checkerframework.checker.units.qual.A;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.openftc.apriltag.AprilTagDetection;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
@@ -36,7 +33,7 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 
 import java.util.ArrayList;
 
-@Autonomous
+@TeleOp
 public class TestAprilTagDetection extends LinearOpMode
 {
     OpenCvCamera camera;
@@ -59,7 +56,8 @@ public class TestAprilTagDetection extends LinearOpMode
     AprilTagIDs ids = new AprilTagIDs();
     Backdrop backdrop = ids.blueBackdrop;
 
-    DetectedAprilTags detectedTags = new DetectedAprilTags();
+    AprilTagDetection[] detectedTags = {null, null, null};
+    boolean[] currentlyDetecting = {false, false, false};
 
     @Override
     public void runOpMode()
@@ -89,18 +87,32 @@ public class TestAprilTagDetection extends LinearOpMode
         // init loop
         while (!isStarted() && !isStopRequested())
         {
+            if(gamepad1.x) {
+                backdrop = ids.blueBackdrop;
+                detectedTags = new AprilTagDetection[3];
+            }
+            else if(gamepad1.b) {
+                backdrop = ids.redBackdrop;
+                detectedTags = new AprilTagDetection[3];
+            }
+
             ArrayList<AprilTagDetection> currentDetections = aprilTagDetectionPipeline.getLatestDetections();
 
+            currentlyDetecting = new boolean[3];
             if(currentDetections.size() != 0)
             {
                 for(AprilTagDetection tag : currentDetections)
                 {
-                    if(tag.id == backdrop.left)
-                        detectedTags.left = tag;
-                    else if(tag.id == backdrop.center)
-                        detectedTags.center = tag;
-                    else if(tag.id == backdrop.right)
-                        detectedTags.right = tag;
+                    if(tag.id == backdrop.left) {
+                        detectedTags[0] = tag;
+                        currentlyDetecting[0] = true;
+                    } else if(tag.id == backdrop.center) {
+                        detectedTags[1] = tag;
+                        currentlyDetecting[1] = true;
+                    } else if(tag.id == backdrop.right) {
+                        detectedTags[2] = tag;
+                        currentlyDetecting[2] = true;
+                    }
                 }
             }
 
@@ -115,28 +127,30 @@ public class TestAprilTagDetection extends LinearOpMode
 
     private void telemetrizeDetectedAprilTags()
     {
-        String[] strings = {"LEFT", "CENTER", "RIGHT"};
+        telemetry.addLine(backdrop.color + " backdrop");
+        String[] strings = {
+                "LEFT (tag " + backdrop.arr[0] + ")",
+                "CENTER (tag " + backdrop.arr[1] + ")",
+                "RIGHT (tag " + backdrop.arr[2] + ")"
+        };
         for(int i = 0; i < 3; i++) {
             telemetry.addLine(strings[i]);
-            AprilTagDetection tag = detectedTags.tags[i];
+            AprilTagDetection tag = detectedTags[i];
             if(tag != null) {
+                telemetry.addLine(currentlyDetecting[i] ? "currently detecting" : "not currently detecting");
                 tagToTelemetry(tag);
             } else {
-                telemetry.addLine("tag not found");
+                telemetry.addLine("not found");
             }
+            telemetry.addLine();
         }
     }
 
     void tagToTelemetry(AprilTagDetection detection)
     {
-        Orientation rot = Orientation.getOrientation(detection.pose.R, AxesReference.INTRINSIC, AxesOrder.YXZ, AngleUnit.DEGREES);
-
-        telemetry.addLine(String.format("\nDetected tag ID=%d", detection.id));
-        telemetry.addLine(String.format("Translation X: %.2f feet", detection.pose.x*FEET_PER_METER));
-        telemetry.addLine(String.format("Translation Y: %.2f feet", detection.pose.y*FEET_PER_METER));
-        telemetry.addLine(String.format("Translation Z: %.2f feet", detection.pose.z*FEET_PER_METER));
-        telemetry.addLine(String.format("Rotation Yaw: %.2f degrees", rot.firstAngle));
-        telemetry.addLine(String.format("Rotation Pitch: %.2f degrees", rot.secondAngle));
-        telemetry.addLine(String.format("Rotation Roll: %.2f degrees", rot.thirdAngle));
+        double x = detection.pose.x*FEET_PER_METER;
+        double y = detection.pose.y*FEET_PER_METER;
+        double z = detection.pose.z*FEET_PER_METER;
+        telemetry.addLine(String.format("(%.2f, %.2f, %.2f)", x, y, z));
     }
 }

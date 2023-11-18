@@ -21,6 +21,8 @@
 
 package org.firstinspires.ftc.teamcode.drive.opmode.Auto;
 
+import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
@@ -29,6 +31,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
 import org.openftc.apriltag.AprilTagDetection;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
@@ -37,7 +41,7 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import java.util.ArrayList;
 
 @Autonomous
-public class BlueAuto extends LinearOpMode
+public class BlueBackAuto extends LinearOpMode
 {
     OpenCvCamera camera;
     AprilTagDetectionPipeline aprilTagDetectionPipeline;
@@ -68,7 +72,7 @@ public class BlueAuto extends LinearOpMode
     {
         telemetry.addLine("Initializing...");
         telemetry.update();
-
+        /*
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
         aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
@@ -88,8 +92,30 @@ public class BlueAuto extends LinearOpMode
 
             }
         });
-
+        */
         telemetry.setMsTransmissionInterval(50);
+
+        SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
+
+        // trajectories
+        Pose2d startPose = new Pose2d(11, 62.5, -Math.PI / 2);
+        double forwardDistance = 26;
+        double waitTime = 1.5;
+        Vector2d backdropCoords = new Vector2d(48, 37);
+        Vector2d parkCoords = new Vector2d(59, 62);
+        int multiplier = -1;
+
+        drive.setPoseEstimate(startPose);
+        TrajectorySequence traj = drive.trajectorySequenceBuilder(startPose)
+            .forward(forwardDistance)
+            .waitSeconds(waitTime)
+            .turn(multiplier * -Math.PI / 2)
+            .lineTo(backdropCoords)
+            .waitSeconds(waitTime)
+            .back(4)
+            .strafeRight(multiplier * 23)
+            .lineTo(parkCoords)
+            .build();
 
         telemetry.addLine("Initialized");
         telemetry.update();
@@ -98,15 +124,17 @@ public class BlueAuto extends LinearOpMode
         teamPropLocation = Location.CENTER;
         correspondingAprilTagID = backdrop.center;
 
-        telemetry.addLine("Team prop location: " + teamPropLocation);
+        //telemetry.addLine("Team prop location: " + teamPropLocation);
         telemetry.update();
 
         waitForStart();
 
         // move to corresponding spike mark
+        drive.followTrajectorySequence(traj);
         // place purple pixel on it
         // move so can see backdrop
         // find april tag corresponding to team prop location
+        /*
         while (tagOfInterest == null)
         {
             ArrayList<AprilTagDetection> currentDetections = aprilTagDetectionPipeline.getLatestDetections();
@@ -141,6 +169,7 @@ public class BlueAuto extends LinearOpMode
 
         // prevent opmode from ending
         while (opModeIsActive()) {sleep(20);}
+        */
     }
 
     void tagToTelemetry(AprilTagDetection detection)

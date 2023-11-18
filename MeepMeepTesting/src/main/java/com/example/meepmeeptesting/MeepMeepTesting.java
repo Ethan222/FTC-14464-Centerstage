@@ -13,74 +13,92 @@ public class MeepMeepTesting {
     public static void main(String[] args) {
         MeepMeep meepMeep = new MeepMeep(600);
 
-        double stackX = -62.6, stackY = -6.4;
-        double junctionX = -25.9, junctionY = -5.6;
-        double intakeWaitTime = .5;
-        RoadRunnerBotEntity bot1 = new DefaultBotBuilder(meepMeep)
+        double forwardDistance = 26;
+        double waitTime = 0;
+
+        Pose2d blueBackStart = new Pose2d(11, 62.5, -Math.PI / 2);
+        Vector2d blueBackdropCoords = new Vector2d(48, 37);
+        Vector2d bluePark = new Vector2d(59, 62);
+        int multiplier = -1;
+        Vector2d redBackdropCoords = new Vector2d(50, -35);
+
+        RoadRunnerBotEntity blueBack = new DefaultBotBuilder(meepMeep)
+                // set to either red or blue alliance
+                .setColorScheme(new ColorSchemeBlueLight())
+                // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
+                .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
+                .followTrajectorySequence(drive ->
+                        drive.trajectorySequenceBuilder(blueBackStart)
+                                .forward(forwardDistance)
+                                .waitSeconds(waitTime)
+                                .turn(multiplier * -Math.PI / 2)
+                                .lineTo(blueBackdropCoords)
+                                .waitSeconds(waitTime)
+                                .back(3)
+                                .strafeRight(multiplier * 23)
+                                .lineTo(bluePark)
+                                .build()
+                );
+
+        Pose2d startPose = new Pose2d(-36, 62, -Math.PI / 2);
+        Pose2d blueStackCoords = new Pose2d(-58, 36, Math.PI);
+        Vector2d bluePark2 = new Vector2d(60, 14);
+        RoadRunnerBotEntity blueFront = new DefaultBotBuilder(meepMeep)
+                .setColorScheme(new ColorSchemeBlueLight())
+                .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
+                .followTrajectorySequence(drive ->
+                        drive.trajectorySequenceBuilder(startPose)
+                                .forward(forwardDistance)
+                                .waitSeconds(waitTime)
+                                .lineToLinearHeading(blueStackCoords)
+                                .waitSeconds(waitTime)
+                                .lineToLinearHeading(new Pose2d(-24, 12, 0))
+                                .lineTo(bluePark2)
+                                .build()
+                );
+
+        RoadRunnerBotEntity redBack = new DefaultBotBuilder(meepMeep)
                 // set to either red or blue alliance
                 .setColorScheme(new ColorSchemeRedDark())
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
                 .followTrajectorySequence(drive ->
-                        drive.trajectorySequenceBuilder(new Pose2d(-31, -61, Math.toRadians(90)))
-                                // move to high junction 1st time
-                                .lineTo(new Vector2d(-15, -57))
-                                .lineTo(new Vector2d(-15, -12))
-                                .lineTo(new Vector2d(junctionX+.3, junctionY + 1.9+.3))
-                                // drop 1st cone
-                                .waitSeconds(intakeWaitTime)
-
-                                // 2nd cone - move to stack 1st time
-                                .back(2.8)
-                                .turn(Math.toRadians(90))
-                                .lineTo(new Vector2d(stackX, stackY))
-                                // pick up 2nd cone
-                                .waitSeconds(intakeWaitTime)
-                                // move to high junction 2nd time
-                                .lineToLinearHeading(new Pose2d(junctionX - 1.3, junctionY-1.1-.3+.4, Math.toRadians(90)))
-                                // drop 2nd cone
-                                .waitSeconds(intakeWaitTime)
-                                .lineTo(new Vector2d(-37.2-1, -7.3))
-                                .turn(Math.toRadians(180))
+                        drive.trajectorySequenceBuilder(new Pose2d(11, -61, Math.toRadians(90)))
+                                .forward(forwardDistance)
+                                .waitSeconds(waitTime)
+                                .turn(-Math.PI / 2)
+                                .lineTo(redBackdropCoords)
+                                .waitSeconds(waitTime)
+                                .strafeRight(23)
+                                .lineTo(new Vector2d(60, -60))
                                 .build()
                 );
 
-        double finalJunctionX = 26.1-.4, finalJunctionY = -6.4+.2;
-        double finalStackX = 61.4, finalStackY = .3;
-        RoadRunnerBotEntity bot2 = new DefaultBotBuilder(meepMeep)
+        Pose2d redStackCoords = new Pose2d(-58, -35, Math.PI);
+        Vector2d redPark = new Vector2d(60, -11);
+        RoadRunnerBotEntity redFront = new DefaultBotBuilder(meepMeep)
                 // set to either red or blue alliance
                 .setColorScheme(new ColorSchemeRedDark())
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
                 .followTrajectorySequence(drive ->
-                        drive.trajectorySequenceBuilder(new Pose2d(37, -61, Math.toRadians(90)))
-                                // move to high junction 1st time
-                                .lineTo(new Vector2d(13, -57))
-                                .lineTo(new Vector2d(15-1, -12))
-                                .lineTo(new Vector2d(finalJunctionX -.5-.7, finalJunctionY + 2))
-                                // drop 1st cone
-                                .waitSeconds(intakeWaitTime)
-
-                                // 2nd cone - move to stack 1st time
-                                .back(2.8)
-                                .turn(Math.toRadians(-90))
-                                .lineTo(new Vector2d(finalStackX, finalStackY))
-                                // pick up 2nd cone
-                                .waitSeconds(intakeWaitTime)
-                                // move to high junction 2nd time
-                                .lineToLinearHeading(new Pose2d(finalJunctionX + 1, finalJunctionY -.9+.9+.4, Math.toRadians(90)))
-                                // drop 2nd cone
-                                .waitSeconds(intakeWaitTime)
-                                .lineTo(new Vector2d(31-.4-.4, -7))
-                                .turn(Math.toRadians(180))
+                        drive.trajectorySequenceBuilder(new Pose2d(-36, -61, Math.PI / 2))
+                                .forward(forwardDistance)
+                                .waitSeconds(waitTime)
+                                .lineToLinearHeading(redStackCoords)
+                                .waitSeconds(waitTime)
+                                .lineToLinearHeading(new Pose2d(-22, -11, 0))
+                                .lineTo(redPark)
                                 .build()
                 );
 
-        meepMeep.setBackground(MeepMeep.Background.FIELD_POWERPLAY_OFFICIAL)
+        meepMeep.setBackground(MeepMeep.Background.FIELD_CENTERSTAGE_JUICE_DARK)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
-                .addEntity(bot1)
-                .addEntity(bot2)
+                .addEntity(blueFront)
+                .addEntity(blueBack)
+                .addEntity(redFront)
+                .addEntity(redBack)
                 .start();
     }
 }
