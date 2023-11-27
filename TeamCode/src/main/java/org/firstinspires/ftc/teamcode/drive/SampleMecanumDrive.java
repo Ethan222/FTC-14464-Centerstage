@@ -25,6 +25,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 
@@ -74,7 +75,8 @@ public class SampleMecanumDrive extends MecanumDrive {
     private DcMotorEx leftFront, leftRear, rightRear, rightFront;
     private List<DcMotorEx> motors;
 
-    private DcMotorEx arm, intake;
+    public DcMotorEx armLifter, armTurner, intake, gripper;
+    public Servo rotater;
     private final double ARM_DEFAULT_SPEED = 1, ARM_MAX_SPEED = 1;
     private final double INTAKE_DEFAULT_SPEED = .5, INTAKE_MAX_SPEED = .7;
 
@@ -108,8 +110,11 @@ public class SampleMecanumDrive extends MecanumDrive {
         rightRear = hardwareMap.get(DcMotorEx.class, "BR");
         rightFront = hardwareMap.get(DcMotorEx.class, "FR");
 
-        arm = hardwareMap.get(DcMotorEx.class, "arm");
+        armLifter = hardwareMap.get(DcMotorEx.class, "armLifter");
+        armTurner = hardwareMap.get(DcMotorEx.class, "armTurner");
         intake = hardwareMap.get(DcMotorEx.class, "intake");
+        gripper = hardwareMap.get(DcMotorEx.class, "gripper");
+        //rotater = hardwareMap.get(Servo.class, "rotater");
 
         motors = Arrays.asList(leftFront, leftRear, rightRear, rightFront);
 
@@ -146,7 +151,7 @@ public class SampleMecanumDrive extends MecanumDrive {
     }
 
     public void setArmPower(double power) { // positive is down, negative is up
-        arm.setPower(power * ARM_MAX_SPEED);
+        armLifter.setPower(power * ARM_MAX_SPEED);
     }
 
     public void armUp(double power) {
@@ -170,7 +175,7 @@ public class SampleMecanumDrive extends MecanumDrive {
     }
 
     public double getArmPower() {
-        return arm.getPower();
+        return armLifter.getPower();
     }
 
     public void setIntakePower(double power) { // positive intakes, negative outtakes

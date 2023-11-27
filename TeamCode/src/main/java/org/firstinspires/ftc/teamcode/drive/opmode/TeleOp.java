@@ -51,7 +51,15 @@ public class TeleOp extends LinearOpMode {
             else
                 drive.stopIntake();
 
-            // use the right stick or d-pad to control the arm
+            // bumpers control gripper
+            if(gamepad1.left_bumper)
+                drive.gripper.setPower(.8);
+            else if(gamepad1.right_bumper)
+                drive.gripper.setPower(-.8);
+            else
+                drive.gripper.setPower(0);
+
+            // use the right stick or d-pad to control the arm lifter
             if(gamepad2.right_stick_y != 0)
                 drive.setArmPower(gamepad2.right_stick_y);
             else if(gamepad2.dpad_up)
@@ -67,9 +75,19 @@ public class TeleOp extends LinearOpMode {
             else
                 drive.stopArm();
 
-            telemetry.addLine("Use the triggers to control the intake and the right stick y or d-pad to control the arm");
+            // d pad left/right controls arm turner
+            if(gamepad1.dpad_left)
+                drive.armTurner.setPower(-.8);
+            else if(gamepad1.dpad_right)
+                drive.armTurner.setPower(.8);
+            else
+                drive.armTurner.setPower(0);
+
+            //telemetry.addLine("Use the triggers to control the intake and the right stick y or d-pad to control the arm");
             telemetry.addData("Intake power", drive.getIntakePower());
-            telemetry.addData("Arm power", drive.getArmPower());
+            telemetry.addData("Gripper pwr", drive.gripper.getPower());
+            telemetry.addData("Arm lifter power", drive.getArmPower());
+            telemetry.addData("arm turner", drive.armTurner.getPower());
             telemetry.update();
         }
     }

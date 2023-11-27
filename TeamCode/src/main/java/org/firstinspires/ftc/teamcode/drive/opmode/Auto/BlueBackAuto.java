@@ -23,6 +23,7 @@ package org.firstinspires.ftc.teamcode.drive.opmode.Auto;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
+import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
@@ -72,7 +73,7 @@ public class BlueBackAuto extends LinearOpMode
     {
         telemetry.addLine("Initializing...");
         telemetry.update();
-        /*
+
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
         aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
@@ -92,7 +93,7 @@ public class BlueBackAuto extends LinearOpMode
 
             }
         });
-        */
+
         telemetry.setMsTransmissionInterval(50);
 
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
@@ -101,21 +102,13 @@ public class BlueBackAuto extends LinearOpMode
         Pose2d startPose = new Pose2d(11, 62.5, -Math.PI / 2);
         double forwardDistance = 26;
         double waitTime = 1.5;
-        Vector2d backdropCoords = new Vector2d(48, 37);
+        double[] backdropYs = {41, 35, 28};
+
         Vector2d parkCoords = new Vector2d(59, 62);
         int multiplier = -1;
 
         drive.setPoseEstimate(startPose);
-        TrajectorySequence traj = drive.trajectorySequenceBuilder(startPose)
-            .forward(forwardDistance)
-            .waitSeconds(waitTime)
-            .turn(multiplier * -Math.PI / 2)
-            .lineTo(backdropCoords)
-            .waitSeconds(waitTime)
-            .back(4)
-            .strafeRight(multiplier * 23)
-            .lineTo(parkCoords)
-            .build();
+
 
         telemetry.addLine("Initialized");
         telemetry.update();
@@ -123,19 +116,35 @@ public class BlueBackAuto extends LinearOpMode
         // figure out where team prop is
         teamPropLocation = Location.CENTER;
         correspondingAprilTagID = backdrop.center;
+        int location = 2;
 
-        //telemetry.addLine("Team prop location: " + teamPropLocation);
+        Vector2d backdropCoords = new Vector2d(44, backdropYs[location]);
+        TrajectorySequence traj1 = drive.trajectorySequenceBuilder(startPose)
+                .forward(forwardDistance)
+                .waitSeconds(waitTime)
+                .turn(multiplier * Math.PI / 2)
+                .lineTo(backdropCoords)
+                //.waitSeconds(waitTime)
+                //.back(4)
+                //.strafeRight(multiplier * 23)
+                //.lineTo(parkCoords)
+                .build();
+
+        telemetry.addLine("Team prop location: " + teamPropLocation);
         telemetry.update();
 
         waitForStart();
 
         // move to corresponding spike mark
-        drive.followTrajectorySequence(traj);
+        drive.followTrajectorySequence(traj1);
         // place purple pixel on it
         // move so can see backdrop
         // find april tag corresponding to team prop location
         /*
-        while (tagOfInterest == null)
+        Trajectory strafe = drive.trajectoryBuilder(new Pose2d())
+                .strafeRight(1)
+                .build();
+        while (tagOfInterest == null && !isStopRequested())
         {
             ArrayList<AprilTagDetection> currentDetections = aprilTagDetectionPipeline.getLatestDetections();
 
@@ -156,20 +165,20 @@ public class BlueBackAuto extends LinearOpMode
             }
 
             telemetry.update();
+            drive.followTrajectory(strafe);
             sleep(20);
         }
 
         telemetry.addLine("Found april tag");
         tagToTelemetry(tagOfInterest);
         telemetry.update();
-
+        */
         // move to backdrop
         // place yellow pixel on backdrop
         // park in backstage
 
         // prevent opmode from ending
-        while (opModeIsActive()) {sleep(20);}
-        */
+        //while (opModeIsActive()) {sleep(20);}
     }
 
     void tagToTelemetry(AprilTagDetection detection)
