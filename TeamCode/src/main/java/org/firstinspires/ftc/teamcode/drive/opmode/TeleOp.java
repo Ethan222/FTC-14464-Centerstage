@@ -50,7 +50,7 @@ public class TeleOp extends LinearOpMode {
                 drive.outtake(gamepad1.left_trigger);
             else
                 drive.stopIntake();
-
+            /*
             // bumpers control gripper
             if(gamepad1.left_bumper)
                 drive.gripper.setPower(.8);
@@ -58,36 +58,59 @@ public class TeleOp extends LinearOpMode {
                 drive.gripper.setPower(-.8);
             else
                 drive.gripper.setPower(0);
-
+            */
             // use the right stick or d-pad to control the arm lifter
             if(gamepad2.right_stick_y != 0)
-                drive.setArmPower(gamepad2.right_stick_y);
+                drive.setArmLifterPower(gamepad2.right_stick_y);
             else if(gamepad2.dpad_up)
                 drive.armUp();
             else if(gamepad2.dpad_down)
                 drive.armDown();
             else if(gamepad1.right_stick_button)
-                drive.setArmPower(gamepad1.right_stick_y);
+                drive.setArmLifterPower(gamepad1.right_stick_y);
             else if(gamepad1.dpad_up)
                 drive.armUp();
             else if(gamepad1.dpad_down)
                 drive.armDown();
             else
-                drive.stopArm();
+                drive.stopArmLifter();
 
             // d pad left/right controls arm turner
             if(gamepad1.dpad_left)
-                drive.armTurner.setPower(-.8);
+                drive.armTurn();
             else if(gamepad1.dpad_right)
-                drive.armTurner.setPower(.8);
+                drive.armUnturn();
             else
-                drive.armTurner.setPower(0);
+                drive.stopArmTurner();
 
-            //telemetry.addLine("Use the triggers to control the intake and the right stick y or d-pad to control the arm");
-            telemetry.addData("Intake power", drive.getIntakePower());
-            telemetry.addData("Gripper pwr", drive.gripper.getPower());
-            telemetry.addData("Arm lifter power", drive.getArmPower());
-            telemetry.addData("arm turner", drive.armTurner.getPower());
+            // a/b controls gripper
+            if(gamepad1.a)
+                drive.gripper.setPosition(drive.gripper.getPosition() + .01);
+            else if(gamepad1.b)
+                drive.gripper.setPosition(drive.gripper.getPosition() - .01);
+
+            // x/y control rotator
+            double chg;
+            if(gamepad1.x)
+                chg = -.005;
+            else if(gamepad1.y)
+                chg = .005;
+            else
+                chg = 0;
+            if(chg != 0) {
+                drive.rotator.setPosition(drive.rotator.getPosition() + chg);
+                sleep(100);
+            }
+
+            telemetry.addLine("triggers control intake, d-pad up/down & left/right controls arm raising/lowering & turning");
+            telemetry.addLine("a/b control gripper, x/y control rotator");
+            telemetry.addLine(String.format("Intake power: %.3f", drive.getIntakePower()));
+            //telemetry.addData("Gripper pwr", drive.gripper.getPower());
+            double[] armLifterPowers = drive.getArmLifterPowers();
+            telemetry.addLine(String.format("Arm lifter powers: [%.3f, %.3f]", armLifterPowers[0], armLifterPowers[1]));
+            telemetry.addLine(String.format("Arm turner power: %.3f", drive.getArmTurnerPower()));
+            telemetry.addLine(String.format("Gripper psn: %.3f", drive.gripper.getPosition()));
+            telemetry.addLine(String.format("Rotator psn: %.3f", drive.rotator.getPosition()));
             telemetry.update();
         }
     }
