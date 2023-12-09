@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 // Generic motor class that can handle one or more motors
 public abstract class CustomMotor {
-    private final DcMotorEx[] motors;
+    protected final DcMotorEx[] motors;
     protected final double DEFAULT_SPEED, MAX_SPEED;
     public CustomMotor(HardwareMap hm, String[] names, double defaultSpeed, double maxSpeed) {
         motors = new DcMotorEx[names.length];
@@ -35,7 +35,7 @@ public abstract class CustomMotor {
     @SuppressLint("DefaultLocale")
     public String getPower() {
         if(motors.length == 1) {
-            return String.format("%.3f", motors[0].getPower());
+            return String.format("%.2f", motors[0].getPower());
         } else {
             StringBuilder powers = new StringBuilder();
             for (DcMotorEx motor : motors) {

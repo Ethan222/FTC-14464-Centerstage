@@ -5,7 +5,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 // controls the intake motor
 public class Intake extends CustomMotor {
     public Intake(HardwareMap hardwareMap, String name) {
-        super(hardwareMap, name, .5, .7);
+        super(hardwareMap, name, .8, .9);
     }
     // positive intakes, negative outtakes
     public void in(double power) {

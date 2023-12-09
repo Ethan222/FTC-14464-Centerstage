@@ -4,16 +4,16 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 public class Claw {
     public CustomServo gripper, rotator;
-    private static final double GRIPPER_INCREMENT = .001, ROTATOR_INCREMENT = .001;
+    private static final double GRIPPER_INCREMENT = .01, ROTATOR_INCREMENT = .01;
     public Claw(HardwareMap hm, String gripperName, String rotatorName) {
         gripper = new CustomServo(hm, gripperName);
-        rotator = new CustomServo(hm, rotatorName);
+        rotator = new CustomServo(hm, rotatorName, 0, .5);
     }
     public void gripIncrementally() {
-        gripper.changePosition(GRIPPER_INCREMENT);
+        gripper.changePosition(-GRIPPER_INCREMENT);
     }
     public void ungripIncrementally() {
-        gripper.changePosition(-GRIPPER_INCREMENT);
+        gripper.changePosition(GRIPPER_INCREMENT);
     }
     public void gripFully() {
         gripper.goToLeft();
@@ -34,9 +34,9 @@ public class Claw {
         rotator.changePosition(-ROTATOR_INCREMENT);
     }
     public void rotateFully() {
-        rotator.goToLeft();
+        rotator.goToRight();
     }
     public void unrotateFully() {
-        rotator.goToRight();
+        rotator.goToLeft();
     }
 }

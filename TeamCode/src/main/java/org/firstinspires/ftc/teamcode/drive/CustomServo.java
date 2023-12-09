@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.drive;
 
+import android.annotation.SuppressLint;
+
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
@@ -15,7 +17,12 @@ public class CustomServo {
         this(hm, name, 0, 1);
     }
     public void setPosition(double psn) {
-        servo.setPosition(psn);
+        if(psn < leftPosition)
+            servo.setPosition(leftPosition);
+        else if(psn > rightPosition)
+            servo.setPosition(rightPosition);
+        else
+            servo.setPosition(psn);
     }
     public double getPosition() {
         return servo.getPosition();
@@ -28,5 +35,9 @@ public class CustomServo {
     }
     public void goToRight() {
         setPosition(rightPosition);
+    }
+    @SuppressLint("DefaultLocale")
+    public String getRoundedPsn() {
+        return String.format("%.3f", getPosition());
     }
 }
