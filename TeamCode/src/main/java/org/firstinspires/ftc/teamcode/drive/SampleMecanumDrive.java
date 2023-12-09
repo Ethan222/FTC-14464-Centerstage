@@ -75,12 +75,10 @@ public class SampleMecanumDrive extends MecanumDrive {
     private DcMotorEx leftFront, leftRear, rightRear, rightFront;
     private List<DcMotorEx> motors;
 
-    private DcMotorEx armLifter1, armLifter2, armTurner, intake;
     public Servo gripper, rotator;
-
-    private static final double ARM_LIFTER_DEFAULT_SPEED = 1, ARM_LIFTER_MAX_SPEED = 1;
-    private static final double ARM_TURNER_DEFAULT_SPEED = 1, ARM_TURNER_MAX_SPEED = 1;
-    private static final double INTAKE_DEFAULT_SPEED = .5, INTAKE_MAX_SPEED = .7;
+    public Intake intake;
+    public ArmTurner armTurner;
+    public ArmLifters armLifters;
 
     private IMU imu;
     private VoltageSensor batteryVoltageSensor;
@@ -113,10 +111,9 @@ public class SampleMecanumDrive extends MecanumDrive {
         rightRear = hardwareMap.get(DcMotorEx.class, "BR");
         rightFront = hardwareMap.get(DcMotorEx.class, "FR");
 
-        intake = hardwareMap.get(DcMotorEx.class, "motor0");
-        armLifter1 = hardwareMap.get(DcMotorEx.class, "motor1");
-        armLifter2 = hardwareMap.get(DcMotorEx.class, "motor3");
-        armTurner = hardwareMap.get(DcMotorEx.class, "motor2");
+        intake = new Intake(hardwareMap, "motor0");
+        armTurner = new ArmTurner(hardwareMap, "motor2");
+        armLifters = new ArmLifters(hardwareMap, "motor1", "motor3");
 
         gripper = hardwareMap.get(Servo.class, "servo1");
         rotator = hardwareMap.get(Servo.class, "servo0");
@@ -154,84 +151,6 @@ public class SampleMecanumDrive extends MecanumDrive {
                 lastEncPositions, lastEncVels, lastTrackingEncPositions, lastTrackingEncVels
         );
     }
-
-    // arm lifter
-    public void setArmLifterPower(double power) { // positive is down, negative is up
-        armLifter1.setPower(power * ARM_LIFTER_MAX_SPEED);
-        armLifter2.setPower(power * ARM_LIFTER_MAX_SPEED);
-    }
-
-    public void armUp(double power) {
-        setArmLifterPower(-power);
-    }
-
-    public void armUp() {
-        armUp(ARM_LIFTER_DEFAULT_SPEED);
-    }
-
-    public void armDown(double power) {
-        setArmLifterPower(power);
-    }
-
-    public void armDown() {
-        armDown(ARM_LIFTER_DEFAULT_SPEED);
-    }
-
-    public void stopArmLifter() {
-        setArmLifterPower(0);
-    }
-
-    public double[] getArmLifterPowers() {
-        return new double[]{armLifter1.getPower(), armLifter2.getPower()};
-    }
-
-    // arm turner
-    public void setArmTurnerPower(double pwr) {
-        armTurner.setPower(-pwr * ARM_TURNER_MAX_SPEED);
-    }
-
-    public void armTurn(double pwr) {
-        setArmTurnerPower(pwr);
-    }
-
-    public void armTurn() {
-        armTurn(ARM_TURNER_DEFAULT_SPEED);
-    }
-
-    public void armUnturn(double pwr) {
-        setArmTurnerPower(-pwr);
-    }
-
-    public void armUnturn() {
-        armUnturn(ARM_TURNER_DEFAULT_SPEED);
-    }
-
-    public void stopArmTurner() {
-        setArmTurnerPower(0);
-    }
-
-    public double getArmTurnerPower() {
-        return armTurner.getPower();
-    }
-
-    // intake
-    public void setIntakePower(double power) { // positive intakes, negative outtakes
-        intake.setPower(power * INTAKE_MAX_SPEED);
-    }
-
-    public void intake(double power) {
-        setIntakePower(power);
-    }
-
-    public void intake() { intake(INTAKE_DEFAULT_SPEED); }
-
-    public void outtake(double power) { setIntakePower(-power); }
-
-    public void outtake() { outtake(INTAKE_DEFAULT_SPEED); }
-
-    public void stopIntake() { setIntakePower(0); }
-
-    public double getIntakePower() { return intake.getPower(); }
 
     public TrajectoryBuilder trajectoryBuilder(Pose2d startPose) {
         return new TrajectoryBuilder(startPose, VEL_CONSTRAINT, ACCEL_CONSTRAINT);
