@@ -6,7 +6,7 @@ public class Claw {
     public CustomServo gripper, rotator;
     private static final double GRIPPER_INCREMENT = .01, ROTATOR_INCREMENT = .01;
     public Claw(HardwareMap hm, String gripperName, String rotatorName) {
-        gripper = new CustomServo(hm, gripperName);
+        gripper = new CustomServo(hm, gripperName, .5, 1);
         rotator = new CustomServo(hm, rotatorName, 0, .5);
     }
     public void gripIncrementally() {
