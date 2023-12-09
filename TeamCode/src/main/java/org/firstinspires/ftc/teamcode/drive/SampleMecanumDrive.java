@@ -75,11 +75,6 @@ public class SampleMecanumDrive extends MecanumDrive {
     private DcMotorEx leftFront, leftRear, rightRear, rightFront;
     private List<DcMotorEx> motors;
 
-    public Servo gripper, rotator;
-    public Intake intake;
-    public ArmTurner armTurner;
-    public ArmLifters armLifters;
-
     private IMU imu;
     private VoltageSensor batteryVoltageSensor;
 
@@ -110,13 +105,6 @@ public class SampleMecanumDrive extends MecanumDrive {
         leftRear = hardwareMap.get(DcMotorEx.class, "BL");
         rightRear = hardwareMap.get(DcMotorEx.class, "BR");
         rightFront = hardwareMap.get(DcMotorEx.class, "FR");
-
-        intake = new Intake(hardwareMap, "motor0");
-        armTurner = new ArmTurner(hardwareMap, "motor2");
-        armLifters = new ArmLifters(hardwareMap, "motor1", "motor3");
-
-        gripper = hardwareMap.get(Servo.class, "servo1");
-        rotator = hardwareMap.get(Servo.class, "servo0");
 
         motors = Arrays.asList(leftFront, leftRear, rightRear, rightFront);
 

@@ -41,7 +41,7 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 
 import java.util.ArrayList;
 
-@Autonomous
+@Autonomous(group = "auto")
 public class BlueBackAuto extends LinearOpMode
 {
     OpenCvCamera camera;

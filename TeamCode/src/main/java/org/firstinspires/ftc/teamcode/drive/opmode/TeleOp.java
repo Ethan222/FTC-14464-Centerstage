@@ -3,8 +3,9 @@ package org.firstinspires.ftc.teamcode.drive.opmode;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Gamepad;
 
-import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.drive.CustomRobot;
 
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(group = "drive")
 public class TeleOp extends LinearOpMode {
@@ -13,95 +14,111 @@ public class TeleOp extends LinearOpMode {
         telemetry.addLine("Initializing...");
         telemetry.update();
 
-        SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
+        CustomRobot robot = new CustomRobot(hardwareMap);
+        robot.drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        boolean singleDriverMode = true;
 
         telemetry.addLine("Initialized");
         telemetry.update();
         waitForStart();
 
         while (!isStopRequested()) {
-            drive.setWeightedDrivePower(
+            robot.drive.setWeightedDrivePower(
                     new Pose2d(
                             -gamepad1.left_stick_y,
                             -gamepad1.left_stick_x,
                             -gamepad1.right_stick_x
                     )
             );
+            robot.drive.update();
 
-            drive.update();
+            if(gamepad1.back && gamepad1.a)
+                singleDriverMode = true;
+            else if(gamepad1.back && gamepad1.b)
+                singleDriverMode = false;
+            else if(gamepad2.back && gamepad2.b)
+                singleDriverMode = false;
 
             // use the triggers to control the intake - right trigger intakes, left trigger outtakes
             if(gamepad2.right_trigger > 0)
-                drive.intake.in(gamepad2.right_trigger);
+                robot.intake.in(gamepad2.right_trigger);
             else if(gamepad2.left_trigger > 0)
-                drive.intake.out(gamepad2.left_trigger);
-            else if(gamepad1.right_trigger > 0)
-                drive.intake.in(gamepad1.right_trigger);
-            else if(gamepad1.left_trigger > 0)
-                drive.intake.out(gamepad1.left_trigger);
+                robot.intake.out(gamepad2.left_trigger);
+            else if(singleDriverMode && gamepad1.right_trigger > 0)
+                robot.intake.in(gamepad1.right_trigger);
+            else if(singleDriverMode && gamepad1.left_trigger > 0)
+                robot.intake.out(gamepad1.left_trigger);
             else
-                drive.intake.stop();
-            /*
-            // bumpers control gripper
-            if(gamepad1.left_bumper)
-                drive.gripper.setPower(.8);
-            else if(gamepad1.right_bumper)
-                drive.gripper.setPower(-.8);
-            else
-                drive.gripper.setPower(0);
-            */
-            // use the right stick or d-pad to control the arm lifter
-            if(gamepad2.right_stick_y != 0)
-                drive.armLifters.setPower(gamepad2.right_stick_y);
+                robot.intake.stop();
+
+            // use the left stick y or d-pad up/down to control the arm lifter
+            if(gamepad2.left_stick_y != 0)
+                robot.armLifters.setPower(gamepad2.left_stick_y);
             else if(gamepad2.dpad_up)
-                drive.armLifters.up();
+                robot.armLifters.up();
             else if(gamepad2.dpad_down)
-                drive.armLifters.down();
-            else if(gamepad1.right_stick_button)
-                drive.armLifters.setPower(gamepad1.right_stick_y);
-            else if(gamepad1.dpad_up)
-                drive.armLifters.up();
-            else if(gamepad1.dpad_down)
-                drive.armLifters.down();
+                robot.armLifters.down();
+            else if(singleDriverMode && gamepad1.dpad_up)
+                robot.armLifters.up();
+            else if(singleDriverMode && gamepad1.dpad_down)
+                robot.armLifters.down();
             else
-                drive.armLifters.stop();
+                robot.armLifters.stop();
 
-            // d pad left/right controls arm turner
-            if(gamepad1.dpad_left)
-                drive.armTurner.turn();
-            else if(gamepad1.dpad_right)
-                drive.armTurner.unturn();
+            // left stick x or d pad left/right controls arm turner
+            if(gamepad2.left_stick_x != 0)
+                robot.armTurner.turn(gamepad2.left_stick_x);
+            else if(gamepad2.dpad_left)
+                robot.armTurner.turn();
+            else if(gamepad2.dpad_right)
+                robot.armTurner.unturn();
+            else if(singleDriverMode && gamepad1.dpad_left)
+                robot.armTurner.turn();
+            else if(singleDriverMode && gamepad1.dpad_right)
+                robot.armTurner.unturn();
             else
-                drive.armTurner.stop();
+                robot.armTurner.stop();
 
-            // a/b controls gripper
-            if(gamepad1.a)
-                drive.gripper.setPosition(drive.gripper.getPosition() + .01);
-            else if(gamepad1.b)
-                drive.gripper.setPosition(drive.gripper.getPosition() - .01);
+            // a/b grip/ungrip fully, bumpers controls gripper incrementally
+            if(gamepad2.a)
+                robot.claw.gripFully();
+            else if(gamepad2.b)
+                robot.claw.ungripFully();
+            else if(gamepad2.left_bumper)
+                robot.claw.gripIncrementally();
+            else if(gamepad2.right_bumper)
+                robot.claw.ungripIncrementally();
+            else if(singleDriverMode && gamepad1.a)
+                robot.claw.gripFully();
+            else if(singleDriverMode && gamepad1.b)
+                robot.claw.ungripFully();
+            else if(singleDriverMode && gamepad1.left_bumper)
+                robot.claw.gripIncrementally();
+            else if(singleDriverMode && gamepad1.right_bumper)
+                robot.claw.ungripIncrementally();
 
-            // x/y control rotator
-            double chg;
-            if(gamepad1.x)
-                chg = -.005;
-            else if(gamepad1.y)
-                chg = .005;
-            else
-                chg = 0;
-            if(chg != 0) {
-                drive.rotator.setPosition(drive.rotator.getPosition() + chg);
-                sleep(100);
-            }
+            // right stick x rotates incrementally, x/y rotate fully
+            if(gamepad2.y)
+                robot.claw.rotateFully();
+            else if(gamepad2.x)
+                robot.claw.unrotateFully();
+            else if(gamepad2.right_stick_x != 0)
+                robot.claw.rotateIncrementally(gamepad2.right_stick_x);
+            else if(singleDriverMode && gamepad1.y)
+                robot.claw.rotateIncrementally();
+            else if(singleDriverMode && gamepad1.x)
+                robot.claw.unrotateIncrementally();
 
-            telemetry.addLine("triggers control intake, d-pad up/down & left/right controls arm raising/lowering & turning");
-            telemetry.addLine("a/b control gripper, x/y control rotator");
-            telemetry.addData("Intake power", drive.intake.getPower());
-            telemetry.addData("Arm turner power", drive.armTurner.getPower());
-            telemetry.addData("Arm lifter powers", drive.armLifters.getPower());
-            telemetry.addLine(String.format("Gripper psn: %.3f", drive.gripper.getPosition()));
-            telemetry.addLine(String.format("Rotator psn: %.3f", drive.rotator.getPosition()));
+            telemetry.addData("Single Driver Mode", singleDriverMode);
+            telemetry.addLine("Gamepad 2: triggers control intake, bumpers & a/b control gripper");
+            telemetry.addLine("left_stick or d-pad controls arm raising/lowering & turning");
+            telemetry.addLine("right_stick_x or x/y control rotator");
+            telemetry.addData("Intake power", robot.intake.getPower());
+            telemetry.addData("Arm turner power", robot.armTurner.getPower());
+            telemetry.addData("Arm lifter powers", robot.armLifters.getPower());
+            telemetry.addData("Gripper psn", robot.claw.gripper.getPosition());
+            telemetry.addData("Rotator psn", robot.claw.rotator.getPosition());
             telemetry.update();
         }
     }

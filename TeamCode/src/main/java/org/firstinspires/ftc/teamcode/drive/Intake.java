@@ -3,7 +3,7 @@ package org.firstinspires.ftc.teamcode.drive;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 // controls the intake motor
-public class Intake extends Motor {
+public class Intake extends CustomMotor {
     public Intake(HardwareMap hardwareMap, String name) {
         super(hardwareMap, name, .5, .7);
     }
