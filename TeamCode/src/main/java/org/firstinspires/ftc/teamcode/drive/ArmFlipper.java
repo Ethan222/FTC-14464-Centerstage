@@ -3,7 +3,7 @@ package org.firstinspires.ftc.teamcode.drive;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 // controls the motor that turns/flips the arm
-public class ArmFlipper extends CustomMotor {
+public class ArmFlipper extends Motor {
     public ArmFlipper(HardwareMap hardwareMap, String name)
     {
         super(hardwareMap, name);

@@ -4,7 +4,7 @@ import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
-import org.firstinspires.ftc.teamcode.drive.CustomRobot;
+import org.firstinspires.ftc.teamcode.drive.Robot;
 
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(group = "drive")
 public class TeleOp extends LinearOpMode {
@@ -13,7 +13,7 @@ public class TeleOp extends LinearOpMode {
         telemetry.addLine("Initializing...");
         telemetry.update();
 
-        CustomRobot robot = new CustomRobot(hardwareMap);
+        Robot robot = new Robot(hardwareMap);
         robot.drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         boolean singleDriverMode = true;
@@ -63,17 +63,17 @@ public class TeleOp extends LinearOpMode {
 
             // use the left stick y or d-pad up/down to control the arm lifter
             if(gamepad2.left_stick_y != 0)
-                robot.armLifters.setPower(-gamepad2.left_stick_y);
+                robot.armRaisers.setPower(-gamepad2.left_stick_y);
             else if(gamepad2.dpad_up)
-                robot.armLifters.up();
+                robot.armRaisers.up();
             else if(gamepad2.dpad_down)
-                robot.armLifters.down();
+                robot.armRaisers.down();
             else if(singleDriverMode && gamepad1.dpad_up)
-                robot.armLifters.up();
+                robot.armRaisers.up();
             else if(singleDriverMode && gamepad1.dpad_down)
-                robot.armLifters.down();
+                robot.armRaisers.down();
             else
-                robot.armLifters.stop();
+                robot.armRaisers.stop();
 
             // right stick x or d pad left/right controls arm flipper
             if(gamepad2.right_stick_x != 0)
@@ -124,7 +124,7 @@ public class TeleOp extends LinearOpMode {
             telemetry.addLine("rotator: x/y");
             telemetry.addData("Intake power", robot.intake.getPower());
             telemetry.addData("Arm flipper power", robot.armFlipper.getPower());
-            telemetry.addData("Arm lifter powers", robot.armLifters.getPower());
+            telemetry.addData("Arm lifter powers", robot.armRaisers.getPower());
             telemetry.addData("Gripper psn", robot.claw.gripper.getRoundedPsn());
             telemetry.addData("Rotator psn", robot.claw.rotator.getRoundedPsn());
             telemetry.update();
