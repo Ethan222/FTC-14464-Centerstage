@@ -9,13 +9,13 @@ public class ArmFlipper extends Motor {
         super(hardwareMap, name);
     }
     public void flip(double power) {
-        setPower(power);
+        setPower(-power);
     }
     public void flip() {
         flip(DEFAULT_SPEED);
     }
     public void unflip(double power) {
-        setPower(-power);
+        setPower(power);
     }
     public void unflip() {
         unflip(DEFAULT_SPEED);

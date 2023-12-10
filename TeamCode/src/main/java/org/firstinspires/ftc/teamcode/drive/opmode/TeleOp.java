@@ -32,7 +32,7 @@ public class TeleOp extends LinearOpMode {
         }
         //waitForStart();
 
-        while (!isStopRequested()) {
+        while (!isStopRequested() && !(gamepad1.start && gamepad1.x) && !(gamepad2.start && gamepad2.x)) {
             robot.drive.setWeightedDrivePower(
                     new Pose2d(
                             -gamepad1.left_stick_y,
@@ -125,8 +125,10 @@ public class TeleOp extends LinearOpMode {
             telemetry.addData("Intake power", robot.intake.getPower());
             telemetry.addData("Arm flipper power", robot.armFlipper.getPower());
             telemetry.addData("Arm lifter powers", robot.armRaisers.getPower());
-            telemetry.addData("Gripper psn", robot.claw.gripper.getRoundedPsn());
-            telemetry.addData("Rotator psn", robot.claw.rotator.getRoundedPsn());
+            telemetry.addLine(String.format("Gripper psn: %s (%s)",
+                    robot.claw.gripper.getRoundedPsn(), robot.claw.gripperStatus()));
+            telemetry.addLine(String.format("Rotator psn: %s (%s)",
+                    robot.claw.rotator.getRoundedPsn(), robot.claw.rotatorStatus()));
             telemetry.update();
         }
     }
