@@ -29,6 +29,8 @@ public class StrafeTest extends LinearOpMode {
                 .strafeRight(DISTANCE)
                 .build();
 
+        telemetry.addLine(String.format("Goes right for %.1f in", DISTANCE));
+
         waitForStart();
 
         if (isStopRequested()) return;

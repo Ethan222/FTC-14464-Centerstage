@@ -14,13 +14,19 @@ public class MeepMeepTesting {
         MeepMeep meepMeep = new MeepMeep(600);
 
         double forwardDistance = 26;
-        double waitTime = 0;
+        double waitTime = 1;
 
         Pose2d blueBackStart = new Pose2d(11, 62.5, -Math.PI / 2);
         Vector2d blueBackdropCoords = new Vector2d(48, 37);
-        Vector2d bluePark = new Vector2d(59, 62);
+        Vector2d bluePark = new Vector2d(60, 62);
         int multiplier = -1;
         Vector2d redBackdropCoords = new Vector2d(50, -35);
+
+        Pose2d[] spikeMarkPoses = {
+                new Pose2d(22.5, 42, Math.PI / 2),
+                new Pose2d(12, 38, Math.PI / 2),
+                new Pose2d(.5, 42, Math.PI / 2)
+        };
 
         RoadRunnerBotEntity blueBack = new DefaultBotBuilder(meepMeep)
                 // set to either red or blue alliance
@@ -29,16 +35,31 @@ public class MeepMeepTesting {
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
                 .followTrajectorySequence(drive ->
                         drive.trajectorySequenceBuilder(blueBackStart)
-                                .forward(forwardDistance)
+                                .lineToLinearHeading(spikeMarkPoses[0])
                                 .waitSeconds(waitTime)
-                                .turn(multiplier * -Math.PI / 2)
-                                .lineTo(blueBackdropCoords)
-                                .waitSeconds(waitTime)
-                                .back(3)
-                                .strafeRight(multiplier * 23)
+                                //.turn(multiplier * Math.PI / 2)
+                                //.lineTo(blueBackdropCoords)
+                                //.waitSeconds(waitTime)
+                                //.back(3)
+                                //.strafeRight(multiplier * 23)
                                 .lineTo(bluePark)
                                 .build()
                 );
+
+        RoadRunnerBotEntity[] blueBacks = new RoadRunnerBotEntity[3];
+        for(int i = 0; i < 3; i++) {
+            Pose2d spikeMarkPose = spikeMarkPoses[i];
+            blueBacks[i] = new DefaultBotBuilder(meepMeep)
+                    .setColorScheme(new ColorSchemeBlueLight())
+                    .setConstraints(60, 60, Math.PI, Math.PI, 15)
+                    .followTrajectorySequence(drive ->
+                            drive.trajectorySequenceBuilder(blueBackStart)
+                                    .lineToLinearHeading(spikeMarkPose)
+                                    .waitSeconds(waitTime)
+                                    .lineTo(bluePark)
+                                    .build()
+                    );
+        }
 
         Pose2d startPose = new Pose2d(-36, 62, -Math.PI / 2);
         Pose2d blueStackCoords = new Pose2d(-58, 36, Math.PI);
@@ -95,7 +116,9 @@ public class MeepMeepTesting {
         meepMeep.setBackground(MeepMeep.Background.FIELD_CENTERSTAGE_JUICE_DARK)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
-                .addEntity(blueBack)
+                .addEntity(blueBacks[0])
+                .addEntity(blueBacks[1])
+                .addEntity(blueBacks[2])
                 .start();
     }
 }

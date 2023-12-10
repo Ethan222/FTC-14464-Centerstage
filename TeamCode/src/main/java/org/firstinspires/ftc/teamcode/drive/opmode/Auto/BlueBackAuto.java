@@ -23,7 +23,6 @@ package org.firstinspires.ftc.teamcode.drive.opmode.Auto;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
-import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
@@ -32,14 +31,14 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.teamcode.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.drive.Robot;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
 import org.openftc.apriltag.AprilTagDetection;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 
-import java.util.ArrayList;
+import java.util.Vector;
 
 @Autonomous(group = "auto")
 public class BlueBackAuto extends LinearOpMode
@@ -73,7 +72,7 @@ public class BlueBackAuto extends LinearOpMode
     {
         telemetry.addLine("Initializing...");
         telemetry.update();
-
+        /*
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
         aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
@@ -93,50 +92,69 @@ public class BlueBackAuto extends LinearOpMode
 
             }
         });
-
+        */
         telemetry.setMsTransmissionInterval(50);
 
-        SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
+        Robot robot = new Robot(hardwareMap);
+
+        telemetry.addLine("robot initialized");
+        telemetry.update();
 
         // trajectories
         Pose2d startPose = new Pose2d(11, 62.5, -Math.PI / 2);
+        Vector2d[] spikeMarkPoses = {
+                new Vector2d(22.5, 42),
+                new Vector2d(12, 38),
+                new Vector2d(.5, 42)
+        };
         double forwardDistance = 26;
         double waitTime = 1.5;
         double[] backdropYs = {41, 35, 28};
 
-        Vector2d parkCoords = new Vector2d(59, 62);
+        Vector2d parkCoords = new Vector2d(60, 62);
         int multiplier = -1;
 
-        drive.setPoseEstimate(startPose);
-
-
-        telemetry.addLine("Initialized");
-        telemetry.update();
+        robot.drive.setPoseEstimate(startPose);
 
         // figure out where team prop is
         teamPropLocation = Location.CENTER;
-        correspondingAprilTagID = backdrop.center;
-        int location = 2;
+        //correspondingAprilTagID = backdrop.center;
+        int location = 0;
 
+        double armFlipStartTime = .5, armFlipTime = 3.5;
         Vector2d backdropCoords = new Vector2d(44, backdropYs[location]);
-        TrajectorySequence traj1 = drive.trajectorySequenceBuilder(startPose)
-                .forward(forwardDistance)
-                .waitSeconds(waitTime)
-                .turn(multiplier * Math.PI / 2)
-                .lineTo(backdropCoords)
+        TrajectorySequence traj = robot.drive.trajectorySequenceBuilder(startPose)
+                .addTemporalMarker(() -> {
+                    robot.gripper.gripFully(); // grip the preloaded pixels
+                })
+                .waitSeconds(.5)
+                .lineTo(spikeMarkPoses[location]) // move to spike mark
+                .turn(Math.PI)
+                // place pixel on spike mark
+                .addTemporalMarker(armFlipStartTime, () -> {
+                    robot.armFlipper.flip();
+                })
+                .waitSeconds(3)
+                .addTemporalMarker(armFlipStartTime + armFlipTime, () -> {
+                    robot.armFlipper.stop();
+                    robot.gripper.ungripFully();
+                })
+                //.turn(multiplier * Math.PI / 2)
+                //.lineTo(backdropCoords)
                 //.waitSeconds(waitTime)
                 //.back(4)
                 //.strafeRight(multiplier * 23)
-                //.lineTo(parkCoords)
+                //.lineTo(parkCoords) // park in backstage
                 .build();
 
+        telemetry.addLine("Initialized");
         telemetry.addLine("Team prop location: " + teamPropLocation);
         telemetry.update();
 
         waitForStart();
 
         // move to corresponding spike mark
-        drive.followTrajectorySequence(traj1);
+        robot.drive.followTrajectorySequence(traj);
         // place purple pixel on it
         // move so can see backdrop
         // find april tag corresponding to team prop location
@@ -176,9 +194,6 @@ public class BlueBackAuto extends LinearOpMode
         // move to backdrop
         // place yellow pixel on backdrop
         // park in backstage
-
-        // prevent opmode from ending
-        //while (opModeIsActive()) {sleep(20);}
     }
 
     void tagToTelemetry(AprilTagDetection detection)
