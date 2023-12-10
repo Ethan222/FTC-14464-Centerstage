@@ -7,12 +7,14 @@ public class Robot {
     public Intake intake;
     public ArmFlipper armFlipper;
     public ArmRaisers armRaisers;
-    public Claw claw;
+    public Gripper gripper;
+    public Rotator rotator;
     public Robot(HardwareMap hardwareMap) {
         drive = new SampleMecanumDrive(hardwareMap);
         intake = new Intake(hardwareMap, "motor0");
         armFlipper = new ArmFlipper(hardwareMap, "motor1");
         armRaisers = new ArmRaisers(hardwareMap, "motor3", "motor2");
-        claw = new Claw(hardwareMap, "servo0", "servo1");
+        gripper = new Gripper(hardwareMap, "servo0");
+        rotator = new Rotator(hardwareMap, "servo1");
     }
 }

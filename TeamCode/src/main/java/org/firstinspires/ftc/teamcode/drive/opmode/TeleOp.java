@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.drive.opmode;
 
+import android.annotation.SuppressLint;
+
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -8,6 +10,7 @@ import org.firstinspires.ftc.teamcode.drive.Robot;
 
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(group = "drive")
 public class TeleOp extends LinearOpMode {
+    @SuppressLint("DefaultLocale")
     @Override
     public void runOpMode() throws InterruptedException {
         telemetry.addLine("Initializing...");
@@ -91,31 +94,33 @@ public class TeleOp extends LinearOpMode {
 
             // a/b grip/ungrip fully, bumpers controls gripper incrementally
             if(gamepad2.a && !gamepad2.start)
-                robot.claw.gripFully();
+                robot.gripper.gripFully();
             else if(gamepad2.b && !gamepad2.start && !gamepad2.back)
-                robot.claw.ungripFully();
+                robot.gripper.ungripFully();
             else if(gamepad2.right_bumper)
-                robot.claw.gripIncrementally();
+                robot.gripper.gripIncrementally();
             else if(gamepad2.left_bumper)
-                robot.claw.ungripIncrementally();
+                robot.gripper.ungripIncrementally();
             else if(singleDriverMode && gamepad1.a && !gamepad1.start && !gamepad1.back)
-                robot.claw.gripFully();
+                robot.gripper.gripFully();
             else if(singleDriverMode && gamepad1.b && !gamepad1.start && !gamepad1.back)
-                robot.claw.ungripFully();
+                robot.gripper.ungripFully();
             else if(singleDriverMode && gamepad1.right_bumper)
-                robot.claw.gripIncrementally();
+                robot.gripper.gripIncrementally();
             else if(singleDriverMode && gamepad1.left_bumper)
-                robot.claw.ungripIncrementally();
+                robot.gripper.ungripIncrementally();
 
             // x/y rotate incrementally
             if(gamepad2.x)
-                robot.claw.rotateIncrementally();
+                robot.rotator.rotate();
             else if(gamepad2.y)
-                robot.claw.unrotateIncrementally();
+                robot.rotator.unrotate();
             else if(singleDriverMode && gamepad1.x)
-                robot.claw.rotateIncrementally();
+                robot.rotator.rotate();
             else if(singleDriverMode && gamepad1.y)
-                robot.claw.unrotateIncrementally();
+                robot.rotator.unrotate();
+            else
+                robot.rotator.stop();
 
             telemetry.addData("Single driver mode", singleDriverMode);
             telemetry.addLine("intake: triggers");
@@ -126,9 +131,8 @@ public class TeleOp extends LinearOpMode {
             telemetry.addData("Arm flipper power", robot.armFlipper.getPower());
             telemetry.addData("Arm lifter powers", robot.armRaisers.getPower());
             telemetry.addLine(String.format("Gripper psn: %s (%s)",
-                    robot.claw.gripper.getRoundedPsn(), robot.claw.gripperStatus()));
-            telemetry.addLine(String.format("Rotator psn: %s (%s)",
-                    robot.claw.rotator.getRoundedPsn(), robot.claw.rotatorStatus()));
+                    robot.gripper.gripper.getRoundedPsn(), robot.gripper.gripperStatus()));
+            telemetry.addLine(String.format("Rotator power: %.2f", robot.rotator.getPower()));
             telemetry.update();
         }
     }
