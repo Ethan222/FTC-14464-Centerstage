@@ -30,6 +30,7 @@ public class StraightTest extends LinearOpMode {
                 .build();
 
         telemetry.addLine(String.format("Goes straight for %.1f in", DISTANCE));
+        telemetry.update();
 
         waitForStart();
 

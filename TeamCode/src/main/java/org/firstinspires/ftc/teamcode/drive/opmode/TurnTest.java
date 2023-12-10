@@ -19,6 +19,7 @@ public class TurnTest extends LinearOpMode {
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
         telemetry.addLine(String.format("turns left %.1f deg", ANGLE));
+        telemetry.update();
 
         waitForStart();
 

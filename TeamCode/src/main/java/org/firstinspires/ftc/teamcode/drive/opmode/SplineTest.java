@@ -17,6 +17,9 @@ public class SplineTest extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         SampleMecanumDrive drive = new SampleMecanumDrive(hardwareMap);
 
+        telemetry.addLine("Splines to (30, 30)");
+        telemetry.update();
+
         waitForStart();
 
         if (isStopRequested()) return;

@@ -88,10 +88,10 @@ public class DriveConstants {
      * You are free to raise this on your own if you would like. It is best determined through experimentation.
      
      */
-    // max velocity tuner said max velocity is 52.55910572252335 and the recommended velocity is 80% of that
-    public static double MAX_VEL = 42.04728457801868; // 80% of max velocity
-    public static double MAX_ACCEL = 52.48291908330528;
-    public static double MAX_ANG_VEL = Math.toRadians(222.7444266666667);
+    // max velocity tuner said max velocity is 50.426578552948435 and the recommended velocity is 80% of that
+    public static double MAX_VEL = 40.34126284235875; // 80% of max velocity
+    public static double MAX_ACCEL = 46;
+    public static double MAX_ANG_VEL = Math.toRadians(141.5);
     public static double MAX_ANG_ACCEL = Math.toRadians(222.7444266666667);
 
     public static RevHubOrientationOnRobot.LogoFacingDirection LOGO_FACING_DIR =
