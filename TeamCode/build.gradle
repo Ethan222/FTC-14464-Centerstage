@@ -39,6 +39,3 @@ dependencies {
 
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.7'
 }
-dependencies {
-    implementation 'org.openftc:apriltag:2.0.0'
-}
