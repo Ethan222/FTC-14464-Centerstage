@@ -3,21 +3,21 @@ package org.firstinspires.ftc.teamcode.drive;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 // controls the motor that turns/flips the arm
-public class ArmFlipper extends Motor {
-    public ArmFlipper(HardwareMap hardwareMap, String name)
+public class ArmFlipper extends Motor { // inherits from the Motor parent class
+    public ArmFlipper(HardwareMap hardwareMap, String name) // constructor
     {
-        super(hardwareMap, name);
+        super(hardwareMap, name);       // calls parent constructor
     }
-    public void flip(double power) {
-        setPower(-power);
+    public void flip(double power) {    // a negative power flips the arm
+        setPower(-power);               // the setPower() method is inherited from Motor
     }
-    public void flip() {
-        flip(DEFAULT_SPEED);
+    public void flip() {     // function overload: if no speed given, use default speed
+        flip(DEFAULT_SPEED); // DEFAULT_SPEED is inherited from Motor
     }
-    public void unflip(double power) {
+    public void unflip(double power) {  // a positive power unflips the arm
         setPower(power);
     }
-    public void unflip() {
+    public void unflip() {              // function overload
         unflip(DEFAULT_SPEED);
     }
 }
