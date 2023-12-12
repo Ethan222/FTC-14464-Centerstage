@@ -48,9 +48,9 @@ public class TeamPropDetector extends OpenCvPipeline {
         original = input.clone();
 
         // define zones
-        Rect one = new Rect(0, 600, 200, 140);
-        Rect two = new Rect(150, 600, 200, 140);
-        Rect three = new Rect(300, 600, 200, 140);
+        Rect one = new Rect(5, 600, 195, 140);
+        Rect two = new Rect(150, 600, 195, 140);
+        Rect three = new Rect(300, 600, 195, 140);
         Imgproc.rectangle(input, one, new Scalar(0, 0, 255), 2);
         Imgproc.rectangle(input, two, new Scalar(0, 0, 255), 2);
         Imgproc.rectangle(input, three, new Scalar(0, 0, 255), 2);
