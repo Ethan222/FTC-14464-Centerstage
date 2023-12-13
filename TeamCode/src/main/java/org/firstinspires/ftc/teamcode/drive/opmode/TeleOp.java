@@ -20,8 +20,7 @@ public class TeleOp extends LinearOpMode {
         robot.drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         boolean singleDriverMode = true;
-
-        while(!isStarted() && !isStopRequested()) {
+        while(opModeInInit()) {
             telemetry.addLine("Initialized");
             telemetry.addData("Single driver mode", singleDriverMode);
             telemetry.update();
@@ -32,15 +31,16 @@ public class TeleOp extends LinearOpMode {
                 singleDriverMode = false;
             else if(gamepad2.back && gamepad2.b)
                 singleDriverMode = false;
+            else if((gamepad1.start && gamepad1.x) || (gamepad2.start && gamepad2.x))
+                requestOpModeStop();
         }
-        //waitForStart();
 
-        while (!isStopRequested() && !(gamepad1.start && gamepad1.x) && !(gamepad2.start && gamepad2.x)) {
+        while (opModeIsActive() && !(gamepad1.start && gamepad1.x) && !(gamepad2.start && gamepad2.x)) {
             robot.drive.setWeightedDrivePower(
                     new Pose2d(
-                            -gamepad1.left_stick_y,
-                            -gamepad1.left_stick_x,
-                            -gamepad1.right_stick_x
+                            -Math.pow(gamepad1.left_stick_y, 5),
+                            -Math.pow(gamepad1.left_stick_x, 5),
+                            -Math.pow(gamepad1.right_stick_x, 3)
                     )
             );
             robot.drive.update();
@@ -111,28 +111,30 @@ public class TeleOp extends LinearOpMode {
                 robot.gripper.ungripIncrementally();
 
             // x/y rotate incrementally
-            if(gamepad2.x)
+            if(gamepad2.y)
                 robot.rotator.rotate();
-            else if(gamepad2.y)
+            else if(gamepad2.x)
                 robot.rotator.unrotate();
-            else if(singleDriverMode && gamepad1.x)
-                robot.rotator.rotate();
             else if(singleDriverMode && gamepad1.y)
+                robot.rotator.rotate();
+            else if(singleDriverMode && gamepad1.x)
                 robot.rotator.unrotate();
             else
                 robot.rotator.stop();
 
             telemetry.addData("Single driver mode", singleDriverMode);
-            telemetry.addLine("intake: triggers");
-            telemetry.addLine("gripper: bumpers or a/b");
-            telemetry.addLine("arm: left_stick or d-pad");
+            telemetry.addLine("\nintake: triggers");
+            telemetry.addLine("arm: joysticks or d-pad");
+            telemetry.addLine("gripper: a/b (or bumpers)");
             telemetry.addLine("rotator: x/y");
-            telemetry.addData("Intake power", robot.intake.getPower());
+            telemetry.addData("\nGamepad1 left_stick_y", gamepad1.left_stick_y);
+            telemetry.addData("Average wheel power", robot.drive.getAverageDriveMotorPower());
+            telemetry.addData("\nIntake power", robot.intake.getPower());
             telemetry.addData("Arm flipper power", robot.armFlipper.getPower());
             telemetry.addData("Arm lifter powers", robot.armRaisers.getPower());
+            telemetry.addLine(String.format("Rotator power: %.2f", robot.rotator.getPower()));
             telemetry.addLine(String.format("Gripper psn: %s (%s)",
                     robot.gripper.gripper.getRoundedPsn(), robot.gripper.gripperStatus()));
-            telemetry.addLine(String.format("Rotator power: %.2f", robot.rotator.getPower()));
             telemetry.update();
         }
     }

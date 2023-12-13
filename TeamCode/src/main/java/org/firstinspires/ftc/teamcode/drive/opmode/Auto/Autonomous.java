@@ -23,14 +23,16 @@ package org.firstinspires.ftc.teamcode.drive.opmode.Auto;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.drive.Robot;
+import org.firstinspires.ftc.teamcode.drive.opmode.Auto.OpenCv.Alliance;
+import org.firstinspires.ftc.teamcode.drive.opmode.Auto.OpenCv.Location;
+import org.firstinspires.ftc.teamcode.drive.opmode.Auto.OpenCv.TeamPropDetector;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
 
-@Autonomous(group = "auto")
-public class Auto1 extends LinearOpMode
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(group = "auto")
+public class Autonomous extends LinearOpMode
 {
     private Alliance alliance = Alliance.BLUE;
 
@@ -53,7 +55,7 @@ public class Auto1 extends LinearOpMode
         //telemetry.setMsTransmissionInterval(50);
 
         robot = new Robot(hardwareMap);
-        teamPropDetector = new TeamPropDetector(hardwareMap);
+        teamPropDetector = new TeamPropDetector(telemetry, hardwareMap);
 
         // init loop - select alliance and side
         while(!opModeIsActive() && !isStopRequested()) {

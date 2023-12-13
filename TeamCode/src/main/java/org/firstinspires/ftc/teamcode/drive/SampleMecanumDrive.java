@@ -140,6 +140,13 @@ public class SampleMecanumDrive extends MecanumDrive {
         );
     }
 
+    public double getAverageDriveMotorPower() {
+        double sum = 0;
+        for(DcMotorEx motor : motors)
+            sum += motor.getPower();
+        return sum / 4;
+    }
+
     public TrajectoryBuilder trajectoryBuilder(Pose2d startPose) {
         return new TrajectoryBuilder(startPose, VEL_CONSTRAINT, ACCEL_CONSTRAINT);
     }

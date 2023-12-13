@@ -1,7 +1,8 @@
-package org.firstinspires.ftc.teamcode.drive.opmode.Auto;
+package org.firstinspires.ftc.teamcode.drive.opmode.Auto.OpenCv;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
@@ -27,11 +28,10 @@ public class TeamPropDetector extends OpenCvPipeline {
     private Scalar avgColor1, avgColor2, avgColor3;
     private double min_difference = 0;
 
-    public TeamPropDetector(HardwareMap hardwareMap) {
+    public TeamPropDetector(Telemetry telemetry, HardwareMap hardwareMap) {
         //int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"));
         camera.setPipeline(this);
-        camera.setViewportRenderer(OpenCvCamera.ViewportRenderer.GPU_ACCELERATED);
         camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
             @Override
             public void onOpened() {

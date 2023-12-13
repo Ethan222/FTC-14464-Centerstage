@@ -5,9 +5,10 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 // represents the servo that controls the gripper
 public class Gripper {
     public CustomServo gripper;                             // the gripper is an instance of the CustomServo class
-    private static final double GRIPPER_INCREMENT = .01;    // this relates to how fast the gripper will moe
+    private static final double GRIPPER_INCREMENT = .01;    // this relates to how fast the gripper will move
+    private static final double OPEN_PSN = .23, CLOSED_PSN = .45;
     public Gripper(HardwareMap hm, String gripperName) {    // constructor
-        gripper = new CustomServo(hm, gripperName, 0, .45);     // instantiates gripper object
+        gripper = new CustomServo(hm, gripperName, OPEN_PSN, CLOSED_PSN);     // instantiates gripper object
     }
     public void gripIncrementally() { gripper.changePosition(GRIPPER_INCREMENT); }       // grips a little at a time
     public void ungripIncrementally() { gripper.changePosition(-GRIPPER_INCREMENT); }    // ungrips a little at a time
@@ -19,9 +20,9 @@ public class Gripper {
     }      // completely opens the gripper
     public String gripperStatus() {             // returns the current status of the gripper as a String
         double psn = gripper.getPosition();     // returns either "fully open", "fully closed", or "partially open"
-        if (psn == 0) {
+        if (psn == OPEN_PSN) {
             return "fully open";
-        } else if (psn == .45) {
+        } else if (psn == CLOSED_PSN) {
             return "fully closed";
         } else {
             return "partially open";
