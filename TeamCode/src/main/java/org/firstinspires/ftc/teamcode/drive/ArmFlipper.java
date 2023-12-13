@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.drive;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 // controls the motor that turns/flips the arm
+// TODO: add encoder so arm can't go down after it's already all the way down
 public class ArmFlipper extends Motor { // inherits from the Motor parent class
     public ArmFlipper(HardwareMap hardwareMap, String name) // constructor
     {

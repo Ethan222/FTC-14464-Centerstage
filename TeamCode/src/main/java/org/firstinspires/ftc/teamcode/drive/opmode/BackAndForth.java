@@ -43,6 +43,8 @@ public class BackAndForth extends LinearOpMode {
                 .back(DISTANCE)
                 .build();
 
+        telemetry.addLine("goes forward and back " + DISTANCE + " in");
+        telemetry.update();
         waitForStart();
 
         while (opModeIsActive() && !isStopRequested()) {
