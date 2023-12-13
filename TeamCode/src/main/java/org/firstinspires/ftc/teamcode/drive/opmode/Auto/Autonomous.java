@@ -44,7 +44,7 @@ public class Autonomous extends LinearOpMode
     Robot robot;
     TeamPropDetector teamPropDetector;
 
-    private Location teamPropLocation;
+    private Location teamPropLocation = Location.LEFT;
 
     @Override
     public void runOpMode()
@@ -52,77 +52,77 @@ public class Autonomous extends LinearOpMode
         telemetry.addLine("Initializing...");
         telemetry.update();
 
-        //telemetry.setMsTransmissionInterval(50);
+        telemetry.setMsTransmissionInterval(50); // default is 250
 
         robot = new Robot(hardwareMap);
-        teamPropDetector = new TeamPropDetector(telemetry, hardwareMap);
+        //teamPropDetector = new TeamPropDetector(telemetry, hardwareMap);
 
         // init loop - select alliance and side
         while(!opModeIsActive() && !isStopRequested()) {
-            if(gamepad1.x || gamepad2.x)
+            if((gamepad1.x) || gamepad2.x)
                 alliance = Alliance.BLUE;
-            else if(gamepad1.b || gamepad2.b)
+            else if((gamepad1.b && !gamepad1.start) || (gamepad2.b && !gamepad2.start))
                 alliance = Alliance.RED;
-            else if(gamepad1.left_bumper)
+            else if(gamepad1.left_bumper || gamepad2.left_bumper)
                 side = Side.LEFT;
-            else if(gamepad1.right_bumper)
+            else if(gamepad1.right_bumper || gamepad2.right_bumper)
                 side = Side.RIGHT;
-            else if(gamepad1.a)
-                teamPropDetector.toggleOverlay();
+            //else if(gamepad1.a)
+                //teamPropDetector.toggleOverlay();
 
-            teamPropDetector.setAlliance(alliance);
-            teamPropLocation = teamPropDetector.getLocation();
+            //teamPropDetector.setAlliance(alliance);
+            //teamPropLocation = teamPropDetector.getLocation();
 
+            telemetry.addLine("Initialized");
             telemetry.addLine(String.format("Alliance: %s (x = blue, b = red)", alliance));
             telemetry.addLine(String.format("Side: %s (left/right bumper)", side));
-            telemetry.addLine(String.format("Show overlay: %s (a)", teamPropDetector.isOverlayShown()));
+            //telemetry.addLine(String.format("Show overlay: %s (a)", teamPropDetector.isOverlayShown()));
             telemetry.addLine();
             telemetry.addData("Team prop location", teamPropLocation);
-            telemetry.addData("Color difference", teamPropDetector.getMinDifference());
+            //telemetry.addData("Color difference", teamPropDetector.getMinDifference());
+            telemetry.addData("\ntelemetry transmission interval", telemetry.getMsTransmissionInterval());
             telemetry.update();
         }
 
-        int location = 0;
+        telemetry.setMsTransmissionInterval(250);
 
         // trajectories
-        Pose2d startPose = new Pose2d(11, 62.5, -Math.PI / 2);
-        Vector2d[] spikeMarkPoses = {
-                new Vector2d(22.5, 42),
-                new Vector2d(12, 38),
-                new Vector2d(.5, 42)
-        };
-        double forwardDistance = 26;
-        double waitTime = 1.5;
-        double[] backdropYs = {41, 35, 28};
+        Pose2d startPose = new Pose2d();
+        Pose2d spikeMarkPosition = new Pose2d();
+        Vector2d parkCoords = new Vector2d();
+        if(alliance == Alliance.BLUE && side == Side.LEFT) {
+            startPose = new Pose2d(11, 62.5, -Math.PI / 2);
 
-        Vector2d parkCoords = new Vector2d(60, 62);
-        int multiplier = -1;
+            if(teamPropLocation == Location.LEFT)
+                spikeMarkPosition = new Pose2d(22.5, 42);
+            else if(teamPropLocation == Location.CENTER)
+                spikeMarkPosition = new Pose2d(12, 38, Math.PI);
+            else
+                spikeMarkPosition = new Pose2d(.5, 42);
+
+            parkCoords = new Vector2d(60, 62);
+        }
+        double waitTime = 1.5;
+        int multiplier = side == Side.LEFT ? 1 : -1;
 
         robot.drive.setPoseEstimate(startPose);
 
-        double armFlipStartTime = .5, armFlipTime = 3.5;
-        Vector2d backdropCoords = new Vector2d(44, backdropYs[location]);
         TrajectorySequence traj = robot.drive.trajectorySequenceBuilder(startPose)
                 .addTemporalMarker(() -> {
                     robot.gripper.gripFully(); // grip the preloaded pixels
                 })
-                .waitSeconds(.5)
-                .lineTo(spikeMarkPoses[location]) // move to spike mark
-                .turn(Math.PI)
+                .waitSeconds(waitTime)
+                .lineToLinearHeading(spikeMarkPosition) // move to spike mark
+                .turn(teamPropLocation == Location.CENTER ? -Math.PI / 2 : 0)
                 // place pixel on spike mark
-                .addTemporalMarker(armFlipStartTime, () -> {
-                    robot.armFlipper.flip();
-                })
-                .waitSeconds(3)
-                .addTemporalMarker(armFlipStartTime + armFlipTime, () -> {
-                    robot.armFlipper.stop();
+                .addTemporalMarker(() -> {
                     robot.gripper.ungripFully();
+                    robot.intake.out();
                 })
-                //.turn(multiplier * Math.PI / 2)
-                //.lineTo(backdropCoords)
-                //.waitSeconds(waitTime)
-                //.back(4)
-                //.strafeRight(multiplier * 23)
+                .back(10)
+                .addTemporalMarker(() -> {
+                    robot.intake.stop();
+                })
                 //.lineTo(parkCoords) // park in backstage
                 .build();
 
