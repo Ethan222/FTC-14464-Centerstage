@@ -35,7 +35,7 @@ public class DriveConstants {
      * from DriveVelocityPIDTuner.
      */
     public static final boolean RUN_USING_ENCODER = true;
-    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(25, 0, 6,
+    public static PIDFCoefficients MOTOR_VELO_PID = new PIDFCoefficients(25, 0, 3.5,
       getMotorVelocityF(MAX_RPM / 60 * TICKS_PER_REV));
 
     /*
@@ -48,7 +48,7 @@ public class DriveConstants {
      */
     public static double WHEEL_RADIUS = 1.8898; // in
     public static double GEAR_RATIO = 1.016949152542373; // output (wheel) speed / input (motor) speed
-    public static double TRACK_WIDTH = 14.17; // in
+    public static double TRACK_WIDTH = 13.93; // in
 
     /*
      * These are the feedforward parameters used to model the drive motor behavior. If you are using
@@ -89,15 +89,15 @@ public class DriveConstants {
      
      */
     // max velocity tuner said max velocity is 51.5 and the recommended velocity is 80% of that
-    public static double MAX_VEL = 41; // 80% of max velocity
-    public static double MAX_ACCEL = 46;
-    public static double MAX_ANG_VEL = Math.toRadians(141.5);
-    public static double MAX_ANG_ACCEL = Math.toRadians(222.7444266666667);
+    public static double MAX_VEL = 40; // 80% of max velocity
+    public static double MAX_ACCEL = 40;
+    public static double MAX_ANG_VEL = Math.toRadians(200);
+    public static double MAX_ANG_ACCEL = Math.toRadians(200);
 
     public static RevHubOrientationOnRobot.LogoFacingDirection LOGO_FACING_DIR =
-            RevHubOrientationOnRobot.LogoFacingDirection.FORWARD;
+            RevHubOrientationOnRobot.LogoFacingDirection.UP;
     public static RevHubOrientationOnRobot.UsbFacingDirection USB_FACING_DIR =
-            RevHubOrientationOnRobot.UsbFacingDirection.RIGHT;
+            RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD;
 
     public static double encoderTicksToInches(double ticks) {
         return WHEEL_RADIUS * 2 * Math.PI * GEAR_RATIO * ticks / TICKS_PER_REV;
