@@ -22,7 +22,7 @@
 package org.firstinspires.ftc.teamcode.drive.opmode.Auto;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
-import com.acmerobotics.roadrunner.geometry.Vector2d;
+import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.drive.Robot;
@@ -44,7 +44,7 @@ public class Autonomous extends LinearOpMode
     Robot robot;
     TeamPropDetector teamPropDetector;
 
-    private Location teamPropLocation = Location.LEFT;
+    private Location teamPropLocation = Location.CENTER;
 
     @Override
     public void runOpMode()
@@ -67,6 +67,12 @@ public class Autonomous extends LinearOpMode
                 side = Side.LEFT;
             else if(gamepad1.right_bumper || gamepad2.right_bumper)
                 side = Side.RIGHT;
+            else if(gamepad1.dpad_left || gamepad2.dpad_left)
+                teamPropLocation = Location.LEFT;
+            else if(gamepad1.dpad_up || gamepad2.dpad_up)
+                teamPropLocation = Location.CENTER;
+            else if(gamepad1.dpad_right || gamepad2.dpad_right)
+                teamPropLocation = Location.RIGHT;
             //else if(gamepad1.a)
                 //teamPropDetector.toggleOverlay();
 
@@ -88,44 +94,57 @@ public class Autonomous extends LinearOpMode
 
         // trajectories
         Pose2d startPose = new Pose2d();
-        Pose2d spikeMarkPosition = new Pose2d();
-        Vector2d parkCoords = new Vector2d();
+        Trajectory spikeMarkTraj;
+        Pose2d parkCoords = new Pose2d();
+        int multiplier = side == Side.RIGHT ? 1 : -1;
         if(alliance == Alliance.BLUE && side == Side.LEFT) {
-            startPose = new Pose2d(11, 62.5, -Math.PI / 2);
+            startPose = new Pose2d(15, 62.5, -Math.PI / 2);
 
-            if(teamPropLocation == Location.LEFT)
-                spikeMarkPosition = new Pose2d(22.5, 42);
-            else if(teamPropLocation == Location.CENTER)
-                spikeMarkPosition = new Pose2d(12, 38, Math.PI);
-            else
-                spikeMarkPosition = new Pose2d(.5, 42);
+            parkCoords = new Pose2d(61, 57, Math.PI);
 
-            parkCoords = new Vector2d(60, 62);
+            if(teamPropLocation == Location.LEFT) {
+                spikeMarkTraj = robot.drive.trajectoryBuilder(startPose)
+                        .splineToLinearHeading(new Pose2d(21, 28, -Math.PI / 2), -Math.PI / 2)
+                        .build();
+            } else if(teamPropLocation == Location.CENTER) {
+                spikeMarkTraj = robot.drive.trajectoryBuilder(startPose)
+                        .splineToLinearHeading(new Pose2d(13, 21, Math.PI), Math.PI)
+                        .build();
+                parkCoords = parkCoords.plus(new Pose2d(0, 1, 0));
+                telemetry.addData("new park coords", parkCoords);
+                telemetry.update();
+            } else
+                spikeMarkTraj = robot.drive.trajectoryBuilder(startPose)
+                        .splineToLinearHeading(new Pose2d(.5, 27, -Math.PI / 2), -Math.PI / 2)
+                        .build();
+        } else {
+            spikeMarkTraj = robot.drive.trajectoryBuilder(startPose)
+                    .splineToLinearHeading(parkCoords, 0)
+                    .build();
         }
-        double waitTime = 1.5;
-        int multiplier = side == Side.LEFT ? 1 : -1;
+        double intakeWaitTime = 1;
 
         robot.drive.setPoseEstimate(startPose);
 
         TrajectorySequence traj = robot.drive.trajectorySequenceBuilder(startPose)
-                .addTemporalMarker(() -> {
-                    robot.gripper.gripFully(); // grip the preloaded pixels
-                })
-                .waitSeconds(waitTime)
-                .lineToLinearHeading(spikeMarkPosition) // move to spike mark
-                .turn(teamPropLocation == Location.CENTER ? -Math.PI / 2 : 0)
+                // move to spike mark
+                .addTrajectory(spikeMarkTraj)
                 // place pixel on spike mark
                 .addTemporalMarker(() -> {
                     robot.gripper.ungripFully();
                     robot.intake.out();
                 })
-                .back(10)
+                .waitSeconds(intakeWaitTime)
+                .back(16)
                 .addTemporalMarker(() -> {
                     robot.intake.stop();
                 })
-                //.lineTo(parkCoords) // park in backstage
+                .build();
+        Trajectory park = robot.drive.trajectoryBuilder(traj.end(), true)
+                .splineToLinearHeading(parkCoords, 0) // park in backstage
                 .build();
 
         robot.drive.followTrajectorySequence(traj);
+        robot.drive.followTrajectory(park);
     }
 }

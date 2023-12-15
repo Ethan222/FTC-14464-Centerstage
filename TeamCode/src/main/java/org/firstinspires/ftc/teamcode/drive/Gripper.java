@@ -20,9 +20,9 @@ public class Gripper extends CustomServo {
     public String getStatus() {         // returns the current status of the gripper as a String
         double psn = getPosition();     // returns either "fully open", "fully closed", or "partially open"
         if (psn == OPEN_PSN) {
-            return "fully open";
+            return "open";
         } else if (psn == CLOSED_PSN) {
-            return "fully closed";
+            return "closed";
         } else {
             return "partially open";
         }

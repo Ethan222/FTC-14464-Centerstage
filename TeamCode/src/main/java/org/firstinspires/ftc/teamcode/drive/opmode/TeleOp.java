@@ -36,14 +36,14 @@ public class TeleOp extends LinearOpMode {
         }
 
         // as soon as it starts, lower intake
-        robot.intake.lower();
+        //robot.intake.lower();
 
         while (opModeIsActive() && !(gamepad1.start && gamepad1.x) && !(gamepad2.start && gamepad2.x)) {
             robot.drive.setWeightedDrivePower(
                     new Pose2d(
-                            -Math.pow(gamepad1.left_stick_y, 5),
-                            -Math.pow(gamepad1.left_stick_x, 5),
-                            -Math.pow(gamepad1.right_stick_x, 3)
+                            -Math.pow(gamepad1.left_stick_y, 7),
+                            -Math.pow(gamepad1.left_stick_x, 7),
+                            -Math.pow(gamepad1.right_stick_x, 7)
                     )
             );
             robot.drive.update();
