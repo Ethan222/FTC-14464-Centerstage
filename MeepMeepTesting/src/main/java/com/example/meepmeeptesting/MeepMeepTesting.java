@@ -2,6 +2,7 @@ package com.example.meepmeeptesting;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
+import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.noahbres.meepmeep.MeepMeep;
 import com.noahbres.meepmeep.core.colorscheme.scheme.ColorSchemeBlueLight;
 import com.noahbres.meepmeep.core.colorscheme.scheme.ColorSchemeRedDark;
@@ -27,43 +28,41 @@ public class MeepMeepTesting {
         Pose2d[] spikeMarkPoses = {
                 new Pose2d(22.5, 28, -Math.PI / 2),
                 new Pose2d(11, 22, Math.PI),
-                new Pose2d(.5, 27, -Math.PI / 2)
+                new Pose2d(.5, 27, Math.PI)
         };
+        Pose2d spikeMarkPose = spikeMarkPoses[2];
+        Pose2d finalSpikeMarkPose = spikeMarkPose;
+        RoadRunnerBotEntity blueBack = new DefaultBotBuilder(meepMeep)
+                // set to either red or blue alliance
+                .setColorScheme(new ColorSchemeBlueLight())
+                // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
+                .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
+                .followTrajectorySequence(drive ->
+                        drive.trajectorySequenceBuilder(blueBackStart)
+                                .splineToLinearHeading(new Pose2d(20, 35, -3 * Math.PI / 4), -3 * Math.PI / 4)
+                                .splineToLinearHeading(finalSpikeMarkPose, Math.PI)
+                                .build()
+                );
 
-//        RoadRunnerBotEntity blueBack = new DefaultBotBuilder(meepMeep)
-//                // set to either red or blue alliance
-//                .setColorScheme(new ColorSchemeBlueLight())
-//                // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
-//                .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
-//                .followTrajectorySequence(drive ->
-//                        drive.trajectorySequenceBuilder(blueBackStart)
-//                                .splineToLinearHeading(spikeMarkPoses[1], Math.PI)
-//                                .waitSeconds(waitTime)
-//                                .back(10)
-//                                .turn(-Math.PI / 2)
-//                                .lineToLinearHeading(bluePark[1])
-//                                .build()
-//                );
-
-        RoadRunnerBotEntity[] blueLefts = new RoadRunnerBotEntity[3];
-        for(int i = 0; i < 3; i++) {
-            Pose2d spikeMarkPose = spikeMarkPoses[i];
-            int time = 5 * i;
-            blueLefts[i] = new DefaultBotBuilder(meepMeep)
-                    .setColorScheme(new ColorSchemeBlueLight())
-                    .setConstraints(60, 60, Math.PI, Math.PI, 15)
-                    .followTrajectorySequence(drive ->
-                            drive.trajectorySequenceBuilder(blueBackStart)
-                                    .waitSeconds(time)
-                                    .splineToLinearHeading(spikeMarkPose, -Math.PI / 2)
-                                    .waitSeconds(waitTime)
-                                    .back(10)
-                                    .turn(-Math.PI / 2)
-                                    .splineToLinearHeading(bluePark[1], 0)
-                                    .build()
-                    );
-        }
-
+//        RoadRunnerBotEntity[] blueLefts = new RoadRunnerBotEntity[3];
+//        for(int i = 0; i < 3; i++) {
+//            spikeMarkPose = spikeMarkPoses[i];
+//            int time = 5 * i;
+//            blueLefts[i] = new DefaultBotBuilder(meepMeep)
+//                    .setColorScheme(new ColorSchemeBlueLight())
+//                    .setConstraints(60, 60, Math.PI, Math.PI, 15)
+//                    .followTrajectorySequence(drive ->
+//                            drive.trajectorySequenceBuilder(blueBackStart)
+//                                    //.waitSeconds(time)
+//                                    .splineToLinearHeading(spikeMarkPose, -Math.PI / 2)
+//                                    .waitSeconds(waitTime)
+//                                    .back(10)
+//                                    .turn(-Math.PI / 2)
+//                                    .splineToLinearHeading(bluePark[1], 0)
+//                                    .build()
+//                    );
+//        }
+//
         Pose2d startPose = new Pose2d(-36, 62, -Math.PI / 2);
         spikeMarkPoses = new Pose2d[]{
                 new Pose2d(21, 28, -Math.PI / 2),
@@ -71,38 +70,37 @@ public class MeepMeepTesting {
                 new Pose2d(.5, 27, -Math.PI / 2)
         };
         Vector2d bluePark2 = new Vector2d(60, 14);
-        RoadRunnerBotEntity[] blueRights = new RoadRunnerBotEntity[3];
+        RoadRunnerBotEntity[] blueFronts = new RoadRunnerBotEntity[3];
         for(int i = 0; i < 2; i++) {
-            Pose2d spikeMarkPose = spikeMarkPoses[i];
+            spikeMarkPose = spikeMarkPoses[i];
             int time = 5 * i;
+            Pose2d finalSpikeMarkPose1 = spikeMarkPose;
             new DefaultBotBuilder(meepMeep)
                     .setColorScheme(new ColorSchemeBlueLight())
                     .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
                     .followTrajectorySequence(drive ->
                             drive.trajectorySequenceBuilder(startPose)
                                     .waitSeconds(time)
-                                    .splineToLinearHeading(spikeMarkPose, -Math.PI / 2)
+                                    .splineToLinearHeading(finalSpikeMarkPose1, -Math.PI / 2)
                                     .waitSeconds(waitTime)
                                     .lineToLinearHeading(new Pose2d(-24, 12, 0))
                                     .lineTo(bluePark2)
                                     .build()
                     );
         }
+//
 
+        Pose2d park = new Pose2d(60, -11, Math.PI);
         RoadRunnerBotEntity redBack = new DefaultBotBuilder(meepMeep)
                 // set to either red or blue alliance
                 .setColorScheme(new ColorSchemeRedDark())
                 // Set bot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
                 .followTrajectorySequence(drive ->
-                        drive.trajectorySequenceBuilder(new Pose2d(11, -61, Math.toRadians(90)))
-                                .forward(forwardDistance)
+                        drive.trajectorySequenceBuilder(new Pose2d(12, -61, Math.toRadians(90)))
+                                .splineToLinearHeading(new Pose2d(23, -27, Math.PI/2), Math.PI/2)
                                 .waitSeconds(waitTime)
-                                .turn(-Math.PI / 2)
-                                .lineTo(redBackdropCoords)
-                                .waitSeconds(waitTime)
-                                .strafeRight(23)
-                                .lineTo(new Vector2d(60, -60))
+                                .splineToLinearHeading(park, Math.PI)
                                 .build()
                 );
 
@@ -127,9 +125,7 @@ public class MeepMeepTesting {
         meepMeep.setBackground(MeepMeep.Background.FIELD_CENTERSTAGE_JUICE_DARK)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
-                .addEntity(blueRights[0])
-                .addEntity(blueRights[1])
-                .addEntity(blueRights[2])
+                .addEntity(blueFronts[0])
                 .start();
     }
 }

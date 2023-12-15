@@ -4,6 +4,8 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.Alliance;
+import org.firstinspires.ftc.teamcode.Location;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
@@ -17,7 +19,7 @@ import org.openftc.easyopencv.OpenCvPipeline;
 import java.util.Arrays;
 import java.util.List;
 
-public class TeamPropDetector extends OpenCvPipeline {
+public class MyOpenCvPipeline extends OpenCvPipeline {
     private final OpenCvCamera camera;
     private final int camW = 800, camH = 448;
     private Location location = Location.LEFT;
@@ -28,7 +30,7 @@ public class TeamPropDetector extends OpenCvPipeline {
     private Scalar avgColor1, avgColor2, avgColor3;
     private double min_difference = 0;
 
-    public TeamPropDetector(Telemetry telemetry, HardwareMap hardwareMap) {
+    public MyOpenCvPipeline(Telemetry telemetry, HardwareMap hardwareMap) {
         //int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"));
         camera.setPipeline(this);

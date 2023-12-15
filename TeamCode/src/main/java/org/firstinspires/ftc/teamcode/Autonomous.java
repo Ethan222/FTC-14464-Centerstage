@@ -27,19 +27,17 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.TensorFlow.TensorFlowObjectDetector;
 import org.firstinspires.ftc.teamcode.subsystems.Robot;
-import org.firstinspires.ftc.teamcode.OpenCv.Alliance;
-import org.firstinspires.ftc.teamcode.OpenCv.Location;
 import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySequence;
 
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(group = "auto", preselectTeleOp = "TeleOp")
 public class Autonomous extends LinearOpMode
 {
-    private Alliance alliance = Alliance.BLUE;
+    private Alliance alliance = Alliance.RED;
 
     private enum Side {
-        LEFT, RIGHT
+        BACK, FRONT
     }
-    private Side side = Side.LEFT;
+    private Side side = Side.BACK;
 
     Robot robot;
     TensorFlowObjectDetector propDetector;
@@ -55,7 +53,7 @@ public class Autonomous extends LinearOpMode
         telemetry.setMsTransmissionInterval(50); // default is 250
 
         robot = new Robot(hardwareMap);
-        propDetector = new TensorFlowObjectDetector(hardwareMap);
+        //propDetector = new TensorFlowObjectDetector(hardwareMap);
 
         // init loop - select alliance and side
         while(!opModeIsActive() && !isStopRequested()) {
@@ -63,10 +61,10 @@ public class Autonomous extends LinearOpMode
                 alliance = Alliance.BLUE;
             else if((gamepad1.b && !gamepad1.start) || (gamepad2.b && !gamepad2.start))
                 alliance = Alliance.RED;
-            else if(gamepad1.left_bumper || gamepad2.left_bumper)
-                side = Side.LEFT;
-            else if(gamepad1.right_bumper || gamepad2.right_bumper)
-                side = Side.RIGHT;
+            else if(gamepad1.y || gamepad2.y)
+                side = Side.BACK;
+            else if((gamepad1.a && !gamepad1.start) || (gamepad2.a && !gamepad2.start))
+                side = Side.FRONT;
             else if(gamepad1.dpad_left || gamepad2.dpad_left)
                 propLocation = Location.LEFT;
             else if(gamepad1.dpad_up || gamepad2.dpad_up)
@@ -74,91 +72,115 @@ public class Autonomous extends LinearOpMode
             else if(gamepad1.dpad_right || gamepad2.dpad_right)
                 propLocation = Location.RIGHT;
 
-            propLocation = propDetector.getLocation();
+            //propLocation = propDetector.getLocation();
 
             telemetry.addLine("Initialized");
             telemetry.addLine(String.format("Alliance: %s (x = blue, b = red)", alliance));
-            telemetry.addLine(String.format("Side: %s (left/right bumper)", side));
+            telemetry.addLine(String.format("Side: %s (a = front, y = back)", side));
             telemetry.addLine();
             telemetry.addData("Team prop location", propLocation);
             telemetry.addLine();
-            propDetector.telemetryBest(telemetry);
+            //propDetector.telemetryBest(telemetry);
             telemetry.update();
         }
         // start of op mode
-        propDetector.stopDetecting();
+        //propDetector.stopDetecting();
         telemetry.setMsTransmissionInterval(250);
 
         // trajectories
         Pose2d startPose, parkPose;
-        Pose2d[] spikeMarkPoses;
-        Trajectory spikeMarkTraj;
-        int multiplier = side == Side.RIGHT ? 1 : -1;
+        TrajectorySequence spikeMarkTraj = null;
+        TrajectorySequence parkTraj;
+        int multiplier = side == Side.FRONT ? 1 : -1;
 
-        if(alliance == Alliance.BLUE && side == Side.LEFT) {
-            // BLUE LEFT (backdrop)
-            startPose = new Pose2d(15, 62.5, -Math.PI / 2);
-            spikeMarkPoses = new Pose2d[]{
-                    new Pose2d(21, 28, -Math.PI / 2),
-                    new Pose2d(13, 21, Math.PI),
-                    new Pose2d(.5, 27, -Math.PI / 2)
-            };
-            parkPose = propLocation == Location.CENTER ? new Pose2d(61, 58, Math.PI) : new Pose2d(61, 57, Math.PI);
+        if(alliance == Alliance.BLUE && side == Side.BACK) {
+            // BLUE BACK (left)
+            startPose = new Pose2d(12, 62.5, -Math.PI / 2);
+            parkPose = propLocation == Location.CENTER ? new Pose2d(61, 59, Math.PI) : new Pose2d(61, 58, Math.PI);
+            switch(propLocation) {
+                case LEFT:
+                    spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
+                            .splineToLinearHeading(new Pose2d(22, 28, -Math.PI/2), -Math.PI/2)
+                            .build();
+                    break;
+                case CENTER:
+                    spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
+                            .splineToLinearHeading(new Pose2d(13, 20.5, Math.PI), Math.PI)
+                            .build();
+                    break;
+                case RIGHT:
+                    spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
+                            .splineToLinearHeading(new Pose2d(20, 39, -3*Math.PI/4), -3*Math.PI/4)
+                            .splineToLinearHeading(new Pose2d(1, 32, Math.PI), Math.PI)
+                            .build();
+            }
         }
-        else if(alliance == Alliance.BLUE && side == Side.RIGHT) {
-            // BLUE RIGHT
+        else if(alliance == Alliance.BLUE && side == Side.FRONT) {
+            // BLUE FRONT (right)
             startPose = new Pose2d(-36, 62, -Math.PI / 2);
-            spikeMarkPoses = new Pose2d[]{};
             parkPose = new Pose2d(60, 14, Math.PI);
+            switch(propLocation) {
+                case LEFT:
+                    spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
+                            .splineToLinearHeading(new Pose2d(-20, 39, -Math.PI/4), -Math.PI/4)
+                            .splineToLinearHeading(new Pose2d(-1, 32, 0), 0)
+                            .build();
+                    break;
+                case CENTER:
+                    spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
+                            .splineToLinearHeading(new Pose2d(-13, 20.5, 0), 0)
+                            .build();
+                    break;
+                case RIGHT:
+                    spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
+                            .splineToLinearHeading(new Pose2d(-22, 28, -Math.PI/2), -Math.PI/2)
+                            .build();
+            }
         }
-        else if(alliance == Alliance.RED && side == Side.LEFT) {
-            // RED LEFT
-            startPose = new Pose2d(-36, -61, Math.PI / 2);
-            spikeMarkPoses = new Pose2d[]{};
-            parkPose = new Pose2d(60, -11, Math.PI);
+        else if(alliance == Alliance.RED && side == Side.BACK) {
+            // RED BACK (right)
+            startPose = new Pose2d(12, -61, Math.PI / 2);
+            parkPose = new Pose2d(60, -59, Math.PI);
+            switch(propLocation) {
+                case LEFT:
+                    spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
+                            .splineToLinearHeading(new Pose2d(16, -47, 3*Math.PI/4), 3*Math.PI/4)
+                            .splineToLinearHeading(new Pose2d(0, -30, Math.PI), Math.PI)
+                            .build();
+                    break;
+                case CENTER:
+                    spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
+                            .splineToLinearHeading(new Pose2d(12, -20.5, Math.PI), Math.PI)
+                            .build();
+                    break;
+                case RIGHT:
+                    spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
+                            .splineToLinearHeading(new Pose2d(22.5, -26, Math.PI/2), Math.PI/2)
+                            .build();
+            }
         }
         else {
-            // RED RIGHT (backdrop)
-            startPose = new Pose2d(11, -61, Math.PI / 2);
-            spikeMarkPoses = new Pose2d[]{};
-            parkPose = new Pose2d(60, -60, Math.PI);
+            // RED FRONT (left)
+            startPose = new Pose2d(-36, -61, Math.PI / 2);
+            parkPose = new Pose2d(60, -11, Math.PI);
         }
 
-        if(propLocation == Location.LEFT) {
-            spikeMarkTraj = robot.drive.trajectoryBuilder(startPose)
-                    .splineToLinearHeading(spikeMarkPoses[0], -Math.PI / 2)
-                    .build();
-        } else if(propLocation == Location.CENTER) {
-            spikeMarkTraj = robot.drive.trajectoryBuilder(startPose)
-                    .splineToLinearHeading(spikeMarkPoses[1], Math.PI)
-                    .build();
-        } else {
-            spikeMarkTraj = robot.drive.trajectoryBuilder(startPose)
-                    .splineToLinearHeading(spikeMarkPoses[2], -Math.PI / 2)
-                    .build();
-        }
         double intakeWaitTime = 1;
 
-        TrajectorySequence placePixel = robot.drive.trajectorySequenceBuilder(startPose)
-                // move to spike mark
-                .addTrajectory(spikeMarkTraj)
-                // place pixel on spike mark
-                .addTemporalMarker(() -> {
-                    robot.gripper.ungripFully();
-                    robot.intake.out();
-                })
+        TrajectorySequence placePixel = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
                 .waitSeconds(intakeWaitTime)
-                .back(16)
-                .addTemporalMarker(() -> {
-                    robot.intake.stop();
-                })
+                .back(14)
                 .build();
         Trajectory park = robot.drive.trajectoryBuilder(placePixel.end(), true)
                 .splineToLinearHeading(parkPose, 0) // park in backstage
                 .build();
 
         robot.drive.setPoseEstimate(startPose);
+        robot.drive.followTrajectorySequence(spikeMarkTraj);
+        robot.gripper.ungripFully();
+        robot.intake.out();
         robot.drive.followTrajectorySequence(placePixel);
+        robot.intake.stop();
         robot.drive.followTrajectory(park);
     }
 }
