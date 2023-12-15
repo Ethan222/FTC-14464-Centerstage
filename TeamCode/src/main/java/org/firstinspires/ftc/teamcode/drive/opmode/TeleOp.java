@@ -119,11 +119,9 @@ public class TeleOp extends LinearOpMode {
             telemetry.addData("\nIntake power", robot.intake.getPower());
             telemetry.addData("Arm flipper power", robot.armFlipper.getPower());
             telemetry.addData("Arm lifter powers", robot.armRaisers.getPower());
-            telemetry.addLine(String.format("Rotator power: %.2f", robot.rotator.getPower()));
-            telemetry.addLine(String.format("Gripper psn: %s (%.3f)",
-                    robot.gripper.getStatus(), robot.gripper.getPosition()));
-            telemetry.addLine(String.format("Intake psn: %s (%.1f)",
-                    robot.intake.getStatus(), robot.intake.lowerer.getPosition()));
+            telemetry.addData("Rotator power", "%.2f", robot.rotator.getPower());
+            telemetry.addData("Gripper psn", "%s (%.3f)", robot.gripper.getStatus(), robot.gripper.getPosition());
+            telemetry.addData("Intake psn", "%s (%.1f)", robot.intake.getStatus(), robot.intake.lowerer.getPosition());
             telemetry.update();
         }
     }
