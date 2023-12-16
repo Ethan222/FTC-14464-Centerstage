@@ -43,7 +43,7 @@ import java.util.concurrent.TimeUnit;
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(group = "auto", preselectTeleOp = "TeleOp")
 public class BackdropAuto extends LinearOpMode
 {
-    private Alliance alliance = Alliance.BLUE;
+    private Alliance alliance = Alliance.RED;
 
     private enum Side {
         BACK, FRONT
@@ -64,7 +64,7 @@ public class BackdropAuto extends LinearOpMode
         telemetry.setMsTransmissionInterval(50); // default is 250
 
         robot = new Robot(hardwareMap);
-        propDetector = new TensorFlowObjectDetector(hardwareMap);
+        //propDetector = new TensorFlowObjectDetector(hardwareMap);
         ExposureControl exposureControl;
         int exposure = 25;
 
@@ -89,6 +89,7 @@ public class BackdropAuto extends LinearOpMode
                 exposureControl = propDetector.visionPortal.getCameraControl(ExposureControl.class);
                 exposureControl.setMode(ExposureControl.Mode.Manual);
                 exposureControl.setExposure(exposure, TimeUnit.MILLISECONDS);
+                telemetry.addLine("camera initialized");
                 telemetry.addData("exposure", exposureControl.getExposure(TimeUnit.MILLISECONDS));
                 if(gamepad1.right_trigger > 0)
                     exposure++;
@@ -98,7 +99,7 @@ public class BackdropAuto extends LinearOpMode
                 telemetry.addLine("camera isn't initialized yet");
             }
 
-            propLocation = propDetector.getLocation();
+            //propLocation = propDetector.getLocation();
 
             telemetry.addLine("\nInitialized");
             telemetry.addLine(String.format("Alliance: %s (x = blue, b = red)", alliance));
@@ -106,11 +107,15 @@ public class BackdropAuto extends LinearOpMode
             telemetry.addLine();
             telemetry.addData("Team prop location", propLocation);
             telemetry.addLine();
-            propDetector.telemetryAll(telemetry);
+            //propDetector.telemetryAll(telemetry);
             telemetry.update();
         }
         // start of op mode
-        //propDetector.stopDetecting();
+        try {
+            propDetector.stopDetecting();
+        } catch(Exception e) {
+            telemetry.addLine("camera isn't initialized yet");
+        }
         telemetry.setMsTransmissionInterval(250);
         ElapsedTime time = new ElapsedTime();
 
@@ -123,30 +128,13 @@ public class BackdropAuto extends LinearOpMode
         if(alliance == Alliance.BLUE && side == Side.BACK) {
             // BLUE BACK (left)
             startPose = new Pose2d(12, 62.5, -Math.PI / 2);
-            backdropPose = new Pose2d(50, 40, Math.PI);
+            backdropPose = new Pose2d(51, 40, Math.PI);
             parkPose = propLocation == Location.CENTER ? new Pose2d(61, 59, Math.PI) : new Pose2d(61, 58, Math.PI);
         }
         else if(alliance == Alliance.BLUE && side == Side.FRONT) {
             // BLUE FRONT (right)
             startPose = new Pose2d(-36, 62, -Math.PI / 2);
             parkPose = new Pose2d(60, 14, Math.PI);
-            switch(propLocation) {
-                case LEFT:
-                    spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                            .splineToLinearHeading(new Pose2d(-20, 39, -Math.PI/4), -Math.PI/4)
-                            .splineToLinearHeading(new Pose2d(-1, 32, 0), 0)
-                            .build();
-                    break;
-                case CENTER:
-                    spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                            .splineToLinearHeading(new Pose2d(-13, 20.5, 0), 0)
-                            .build();
-                    break;
-                case RIGHT:
-                    spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                            .splineToLinearHeading(new Pose2d(-22, 28, -Math.PI/2), -Math.PI/2)
-                            .build();
-            }
         }
         else if(alliance == Alliance.RED && side == Side.BACK) {
             // RED BACK (right)
@@ -157,7 +145,6 @@ public class BackdropAuto extends LinearOpMode
         else {
             // RED FRONT (left)
             startPose = new Pose2d(-36, -61, Math.PI / 2);
-
             parkPose = new Pose2d(60, -11, Math.PI);
         }
 
@@ -172,6 +159,7 @@ public class BackdropAuto extends LinearOpMode
                     .forward(2)
                     .build();
         }
+
         TrajectorySequence moveToBackdrop = robot.drive.trajectorySequenceBuilder(startPose)
                 .splineToLinearHeading(backdropPose, 0)
                 .build();
@@ -187,34 +175,47 @@ public class BackdropAuto extends LinearOpMode
 
         robot.armFlipper.flip();
         time.reset();
-        while(time.milliseconds() < 2000 && opModeIsActive());
+        while(time.milliseconds() < 900 && opModeIsActive());
+        //robot.armFlipper.stop();
+
+        robot.rotator.unrotate();
+        //time.reset();
+        while(time.milliseconds() < 1500 && opModeIsActive());
         robot.armFlipper.stop();
+        while(time.milliseconds() < 2400 && opModeIsActive());
+        robot.rotator.stop();
+
+//        robot.armFlipper.flip();
+//        time.reset();
+//        while(time.milliseconds() < 600 && opModeIsActive());
+//        robot.armFlipper.stop();
 
         robot.rotator.rotate();
         time.reset();
-        while(time.milliseconds() < 3000 && opModeIsActive());
+        while(time.milliseconds() < 3600 && opModeIsActive());
         robot.rotator.stop();
 
         robot.armFlipper.flip();
         time.reset();
-        while(time.milliseconds() < 1000 && opModeIsActive());
+        while(time.milliseconds() < 700 && opModeIsActive());
         robot.armFlipper.stop();
 
         robot.gripper.ungripFully();
         time.reset();
-        while(time.milliseconds() < 1000 && opModeIsActive());
+        while(time.milliseconds() < 1900 && opModeIsActive());
 
         robot.rotator.unrotate();
         time.reset();
-        while(time.milliseconds() < 2000 && opModeIsActive());
+        while(time.milliseconds() < 2250 && opModeIsActive());
         robot.rotator.stop();
 
         robot.armFlipper.unflip();
         time.reset();
-        while(time.milliseconds() < 1500 && opModeIsActive());
+        while(time.milliseconds() < 1400 && opModeIsActive());
         robot.armFlipper.stop();
 
         robot.drive.followTrajectorySequence(moveForward);
         robot.drive.followTrajectory(park);
+        robot.intake.raise();
     }
 }

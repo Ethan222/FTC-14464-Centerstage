@@ -5,7 +5,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 // represents the servo that controls the gripper
 public class Gripper extends CustomServo {
     private static final double INCREMENT = .01;    // this relates to how fast the gripper will move
-    private static final double OPEN_PSN = .23, CLOSED_PSN = .45;
+    private static final double OPEN_PSN = .16, CLOSED_PSN = .44;
     public Gripper(HardwareMap hm, String gripperName) {    // constructor
         super(hm, gripperName, OPEN_PSN, CLOSED_PSN);       // calls parent constructor
     }
