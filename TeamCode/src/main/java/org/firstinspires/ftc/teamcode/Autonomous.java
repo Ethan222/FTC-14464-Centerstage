@@ -21,13 +21,24 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import androidx.annotation.NonNull;
+
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
+import com.acmerobotics.roadrunner.trajectory.constraints.TrajectoryAccelerationConstraint;
+import com.acmerobotics.roadrunner.trajectory.constraints.TrajectoryVelocityConstraint;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
+import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.teamcode.TensorFlow.TensorFlowObjectDetector;
 import org.firstinspires.ftc.teamcode.subsystems.Robot;
 import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySequence;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(group = "auto", preselectTeleOp = "TeleOp")
 public class Autonomous extends LinearOpMode
@@ -53,7 +64,9 @@ public class Autonomous extends LinearOpMode
         telemetry.setMsTransmissionInterval(50); // default is 250
 
         robot = new Robot(hardwareMap);
-        //propDetector = new TensorFlowObjectDetector(hardwareMap);
+        propDetector = new TensorFlowObjectDetector(hardwareMap);
+        ExposureControl exposureControl;
+        int exposure = 25;
 
         // init loop - select alliance and side
         while(!opModeIsActive() && !isStopRequested()) {
@@ -72,20 +85,34 @@ public class Autonomous extends LinearOpMode
             else if(gamepad1.dpad_right || gamepad2.dpad_right)
                 propLocation = Location.RIGHT;
 
-            //propLocation = propDetector.getLocation();
+            try {
+                exposureControl = propDetector.visionPortal.getCameraControl(ExposureControl.class);
+                exposureControl.setMode(ExposureControl.Mode.Manual);
+                exposureControl.setExposure(exposure, TimeUnit.MILLISECONDS);
+                telemetry.addData("exposure", exposureControl.getExposure(TimeUnit.MILLISECONDS));
+                if(gamepad1.right_trigger > 0)
+                    exposure++;
+                else if(gamepad1.left_trigger > 0)
+                    exposure--;
+            } catch(Exception e) {
+                telemetry.addLine("camera isn't initialized yet");
+            }
 
-            telemetry.addLine("Initialized");
+            propLocation = propDetector.getLocation();
+
+            telemetry.addLine("\nInitialized");
             telemetry.addLine(String.format("Alliance: %s (x = blue, b = red)", alliance));
             telemetry.addLine(String.format("Side: %s (a = front, y = back)", side));
             telemetry.addLine();
             telemetry.addData("Team prop location", propLocation);
             telemetry.addLine();
-            //propDetector.telemetryBest(telemetry);
+            propDetector.telemetryAll(telemetry);
             telemetry.update();
         }
         // start of op mode
         //propDetector.stopDetecting();
         telemetry.setMsTransmissionInterval(250);
+        ElapsedTime time = new ElapsedTime();
 
         // trajectories
         Pose2d startPose, parkPose;
@@ -167,6 +194,15 @@ public class Autonomous extends LinearOpMode
 
         double intakeWaitTime = 1;
 
+        Trajectory[] moveForwardALittle = new Trajectory[10];
+        moveForwardALittle[0] = robot.drive.trajectoryBuilder(startPose)
+                .forward(2)
+                .build();
+        for(int i = 1; i < 10; i++) {
+            moveForwardALittle[i] = robot.drive.trajectoryBuilder(moveForwardALittle[i - 1].end())
+                    .forward(2)
+                    .build();
+        }
         TrajectorySequence placePixel = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
                 .waitSeconds(intakeWaitTime)
                 .back(14)
@@ -176,6 +212,18 @@ public class Autonomous extends LinearOpMode
                 .build();
 
         robot.drive.setPoseEstimate(startPose);
+        List<Recognition> recognitions = propDetector.getRecognitions();
+        int i = 0;
+//        while(recognitions.size() == 0 && i < 6 && opModeIsActive() && time.seconds() < 15) {
+//            robot.drive.followTrajectory(moveForwardALittle[i]);
+//            recognitions = propDetector.getRecognitions();
+//            telemetry.addLine("moving forward");
+//            propDetector.telemetryAll(telemetry);
+//            telemetry.update();
+//            sleep(1000);
+//            i++;
+//        }
+        while(opModeIsActive());
         robot.drive.followTrajectorySequence(spikeMarkTraj);
         robot.gripper.ungripFully();
         robot.intake.out();
