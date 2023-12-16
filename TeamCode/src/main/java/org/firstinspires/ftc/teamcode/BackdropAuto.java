@@ -27,7 +27,6 @@ import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.acmerobotics.roadrunner.trajectory.constraints.TrajectoryAccelerationConstraint;
 import com.acmerobotics.roadrunner.trajectory.constraints.TrajectoryVelocityConstraint;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -40,11 +39,11 @@ import org.firstinspires.ftc.teamcode.roadrunner.trajectorysequence.TrajectorySe
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-@Disabled
+
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(group = "auto", preselectTeleOp = "TeleOp")
-public class Autonomous extends LinearOpMode
+public class BackdropAuto extends LinearOpMode
 {
-    private Alliance alliance = Alliance.RED;
+    private Alliance alliance = Alliance.BLUE;
 
     private enum Side {
         BACK, FRONT
@@ -116,7 +115,7 @@ public class Autonomous extends LinearOpMode
         ElapsedTime time = new ElapsedTime();
 
         // trajectories
-        Pose2d startPose, parkPose;
+        Pose2d startPose, backdropPose = null, parkPose;
         TrajectorySequence spikeMarkTraj = null;
         TrajectorySequence parkTraj;
         int multiplier = side == Side.FRONT ? 1 : -1;
@@ -124,24 +123,8 @@ public class Autonomous extends LinearOpMode
         if(alliance == Alliance.BLUE && side == Side.BACK) {
             // BLUE BACK (left)
             startPose = new Pose2d(12, 62.5, -Math.PI / 2);
+            backdropPose = new Pose2d(50, 40, Math.PI);
             parkPose = propLocation == Location.CENTER ? new Pose2d(61, 59, Math.PI) : new Pose2d(61, 58, Math.PI);
-            switch(propLocation) {
-                case LEFT:
-                    spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                            .splineToLinearHeading(new Pose2d(22, 28, -Math.PI/2), -Math.PI/2)
-                            .build();
-                    break;
-                case CENTER:
-                    spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                            .splineToLinearHeading(new Pose2d(13, 20.5, Math.PI), Math.PI)
-                            .build();
-                    break;
-                case RIGHT:
-                    spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                            .splineToLinearHeading(new Pose2d(20, 39, -3*Math.PI/4), -3*Math.PI/4)
-                            .splineToLinearHeading(new Pose2d(1, 32, Math.PI), Math.PI)
-                            .build();
-            }
         }
         else if(alliance == Alliance.BLUE && side == Side.FRONT) {
             // BLUE FRONT (right)
@@ -168,28 +151,13 @@ public class Autonomous extends LinearOpMode
         else if(alliance == Alliance.RED && side == Side.BACK) {
             // RED BACK (right)
             startPose = new Pose2d(12, -61, Math.PI / 2);
+            backdropPose = new Pose2d(50, -35, Math.PI);
             parkPose = new Pose2d(60, -59, Math.PI);
-            switch(propLocation) {
-                case LEFT:
-                    spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                            .splineToLinearHeading(new Pose2d(16, -47, 3*Math.PI/4), 3*Math.PI/4)
-                            .splineToLinearHeading(new Pose2d(0, -30, Math.PI), Math.PI)
-                            .build();
-                    break;
-                case CENTER:
-                    spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                            .splineToLinearHeading(new Pose2d(12, -20.5, Math.PI), Math.PI)
-                            .build();
-                    break;
-                case RIGHT:
-                    spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                            .splineToLinearHeading(new Pose2d(22.5, -26, Math.PI/2), Math.PI/2)
-                            .build();
-            }
         }
         else {
             // RED FRONT (left)
             startPose = new Pose2d(-36, -61, Math.PI / 2);
+
             parkPose = new Pose2d(60, -11, Math.PI);
         }
 
@@ -204,32 +172,49 @@ public class Autonomous extends LinearOpMode
                     .forward(2)
                     .build();
         }
-        TrajectorySequence placePixel = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
-                .waitSeconds(intakeWaitTime)
-                .back(14)
+        TrajectorySequence moveToBackdrop = robot.drive.trajectorySequenceBuilder(startPose)
+                .splineToLinearHeading(backdropPose, 0)
                 .build();
-        Trajectory park = robot.drive.trajectoryBuilder(placePixel.end(), true)
+        TrajectorySequence moveForward = robot.drive.trajectorySequenceBuilder(moveToBackdrop.end())
+                .forward(8)
+                .build();
+        Trajectory park = robot.drive.trajectoryBuilder(moveForward.end(), true)
                 .splineToLinearHeading(parkPose, 0) // park in backstage
                 .build();
 
         robot.drive.setPoseEstimate(startPose);
-        List<Recognition> recognitions = propDetector.getRecognitions();
-        int i = 0;
-//        while(recognitions.size() == 0 && i < 6 && opModeIsActive() && time.seconds() < 15) {
-//            robot.drive.followTrajectory(moveForwardALittle[i]);
-//            recognitions = propDetector.getRecognitions();
-//            telemetry.addLine("moving forward");
-//            propDetector.telemetryAll(telemetry);
-//            telemetry.update();
-//            sleep(1000);
-//            i++;
-//        }
-        while(opModeIsActive());
-        robot.drive.followTrajectorySequence(spikeMarkTraj);
+        robot.drive.followTrajectorySequence(moveToBackdrop);
+
+        robot.armFlipper.flip();
+        time.reset();
+        while(time.milliseconds() < 2000 && opModeIsActive());
+        robot.armFlipper.stop();
+
+        robot.rotator.rotate();
+        time.reset();
+        while(time.milliseconds() < 3000 && opModeIsActive());
+        robot.rotator.stop();
+
+        robot.armFlipper.flip();
+        time.reset();
+        while(time.milliseconds() < 1000 && opModeIsActive());
+        robot.armFlipper.stop();
+
         robot.gripper.ungripFully();
-        robot.intake.out();
-        robot.drive.followTrajectorySequence(placePixel);
-        robot.intake.stop();
+        time.reset();
+        while(time.milliseconds() < 1000 && opModeIsActive());
+
+        robot.rotator.unrotate();
+        time.reset();
+        while(time.milliseconds() < 2000 && opModeIsActive());
+        robot.rotator.stop();
+
+        robot.armFlipper.unflip();
+        time.reset();
+        while(time.milliseconds() < 1500 && opModeIsActive());
+        robot.armFlipper.stop();
+
+        robot.drive.followTrajectorySequence(moveForward);
         robot.drive.followTrajectory(park);
     }
 }
