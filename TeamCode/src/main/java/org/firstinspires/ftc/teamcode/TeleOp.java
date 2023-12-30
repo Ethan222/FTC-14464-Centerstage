@@ -19,6 +19,8 @@ public class TeleOp extends LinearOpMode {
         Robot robot = new Robot(hardwareMap);
         robot.drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
+        Button x = new Button(), y = new Button();
+
         boolean singleDriverMode = false;
         while(opModeInInit()) {
             telemetry.addLine("Initialized");
@@ -99,13 +101,25 @@ public class TeleOp extends LinearOpMode {
             else if(singleDriverMode && gamepad1.b && !gamepad1.start && !gamepad1.back)
                 robot.gripper.ungripFully();
 
-            // x/y rotate incrementally
-            if(gamepad2.y || (singleDriverMode && gamepad1.y))
-                robot.rotator.rotate();
-            else if(gamepad2.x || (singleDriverMode && gamepad1.x))
-                robot.rotator.unrotate();
-            else
+            // x/y rotate
+            // short press moves at half speed, after half a second it starts moving at full speed
+            if(gamepad2.y || (singleDriverMode && gamepad1.y)) {
+                y.down();
+                if(y.getTimeDown() < 500) // short press
+                    robot.rotator.rotate(.5); // just move a little bit (small adjustments)
+                else // long press
+                    robot.rotator.rotate(1); // move as fast as possible
+            } else if(gamepad2.x || (singleDriverMode && gamepad1.x)) {
+                x.down();
+                if(x.getTimeDown() < 500)
+                    robot.rotator.unrotate(.5);
+                else
+                    robot.rotator.unrotate(1);
+            } else {
+                x.up();
+                y.up();
                 robot.rotator.stop();
+            }
 
             // gamepad1 a/b control launcher
             if(gamepad1.a && !singleDriverMode && !gamepad1.start && !gamepad1.back)
