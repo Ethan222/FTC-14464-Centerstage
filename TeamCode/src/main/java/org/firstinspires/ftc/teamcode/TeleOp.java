@@ -41,9 +41,9 @@ public class TeleOp extends LinearOpMode {
         while (opModeIsActive() && !(gamepad1.start && gamepad1.x) && !(gamepad2.start && gamepad2.x)) {
             robot.drive.setWeightedDrivePower(
                     new Pose2d(
-                            -Math.pow(gamepad1.left_stick_y, 7),
-                            -Math.pow(gamepad1.left_stick_x, 7),
-                            -Math.pow(gamepad1.right_stick_x, 7)
+                            -Math.pow(gamepad1.left_stick_y, 1),
+                            -Math.pow(gamepad1.left_stick_x, 1),
+                            -Math.pow(gamepad1.right_stick_x, 1)
                     )
             );
             robot.drive.update();
