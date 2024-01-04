@@ -36,8 +36,8 @@ import org.firstinspires.ftc.teamcode.Auto.roadrunner.trajectorysequence.Traject
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-@Disabled
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(group = "auto", preselectTeleOp = "TeleOp")
+
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "TensorFlow Auto", group = "auto", preselectTeleOp = "TeleOp")
 public class TensorFlowAuto extends LinearOpMode
 {
     private Alliance alliance = Alliance.RED;

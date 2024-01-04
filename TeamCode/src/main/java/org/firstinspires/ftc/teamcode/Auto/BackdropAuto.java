@@ -33,7 +33,7 @@ import org.firstinspires.ftc.teamcode.Auto.roadrunner.trajectorysequence.Traject
 
 import java.util.concurrent.TimeUnit;
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(group = "auto", preselectTeleOp = "TeleOp")
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "Simple Backdrop Auto", group = "auto", preselectTeleOp = "TeleOp")
 public class BackdropAuto extends LinearOpMode
 {
     private Alliance alliance = Alliance.RED;

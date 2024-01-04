@@ -12,7 +12,7 @@ import org.firstinspires.ftc.vision.tfod.TfodProcessor;
 import java.util.List;
 
 public class TensorFlowObjectDetector {
-    private static final String MODEL_ASSET = "blue_red_prop_model_1.tflite";
+    private static final String MODEL_ASSET = "blue_red_prop_model_2.tflite";
     private static final String[] LABELS = { "blueProp", "redProp" };
     private static final float MIN_CONFIDENCE = .5f;
     private static final double LEFT_CENTER_DIVISION = 200;
