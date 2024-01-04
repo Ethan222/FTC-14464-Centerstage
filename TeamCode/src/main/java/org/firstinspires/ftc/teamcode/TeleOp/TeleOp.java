@@ -76,13 +76,13 @@ public class TeleOp extends LinearOpMode {
 
             // left stick y or d-pad up/down controls the arm lifter
             if(gamepad2.left_stick_y != 0)
-                robot.armRaisers.setPower(-gamepad2.left_stick_y);
+                robot.armRaiser.setPower(-gamepad2.left_stick_y);
             else if(gamepad.dpad_up)
-                robot.armRaisers.up();
+                robot.armRaiser.up();
             else if(gamepad.dpad_down)
-                robot.armRaisers.down();
+                robot.armRaiser.down();
             else
-                robot.armRaisers.stop();
+                robot.armRaiser.stop();
 
             // a/b grip/ungrip fully
 //            if(gamepad2.a && !gamepad2.start && !gamepad2.back)
@@ -130,7 +130,7 @@ public class TeleOp extends LinearOpMode {
             telemetry.addData("Average wheel power", robot.drive.getAverageDriveMotorPower());
             telemetry.addData("\nIntake power", robot.intake.getPower());
 //            telemetry.addData("Arm flipper power", robot.armFlipper.getPower());
-            telemetry.addData("Arm raiser power", robot.armRaisers.getPower());
+            telemetry.addData("Arm raiser power", robot.armRaiser.getPower());
 //            telemetry.addData("Rotator power", "%.2f", robot.rotator.getPower());
 //            telemetry.addData("Gripper psn", "%s (%.3f)", robot.gripper.getStatus(), robot.gripper.getPosition());
             telemetry.addData("Intake psn", "%s (%.1f)", robot.intake.getStatus(), robot.intake.lowerer.getPosition());
