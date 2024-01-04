@@ -11,6 +11,7 @@ import org.firstinspires.ftc.teamcode.subsystems.Robot;
 
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(group = "drive")
 public class TeleOp extends LinearOpMode {
+    private static boolean singleDriverMode = false;
     @SuppressLint("DefaultLocale")
     @Override
     public void runOpMode() throws InterruptedException {
@@ -22,7 +23,6 @@ public class TeleOp extends LinearOpMode {
 
         Button x = new Button(), y = new Button();
 
-        boolean singleDriverMode = true;
         Gamepad gamepad;
         while(opModeInInit()) {
             telemetry.addLine("Initialized");
@@ -128,12 +128,12 @@ public class TeleOp extends LinearOpMode {
 //            telemetry.addLine("launcher: gamepad1 a/b");
             telemetry.addData("\nGamepad1 left_stick_y", gamepad1.left_stick_y);
             telemetry.addData("Average wheel power", robot.drive.getAverageDriveMotorPower());
-            telemetry.addData("\nIntake power", robot.intake.getPower());
-//            telemetry.addData("Arm flipper power", robot.armFlipper.getPower());
-            telemetry.addData("Arm raiser power", robot.armRaiser.getPower());
-//            telemetry.addData("Rotator power", "%.2f", robot.rotator.getPower());
+            telemetry.addData("\nIntake psn", "%s (%.1f)", robot.intake.getStatus(), robot.intake.lowerer.getPosition());
+            telemetry.addData("Intake pwr", robot.intake.getPower());
+//            telemetry.addData("Arm flipper pwr", robot.armFlipper.getPower());
+            telemetry.addData("Arm raiser pwr", robot.armRaiser.getPower());
+//            telemetry.addData("Rotator pwr", "%.2f", robot.rotator.getPower());
 //            telemetry.addData("Gripper psn", "%s (%.3f)", robot.gripper.getStatus(), robot.gripper.getPosition());
-            telemetry.addData("Intake psn", "%s (%.1f)", robot.intake.getStatus(), robot.intake.lowerer.getPosition());
 //            telemetry.addData("Launcher psn", "%.2f", robot.launcher.getPosition());
             telemetry.update();
         }
