@@ -6,12 +6,9 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 // controls the 2 motors that raise the arm
-public class ArmRaisers extends Motor {     // inherits from Motor
-    public ArmRaisers(HardwareMap hm, String name1, String name2) {             // constructor
-        super(hm, new String[]{name1, name2}, .5, 1);      // calls parent constructor with default speed and max speed
-        motors[0].setDirection(DcMotorSimple.Direction.REVERSE);                // reverse left arm lifter
-        for(DcMotorEx motor: motors)                                            // loop through all the motors and
-            motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);        // set them to brake at zero power
+public class ArmRaiser extends Motor {     // inherits from Motor
+    public ArmRaiser(HardwareMap hm, String name) {             // constructor
+        super(hm, name, .5, 1);      // calls parent constructor with default speed and max speed
     }
     // up() raises the arm and down() lowers it. Each method has 2 overloads based on whether or not it is passed an argument.
     public void up(double power) {

@@ -7,8 +7,8 @@ public class Intake extends Motor { // inherits from parent class Motor
     public CustomServo lowerer;     // servo to raise/lower the intake
     private static final double UP_PSN = 1, DOWN_PSN = 0;   // up and down positions of the servo
     public Intake(HardwareMap hardwareMap, String name) {        // constructor
-        super(hardwareMap, name, .8, .9);   // calls parent constructor to initialize intake motor
-        lowerer = new CustomServo(hardwareMap, "servo2", DOWN_PSN, UP_PSN); // initializes lowerer servo
+        super(hardwareMap, name, 1, 1);   // calls parent constructor to initialize intake motor
+        lowerer = new CustomServo(hardwareMap, "intakeRaiser", DOWN_PSN, UP_PSN); // initializes lowerer servo
     }
     public void in(double power) {
         setPower(power);
