@@ -122,19 +122,19 @@ public class AprilTagAuto extends LinearOpMode
         Vector2d backdropCoords = new Vector2d(44, backdropYs[location]);
         TrajectorySequence traj = robot.drive.trajectorySequenceBuilder(startPose)
                 .addTemporalMarker(() -> {
-                    robot.gripper.gripFully(); // grip the preloaded pixels
+                    robot.gripper1.downFully(); // grip the preloaded pixels
                 })
                 .waitSeconds(.5)
                 .lineTo(spikeMarkPoses[location]) // move to spike mark
                 .turn(Math.PI)
                 // place pixel on spike mark
                 .addTemporalMarker(armFlipStartTime, () -> {
-                    robot.armFlipper.flip();
+                    robot.outtakeRaiser.up();
                 })
                 .waitSeconds(3)
                 .addTemporalMarker(armFlipStartTime + armFlipTime, () -> {
-                    robot.armFlipper.stop();
-                    robot.gripper.ungripFully();
+                    robot.outtakeRaiser.stop();
+                    robot.gripper1.upFully();
                 })
                 //.turn(multiplier * Math.PI / 2)
                 //.lineTo(backdropCoords)

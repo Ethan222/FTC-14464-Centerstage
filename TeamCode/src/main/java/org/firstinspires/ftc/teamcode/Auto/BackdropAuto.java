@@ -166,46 +166,38 @@ public class BackdropAuto extends LinearOpMode
         robot.drive.setPoseEstimate(startPose);
         robot.drive.followTrajectorySequence(moveToBackdrop);
 
-        robot.armFlipper.flip();
+        robot.outtakeRaiser.up();
         time.reset();
         while(time.milliseconds() < 900 && opModeIsActive());
         //robot.armFlipper.stop();
 
-        robot.rotator.unrotate();
+        robot.rotator.retractFully();
         //time.reset();
         while(time.milliseconds() < 1500 && opModeIsActive());
-        robot.armFlipper.stop();
-        while(time.milliseconds() < 2400 && opModeIsActive());
-        robot.rotator.stop();
+        robot.outtakeRaiser.stop();
 
 //        robot.armFlipper.flip();
 //        time.reset();
 //        while(time.milliseconds() < 600 && opModeIsActive());
 //        robot.armFlipper.stop();
 
-        robot.rotator.rotate();
-        time.reset();
-        while(time.milliseconds() < 3600 && opModeIsActive());
-        robot.rotator.stop();
+        robot.rotator.rotateFully();
 
-        robot.armFlipper.flip();
+        robot.outtakeRaiser.up();
         time.reset();
         while(time.milliseconds() < 700 && opModeIsActive());
-        robot.armFlipper.stop();
+        robot.outtakeRaiser.stop();
 
-        robot.gripper.ungripFully();
+        robot.gripper1.upFully();
         time.reset();
         while(time.milliseconds() < 1900 && opModeIsActive());
 
-        robot.rotator.unrotate();
-        time.reset();
-        while(time.milliseconds() < 2250 && opModeIsActive());
-        robot.rotator.stop();
+        robot.rotator.retractFully();
 
-        robot.armFlipper.unflip();
+        robot.outtakeRaiser.down();
         time.reset();
         while(time.milliseconds() < 1400 && opModeIsActive());
-        robot.armFlipper.stop();
+        robot.outtakeRaiser.stop();
 
         robot.drive.followTrajectorySequence(moveForward);
         robot.drive.followTrajectory(park);

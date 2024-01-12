@@ -1,25 +1,37 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-// controls the continuous servo that rotates the claw mechanism
-public class Rotator {
-    private CRServo rotator;                            // the actual continuous servo
-    private static final double DEFAULT_SPEED = 1;      // constant field to represent the default speed the servo should run at
-    // constructor: initializes the servo and retrieves it from the hardware map
-    public Rotator(HardwareMap hm, String name) {
-        rotator = hm.get(CRServo.class, name);
+// controls the servo that rotates the outtake mechanism
+public class Rotator extends CustomServo {
+    private static final double INCREMENT = .01;    // this relates to how fast the gripper will move
+    private double EXTENDED_PSN, RETRACTED_PSN;
+    // constructor
+    public Rotator(HardwareMap hm, String name, double retractedPsn, double extendedPsn) {
+        super(hm, name, 0, 1); // calls parent constructor
+        RETRACTED_PSN = retractedPsn;
+        EXTENDED_PSN = extendedPsn;
     }
-    public void setPower(double power) {
-        rotator.setPower(power);
-    }   // sets the power of the servo
-    public void rotate(double power) { setPower(power); }             // rotates the claw at the given speed
-    public void rotate() { rotate(DEFAULT_SPEED); }                   // rotates at the default speed
-    public void unrotate(double power) { setPower(-power); }          // rotates in the other direction
-    public void unrotate() { unrotate(DEFAULT_SPEED); }               // unrotates at the default speed
-    public void stop() {
-        rotator.setPower(0);
-    }                       // stops the servo
-    public double getPower() { return rotator.getPower(); }           // returns the servo's current power
+    public Rotator(HardwareMap hm, String name) {
+        this(hm, name, 0, 1);
+    }
+    public void rotateFully() {
+        setPosition(EXTENDED_PSN);
+    }
+    public void retractFully() {
+        setPosition(RETRACTED_PSN);
+    }
+    public void rotateIncrementally() { changePosition(-INCREMENT); }
+    public void retractIncrementally() { changePosition(INCREMENT); }
+
+    // returns the current status as a String
+    public String getStatus() {
+        double psn = getPosition();
+        if(Math.abs(psn - RETRACTED_PSN) < .02)
+            return "retracted";
+        else if(Math.abs(psn - EXTENDED_PSN) < .02)
+            return "extended";
+        else
+            return "partly extended";
+    }
 }

@@ -9,11 +9,14 @@ import com.qualcomm.robotcore.hardware.Servo;
 public class CustomServo {
     private Servo servo;                                // field representing the actual Servo object
     private double leftPosition, rightPosition;         // fields representing the farthest left and right the servo can go
+    public enum Status {
+        LEFT, MIDDLE, RIGHT
+    }
     public CustomServo(HardwareMap hm, String name, double leftPsn, double rightPsn) {
         servo = hm.get(Servo.class, name);
         leftPosition = leftPsn;
         rightPosition = rightPsn;
-    }       // constructor
+    }
     public CustomServo(HardwareMap hm, String name) {   // constructor overload with default left and right positions
         this(hm, name, 0, 1);
     }
@@ -36,5 +39,15 @@ public class CustomServo {
     }
     public void goToRight() {
         setPosition(rightPosition);
+    }
+    public String getStatus() {
+        double psn = getPosition();
+        if (Math.abs(psn - leftPosition) < .03) {
+            return Status.LEFT.toString();
+        } else if (Math.abs(psn - rightPosition) < .03) {
+            return Status.RIGHT.toString();
+        } else {
+            return Status.MIDDLE.toString();
+        }
     }
 }

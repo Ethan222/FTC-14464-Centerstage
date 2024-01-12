@@ -23,7 +23,6 @@ package org.firstinspires.ftc.teamcode.Auto.TensorFlow;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -222,7 +221,7 @@ public class TensorFlowAuto extends LinearOpMode
 //        }
         while(opModeIsActive());
         robot.drive.followTrajectorySequence(spikeMarkTraj);
-        robot.gripper.ungripFully();
+        robot.gripper1.upFully();
         robot.intake.out();
         robot.drive.followTrajectorySequence(placePixel);
         robot.intake.stop();

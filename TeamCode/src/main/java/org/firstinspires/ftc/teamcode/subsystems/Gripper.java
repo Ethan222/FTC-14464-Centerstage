@@ -2,29 +2,36 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-// represents the servo that controls the gripper
+// represents a servo that controls a gripper
 public class Gripper extends CustomServo {
     private static final double INCREMENT = .01;    // this relates to how fast the gripper will move
-    private static final double OPEN_PSN = .16, CLOSED_PSN = .44;
-    public Gripper(HardwareMap hm, String gripperName) {    // constructor
-        super(hm, gripperName, OPEN_PSN, CLOSED_PSN);       // calls parent constructor
+    private double UP_PSN, DOWN_PSN;
+    // constructor
+    public Gripper(HardwareMap hm, String name, double upPsn, double downPsn) {
+        super(hm, name, Math.min(upPsn, downPsn), Math.max(upPsn, downPsn)); // calls parent constructor
+        UP_PSN = upPsn;
+        DOWN_PSN = downPsn;
     }
-    public void gripIncrementally() { changePosition(INCREMENT); }       // grips a little at a time
-    public void ungripIncrementally() { changePosition(-INCREMENT); }    // ungrips a little at a time
-    public void gripFully() {
-        goToRight();
+    public Gripper(HardwareMap hm, String name) {
+        this(hm, name, 0, 1);
+    }
+    public void downFully() {
+        setPosition(DOWN_PSN);
     }       // completely closes the gripper
-    public void ungripFully() {
-        goToLeft();
+    public void upFully() {
+        setPosition(UP_PSN);
     }      // completely opens the gripper
-    public String getStatus() {         // returns the current status of the gripper as a String
-        double psn = getPosition();     // returns either "fully open", "fully closed", or "partially open"
-        if (Math.abs(psn - OPEN_PSN) < .03) {
-            return "open";
-        } else if (Math.abs(psn - CLOSED_PSN) < .03) {
-            return "closed";
-        } else {
-            return "partially open";
-        }
+    public void downIncrementally() { changePosition(INCREMENT); }       // grips a little at a time
+    public void upIncrementally() { changePosition(-INCREMENT); }
+
+    // returns the current status of the gripper as a String
+    public String getStatus() {
+        String status = super.getStatus();
+        if(status.equals(Status.LEFT.toString()))
+            return UP_PSN < DOWN_PSN ? "up" : "down";
+        else if(status.equals(Status.RIGHT.toString()))
+            return UP_PSN > DOWN_PSN ? "up" : "down";
+        else
+            return "partway up";
     }
 }
