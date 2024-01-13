@@ -24,6 +24,7 @@ public class TeleOp extends LinearOpMode {
         //Button x = new Button(), y = new Button();
 
         int reverseDirection = -1;
+        double speed = 1;
 
         Gamepad gamepad;
         while(opModeInInit()) {
@@ -45,12 +46,20 @@ public class TeleOp extends LinearOpMode {
         while (opModeIsActive() && !(gamepad1.start && gamepad1.x) && !(gamepad2.start && gamepad2.x)) {
             robot.drive.setWeightedDrivePower(
                     new Pose2d(
-                            reverseDirection * Math.pow(gamepad1.left_stick_y, 1),
-                            reverseDirection * Math.pow(gamepad1.left_stick_x, 1),
-                            reverseDirection * Math.pow(gamepad1.right_stick_x, 1)
+                            reverseDirection * speed * gamepad1.left_stick_y,
+                            reverseDirection * speed * gamepad1.left_stick_x,
+                            reverseDirection * speed * gamepad1.right_stick_x
                     )
             );
             robot.drive.update();
+
+            if(gamepad1.start && gamepad1.y)
+                reverseDirection *= -1;
+
+            if(gamepad1.right_bumper && !singleDriverMode)
+                speed = .5;
+            else
+                speed = 1;
 
             if((gamepad1.back && gamepad1.a) || (gamepad2.back && gamepad2.a))
                 singleDriverMode = true;
@@ -61,9 +70,6 @@ public class TeleOp extends LinearOpMode {
                 gamepad = gamepad1;
             else
                 gamepad = gamepad2;
-
-            if(gamepad1.start && gamepad1.y)
-                reverseDirection *= -1;
 
             // use the triggers to control the intake - right trigger intakes, left trigger outtakes
             if(gamepad.right_trigger > 0)
@@ -90,7 +96,7 @@ public class TeleOp extends LinearOpMode {
                 robot.gripper1.upFully();
             else if(gamepad.x && !gamepad.start && !gamepad.back)
                 robot.gripper2.downFully();
-            else if(gamepad.y && !gamepad.back)
+            else if(gamepad.y && !gamepad.start && !gamepad.back)
                 robot.gripper2.upFully();
 
             // left/right on d-pad rotate
