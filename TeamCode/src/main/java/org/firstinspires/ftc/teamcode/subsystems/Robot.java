@@ -17,11 +17,11 @@ public class Robot {
         drive = new SampleMecanumDrive(hardwareMap);
         intake = new Intake(hardwareMap, "intake", "servo4");
         gripper1 = new Gripper(hardwareMap, "servo1", .39, .64);
-        gripper2 = new Gripper(hardwareMap, "servo2");
+        gripper2 = new Gripper(hardwareMap, "servo2", .7, 1);
         rotator = new Rotator(hardwareMap, "servo0", .46, .23);
         outtakeRaiser = new OuttakeRaiser(hardwareMap, "armMotor");
         hangMotor = new HangMotor(hardwareMap, "hangMotor");
-        autoClaw = new AutoClaw(hardwareMap, "servo3", 0, .6);
-//        launcher = new DroneLauncher(hardwareMap, "servo3");
+        autoClaw = new AutoClaw(hardwareMap, "servo3", .06, .54);
+//        launcher = new DroneLauncher(hardwareMap, "servo5");
     }
 }

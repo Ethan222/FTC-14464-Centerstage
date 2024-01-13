@@ -27,10 +27,14 @@ public class Rotator extends CustomServo {
     // returns the current status as a String
     public String getStatus() {
         double psn = getPosition();
-        if(Math.abs(psn - RETRACTED_PSN) < .02)
+        if(Math.abs(psn - RETRACTED_PSN) < .03)
             return "retracted";
-        else if(Math.abs(psn - EXTENDED_PSN) < .02)
+        else if(Math.abs(psn - EXTENDED_PSN) < .03)
             return "extended";
+        else if(psn > RETRACTED_PSN)
+            return "extra retracted";
+        else if(psn < EXTENDED_PSN)
+            return "extra extended";
         else
             return "partly extended";
     }

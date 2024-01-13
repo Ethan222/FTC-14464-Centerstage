@@ -21,7 +21,9 @@ public class TeleOp extends LinearOpMode {
         Robot robot = new Robot(hardwareMap);
         robot.drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        Button x = new Button(), y = new Button();
+        //Button x = new Button(), y = new Button();
+
+        int reverseDirection = -1;
 
         Gamepad gamepad;
         while(opModeInInit()) {
@@ -43,9 +45,9 @@ public class TeleOp extends LinearOpMode {
         while (opModeIsActive() && !(gamepad1.start && gamepad1.x) && !(gamepad2.start && gamepad2.x)) {
             robot.drive.setWeightedDrivePower(
                     new Pose2d(
-                            -Math.pow(gamepad1.left_stick_y, 1),
-                            -Math.pow(gamepad1.left_stick_x, 1),
-                            -Math.pow(gamepad1.right_stick_x, 1)
+                            reverseDirection * Math.pow(gamepad1.left_stick_y, 1),
+                            reverseDirection * Math.pow(gamepad1.left_stick_x, 1),
+                            reverseDirection * Math.pow(gamepad1.right_stick_x, 1)
                     )
             );
             robot.drive.update();
@@ -60,6 +62,9 @@ public class TeleOp extends LinearOpMode {
             else
                 gamepad = gamepad2;
 
+            if(gamepad1.start && gamepad1.y)
+                reverseDirection *= -1;
+
             // use the triggers to control the intake - right trigger intakes, left trigger outtakes
             if(gamepad.right_trigger > 0)
                 robot.intake.in(gamepad.right_trigger);
@@ -69,30 +74,34 @@ public class TeleOp extends LinearOpMode {
                 robot.intake.stop();
 
             // bumpers raise/lower the intake
-            if(gamepad.right_bumper)
+            if(gamepad.right_bumper && gamepad.back)
+                robot.intake.lower(.1);
+            else if(gamepad.left_bumper && gamepad.back)
+                robot.intake.raise(.1);
+            else if(gamepad.right_bumper)
                 robot.intake.lower();
             else if(gamepad.left_bumper)
                 robot.intake.raise();
 
             // a/b and x/y control the 2 grippers
             if(gamepad.a && !gamepad.start && !gamepad.back)
-                robot.gripper1.downIncrementally();
+                robot.gripper1.downFully();
             else if(gamepad.b && !gamepad.start && !gamepad.back)
-                robot.gripper1.upIncrementally();
-            else if(gamepad.x && !gamepad.start)
-                robot.gripper2.downIncrementally();
-            else if(gamepad.y)
-                robot.gripper2.upIncrementally();
+                robot.gripper1.upFully();
+            else if(gamepad.x && !gamepad.start && !gamepad.back)
+                robot.gripper2.downFully();
+            else if(gamepad.y && !gamepad.back)
+                robot.gripper2.upFully();
 
             // left/right on d-pad rotate
             if(gamepad.dpad_right && gamepad.back)
-                robot.rotator.rotateFully();
-            else if(gamepad.dpad_left && gamepad.back)
-                robot.rotator.retractFully();
-            else if(gamepad.dpad_right)
                 robot.rotator.rotateIncrementally();
-            else if(gamepad.dpad_left)
+            else if(gamepad.dpad_left && gamepad.back)
                 robot.rotator.retractIncrementally();
+            else if(gamepad.dpad_right)
+                robot.rotator.rotateFully();
+            else if(gamepad.dpad_left)
+                robot.rotator.retractFully();
 
             // short press moves at half speed, after half a second it starts moving at full speed
 //            if(gamepad2.y || (singleDriverMode && gamepad1.y)) {
@@ -139,7 +148,8 @@ public class TeleOp extends LinearOpMode {
 //            else if(gamepad1.b && !singleDriverMode && !gamepad1.start && !gamepad1.back)
 //                robot.launcher.reset();
 
-            telemetry.addData("Single driver mode", singleDriverMode);
+            telemetry.addData("Single driver mode (back + a/b)", singleDriverMode);
+            telemetry.addData("Reverse direction (start + y)", reverseDirection == 1);
             telemetry.addData("\nGamepad1 left_stick_y", gamepad1.left_stick_y);
             telemetry.addData("Average wheel power", robot.drive.getAverageDriveMotorPower());
             telemetry.addData("\nIntake (triggers)", robot.intake.getPower());
@@ -147,7 +157,7 @@ public class TeleOp extends LinearOpMode {
             telemetry.addData("Gripper1 (a/b)", "%s (%.3f)", robot.gripper1.getStatus(), robot.gripper1.getPosition());
             telemetry.addData("Gripper2 (x/y)", "%s (%.3f)", robot.gripper2.getStatus(), robot.gripper2.getPosition());
             telemetry.addData("Rotator (d-pad L/R)", "%s (%.3f)", robot.rotator.getStatus(), robot.rotator.getPosition());
-            telemetry.addData("Outtake raiser (left stick or d-pad U/D)", robot.outtakeRaiser.getPower());
+            telemetry.addData("Raise outtake (left stick or d-pad U/D)", robot.outtakeRaiser.getPower());
             telemetry.addData("Hang (right stick y)", robot.hangMotor.getPower());
             telemetry.addData("Auto claw (back + x/y)", "%s (%.3f)", robot.autoClaw.getStatus(), robot.autoClaw.getPosition());
 //            telemetry.addData("Launcher psn", "%.2f", robot.launcher.getPosition());
