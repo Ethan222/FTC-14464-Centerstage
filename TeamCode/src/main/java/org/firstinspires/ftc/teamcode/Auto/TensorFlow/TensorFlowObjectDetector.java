@@ -28,7 +28,7 @@ public class TensorFlowObjectDetector {
         builder.setCamera(hardwareMap.get(WebcamName.class, "Webcam 1")); // set the camera
         builder.addProcessor(tfod); // set and enable processor
         visionPortal = builder.build(); // build the vision portal using the above settings
-        //tfod.setMinResultConfidence(MIN_CONFIDENCE); // set confidence threshold for TFOD recognitions
+        tfod.setMinResultConfidence(MIN_CONFIDENCE); // set confidence threshold for TFOD recognitions
     }
     public void update() {
         List<Recognition> recognitions = tfod.getRecognitions();
@@ -49,29 +49,35 @@ public class TensorFlowObjectDetector {
         return tfod.getRecognitions();
     }
     public Location getLocation() {
-        update();
-        // if it doesn't see anything it must be right
-        if(mostConfidentRecognition == null)
-            return Location.RIGHT;
-
-        double centerY = (mostConfidentRecognition.getTop() + mostConfidentRecognition.getBottom()) / 2;
-        if(centerY > LEFT_CENTER_DIVISION)
+        return getLocation(mostConfidentRecognition);
+    }
+    public Location getLocation(Recognition recognition)
+    {
+        // if it doesn't see anything it must be left
+        if(recognition == null)
             return Location.LEFT;
-        else
+
+        double centerY = (recognition.getTop() + recognition.getBottom()) / 2;
+        if(centerY > LEFT_CENTER_DIVISION)
             return Location.CENTER;
+        else
+            return Location.RIGHT;
     }
     // sends info to telemetry about all found objects
     public void telemetryAll(Telemetry telemetry) {
         List<Recognition> currentRecognitions = tfod.getRecognitions();
-        telemetry.addData("# Objects Detected", currentRecognitions.size());
+        if(currentRecognitions.size() == 0)
+            telemetry.addLine("No objects detected");
+        else
+            telemetry.addData("# Objects Detected", currentRecognitions.size());
 
         // Step through the list of recognitions and display info for each one.
         for (Recognition recognition : currentRecognitions) {
             telemetry.addLine();
             telemetrySingle(telemetry, recognition);
         }
-        if(previousRecognition != null) {
-            telemetry.addLine("Previously seen:");
+        if(currentRecognitions.size() == 0 && previousRecognition != null) {
+            telemetry.addLine("\nPreviously seen:");
             telemetrySingle(telemetry, previousRecognition);
         }
     }
@@ -84,14 +90,15 @@ public class TensorFlowObjectDetector {
         }
     }
     public void telemetrySingle(Telemetry telemetry, Recognition recognition) {
-        double x = (mostConfidentRecognition.getLeft() + mostConfidentRecognition.getRight()) / 2;
-        double y = (mostConfidentRecognition.getTop() + mostConfidentRecognition.getBottom()) / 2;
+        double x = (recognition.getLeft() + recognition.getRight()) / 2;
+        double y = (recognition.getTop() + recognition.getBottom()) / 2;
 
-        telemetry.addLine(String.format("%s found (%.0f %% conf.)", mostConfidentRecognition.getLabel(), mostConfidentRecognition.getConfidence() * 100));
-        telemetry.addData("- Position", "(%.0f, %.0f)", x, y);
-        telemetry.addData("- Size", "%.0f x %.0f", mostConfidentRecognition.getWidth(), mostConfidentRecognition.getHeight());
+        telemetry.addLine(String.format("%s found (%.0f %% conf.)", recognition.getLabel(), recognition.getConfidence() * 100));
+        telemetry.addData("- Position", "%s (%.0f, %.0f)", getLocation(recognition), x, y);
+        telemetry.addData("- Size", "%.0f x %.0f", recognition.getWidth(), recognition.getHeight());
     }
     public void stopDetecting() { // save CPU resources when camera is no longer needed
         visionPortal.close();
+        tfod.shutdown();
     }
 }

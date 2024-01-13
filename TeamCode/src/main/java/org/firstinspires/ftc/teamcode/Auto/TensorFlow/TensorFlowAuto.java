@@ -34,38 +34,41 @@ import org.firstinspires.ftc.teamcode.subsystems.Robot;
 import org.firstinspires.ftc.teamcode.Auto.roadrunner.trajectorysequence.TrajectorySequence;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "TensorFlow Auto", group = "auto", preselectTeleOp = "TeleOp")
 public class TensorFlowAuto extends LinearOpMode
 {
-    private Alliance alliance = Alliance.RED;
-
     private enum Side {
         BACK, FRONT
     }
+
+    private Alliance alliance = Alliance.RED;
     private Side side = Side.BACK;
 
     Robot robot;
     TensorFlowObjectDetector propDetector;
 
-    private Location propLocation = Location.CENTER;
+    private Location propLocation = Location.LEFT;
 
     @Override
     public void runOpMode()
     {
-        telemetry.addLine("Initializing...");
-        telemetry.update();
-
-        telemetry.setMsTransmissionInterval(50); // default is 250
+        boolean initialized = false;
+        double timeToCameraInit = 0;
 
         robot = new Robot(hardwareMap);
+
         propDetector = new TensorFlowObjectDetector(hardwareMap);
         ExposureControl exposureControl;
-        int exposure = 25;
+        int exposure = 50;
+        telemetry.setMsTransmissionInterval(50); // default is 250
+
+        String status = "initializing";
 
         // init loop - select alliance and side
-        while(!opModeIsActive() && !isStopRequested()) {
+        while(opModeInInit()) {
             if((gamepad1.x) || gamepad2.x)
                 alliance = Alliance.BLUE;
             else if((gamepad1.b && !gamepad1.start) || (gamepad2.b && !gamepad2.start))
@@ -81,32 +84,45 @@ public class TensorFlowAuto extends LinearOpMode
             else if(gamepad1.dpad_right || gamepad2.dpad_right)
                 propLocation = Location.RIGHT;
 
+            telemetry.addLine(initialized ? "Initialized" : String.format(Locale.ENGLISH, "Initializing... %.1f", 3 - time));
+            telemetry.addData("Status", status);
+            telemetry.addData("Runtime", "%.1f", time);
+            telemetry.addData("Camera init time", "%.2f", timeToCameraInit);
+            telemetry.addLine(String.format("\nAlliance: %s (x = blue, b = red)", alliance));
+            telemetry.addLine(String.format("Side: %s (a = front, y = back)", side));
+            telemetry.addData("\nTeam prop location", propLocation);
+            //telemetry.addLine();
+
             try {
                 exposureControl = propDetector.visionPortal.getCameraControl(ExposureControl.class);
                 exposureControl.setMode(ExposureControl.Mode.Manual);
                 exposureControl.setExposure(exposure, TimeUnit.MILLISECONDS);
-                telemetry.addData("exposure", exposureControl.getExposure(TimeUnit.MILLISECONDS));
+
+                if(!initialized)
+                    timeToCameraInit = time;
+                initialized = true;
+
+                //telemetry.addLine("camera initialized");
+                telemetry.addData("exposure (RT/LT)", exposureControl.getExposure(TimeUnit.MILLISECONDS));
                 if(gamepad1.right_trigger > 0)
                     exposure++;
                 else if(gamepad1.left_trigger > 0)
                     exposure--;
+
+                status = "updating prop location";
+                propDetector.update();
+                propLocation = propDetector.getLocation();
             } catch(Exception e) {
                 telemetry.addLine("camera isn't initialized yet");
             }
 
-            propLocation = propDetector.getLocation();
-
-            telemetry.addLine("\nInitialized");
-            telemetry.addLine(String.format("Alliance: %s (x = blue, b = red)", alliance));
-            telemetry.addLine(String.format("Side: %s (a = front, y = back)", side));
-            telemetry.addLine();
-            telemetry.addData("Team prop location", propLocation);
             telemetry.addLine();
             propDetector.telemetryAll(telemetry);
             telemetry.update();
         }
+
         // start of op mode
-        //propDetector.stopDetecting();
+        propDetector.stopDetecting();
         telemetry.setMsTransmissionInterval(250);
         ElapsedTime time = new ElapsedTime();
 

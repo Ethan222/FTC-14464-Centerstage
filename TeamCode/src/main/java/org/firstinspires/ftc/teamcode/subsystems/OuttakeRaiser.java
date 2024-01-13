@@ -10,13 +10,13 @@ public class OuttakeRaiser extends Motor { // inherits from the Motor parent cla
         super(hardwareMap, name);       // calls parent constructor
     }
     public void up(double power) {    // a negative power flips the arm
-        setPower(-power);               // the setPower() method is inherited from Motor
+        setPower(power);               // the setPower() method is inherited from Motor
     }
     public void up() {     // function overload: if no speed given, use default speed
         up(DEFAULT_SPEED); // DEFAULT_SPEED is inherited from Motor
     }
     public void down(double power) {  // a positive power unflips the arm
-        setPower(power);
+        setPower(-power);
     }
     public void down() {              // function overload
         down(DEFAULT_SPEED);
