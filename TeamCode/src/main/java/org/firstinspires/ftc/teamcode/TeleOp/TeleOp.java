@@ -67,7 +67,7 @@ public class TeleOp extends LinearOpMode {
 
             if(gamepad1.back && gamepad1.a)
                 singleDriverMode = true;
-            else if(gamepad2.back && gamepad2.b)
+            else if((gamepad1.back && gamepad1.b) || (gamepad2.back && gamepad2.b))
                 singleDriverMode = false;
 
             if(singleDriverMode)
