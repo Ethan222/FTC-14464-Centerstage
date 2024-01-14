@@ -44,8 +44,8 @@ public class TensorFlowAuto extends LinearOpMode
         BACK, FRONT
     }
 
-    private Alliance alliance = Alliance.RED;
-    private Side side = Side.BACK;
+    private static Alliance alliance = Alliance.RED;
+    private static Side side = Side.BACK;
 
     Robot robot;
     TensorFlowObjectDetector propDetector;
@@ -61,14 +61,12 @@ public class TensorFlowAuto extends LinearOpMode
         robot = new Robot(hardwareMap);
 
         propDetector = new TensorFlowObjectDetector(hardwareMap);
-        ExposureControl exposureControl;
-        int exposure = 50;
-        telemetry.setMsTransmissionInterval(50); // default is 250
-
-        String status = "initializing";
+        ExposureControl exposureControl = null;
+        //int exposure = 50;
+        //telemetry.setMsTransmissionInterval(250); // was 50, default is 250
 
         // init loop - select alliance and side
-        while(opModeInInit()) {
+        while(!isStarted() && !isStopRequested()) {
             if((gamepad1.x) || gamepad2.x)
                 alliance = Alliance.BLUE;
             else if((gamepad1.b && !gamepad1.start) || (gamepad2.b && !gamepad2.start))
@@ -77,54 +75,48 @@ public class TensorFlowAuto extends LinearOpMode
                 side = Side.BACK;
             else if((gamepad1.a && !gamepad1.start) || (gamepad2.a && !gamepad2.start))
                 side = Side.FRONT;
-            else if(gamepad1.dpad_left || gamepad2.dpad_left)
-                propLocation = Location.LEFT;
-            else if(gamepad1.dpad_up || gamepad2.dpad_up)
-                propLocation = Location.CENTER;
-            else if(gamepad1.dpad_right || gamepad2.dpad_right)
-                propLocation = Location.RIGHT;
 
-            telemetry.addLine(initialized ? "Initialized" : String.format(Locale.ENGLISH, "Initializing... %.1f", 3 - time));
-            telemetry.addData("Status", status);
-            telemetry.addData("Runtime", "%.1f", time);
+            telemetry.addLine(initialized ? "Initialized" : String.format(Locale.ENGLISH, "Initializing... %.1f", 3 - getRuntime()));
+            telemetry.addData("Runtime", "%.1f", getRuntime());
             telemetry.addData("Camera init time", "%.2f", timeToCameraInit);
             telemetry.addLine(String.format("\nAlliance: %s (x = blue, b = red)", alliance));
             telemetry.addLine(String.format("Side: %s (a = front, y = back)", side));
-            telemetry.addData("\nTeam prop location", propLocation);
-            //telemetry.addLine();
+            telemetry.addData("\nProp location", initialized ? propLocation : null);
 
-            try {
-                exposureControl = propDetector.visionPortal.getCameraControl(ExposureControl.class);
-                exposureControl.setMode(ExposureControl.Mode.Manual);
-                exposureControl.setExposure(exposure, TimeUnit.MILLISECONDS);
-
-                if(!initialized)
+            if(!initialized) {
+                try {
+                    exposureControl = propDetector.visionPortal.getCameraControl(ExposureControl.class);
+                    //exposureControl.setMode(ExposureControl.Mode.Manual);
                     timeToCameraInit = time;
-                initialized = true;
-
-                //telemetry.addLine("camera initialized");
-                telemetry.addData("exposure (RT/LT)", exposureControl.getExposure(TimeUnit.MILLISECONDS));
-                if(gamepad1.right_trigger > 0)
+                    initialized = true;
+                } catch (Exception e) {
+                    telemetry.addLine("camera isn't initialized yet");
+                }
+            } else {
+                telemetry.addData("exposure", exposureControl.getExposure(TimeUnit.MILLISECONDS));
+                /* if(gamepad1.right_trigger > 0)
                     exposure++;
                 else if(gamepad1.left_trigger > 0)
                     exposure--;
+                exposureControl.setExposure(exposure, TimeUnit.MILLISECONDS); */
 
-                status = "updating prop location";
                 propDetector.update();
                 propLocation = propDetector.getLocation();
-            } catch(Exception e) {
-                telemetry.addLine("camera isn't initialized yet");
+                telemetry.addLine();
+                propDetector.telemetryAll(telemetry);
             }
 
-            telemetry.addLine();
-            propDetector.telemetryAll(telemetry);
             telemetry.update();
+            sleep(10);
         }
 
         // start of op mode
         propDetector.stopDetecting();
         telemetry.setMsTransmissionInterval(250);
-        ElapsedTime time = new ElapsedTime();
+
+        telemetry.addData("Started", "%s %s", alliance, side);
+        telemetry.addData("Prop location", propLocation);
+        telemetry.update();
 
         // trajectories
         Pose2d startPose, parkPose;
@@ -235,12 +227,10 @@ public class TensorFlowAuto extends LinearOpMode
 //            sleep(1000);
 //            i++;
 //        }
-        while(opModeIsActive());
+
         robot.drive.followTrajectorySequence(spikeMarkTraj);
-        robot.gripper1.upFully();
-        robot.intake.out();
+        robot.autoClaw.out();
         robot.drive.followTrajectorySequence(placePixel);
-        robot.intake.stop();
-        robot.drive.followTrajectory(park);
+//        robot.drive.followTrajectory(park);
     }
 }

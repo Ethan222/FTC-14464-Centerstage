@@ -14,8 +14,8 @@ import java.util.List;
 public class TensorFlowObjectDetector {
     private static final String MODEL_ASSET = "blue_red_prop_model_2.tflite";
     private static final String[] LABELS = { "blueProp", "redProp" };
-    private static final float MIN_CONFIDENCE = .5f;
-    private static final double LEFT_CENTER_DIVISION = 200;
+    private static final float MIN_CONFIDENCE = .6f;
+    private static final double CENTER_DIVISION = 350;
     private TfodProcessor tfod; // stores instance of TFOD processor
     public VisionPortal visionPortal; // stores instance of vision portal
     private Recognition mostConfidentRecognition, previousRecognition;
@@ -57,11 +57,11 @@ public class TensorFlowObjectDetector {
         if(recognition == null)
             return Location.LEFT;
 
-        double centerY = (recognition.getTop() + recognition.getBottom()) / 2;
-        if(centerY > LEFT_CENTER_DIVISION)
-            return Location.CENTER;
-        else
+        double centerX = (recognition.getLeft() + recognition.getRight()) / 2;
+        if(centerX > CENTER_DIVISION)
             return Location.RIGHT;
+        else
+            return Location.CENTER;
     }
     // sends info to telemetry about all found objects
     public void telemetryAll(Telemetry telemetry) {
