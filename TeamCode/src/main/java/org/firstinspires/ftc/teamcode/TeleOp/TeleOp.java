@@ -2,16 +2,19 @@ package org.firstinspires.ftc.teamcode.TeleOp;
 
 import android.annotation.SuppressLint;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.subsystems.Robot;
-
+@Config
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(group = "drive")
 public class TeleOp extends LinearOpMode {
     private static boolean singleDriverMode = false;
+    public static double SLOW_SPEED = .5;
     @SuppressLint("DefaultLocale")
     @Override
     public void runOpMode() throws InterruptedException {
@@ -21,23 +24,22 @@ public class TeleOp extends LinearOpMode {
         Robot robot = new Robot(hardwareMap);
         robot.drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        //Button x = new Button(), y = new Button();
-
-        int reverseDirection = -1;
+        int reverseDirection = 1;
         double speed = 1;
 
+        boolean usingEncoder = true;
+        ElapsedTime armTimer = new ElapsedTime();
+
         Gamepad gamepad;
-        while(opModeInInit()) {
+        while(opModeInInit() && !(gamepad1.start && gamepad1.back) && !(gamepad2.start && gamepad2.back)) {
             telemetry.addLine("Initialized");
-            telemetry.addData("Single driver mode", singleDriverMode);
+            telemetry.addData("Single driver mode (back + a/b)", singleDriverMode);
             telemetry.update();
 
             if(gamepad1.back && gamepad1.a)
                 singleDriverMode = true;
             else if((gamepad1.back && gamepad1.b) || (gamepad2.back && gamepad2.b))
                 singleDriverMode = false;
-            else if((gamepad1.start && gamepad1.x) || (gamepad2.start && gamepad2.x))
-                requestOpModeStop();
         }
 
         // as soon as it starts, lower intake
@@ -48,7 +50,7 @@ public class TeleOp extends LinearOpMode {
                     new Pose2d(
                             reverseDirection * speed * gamepad1.left_stick_y,
                             reverseDirection * speed * gamepad1.left_stick_x,
-                            speed * gamepad1.right_stick_x
+                            speed * -gamepad1.right_stick_x
                     )
             );
             robot.drive.update();
@@ -58,14 +60,14 @@ public class TeleOp extends LinearOpMode {
             else if(gamepad1.start && gamepad1.y)
                 reverseDirection = -1;
 
-            if(gamepad1.right_bumper && !singleDriverMode)
-                speed = .5;
+            if((!singleDriverMode && gamepad1.right_bumper) || gamepad1.start)
+                speed = SLOW_SPEED;
             else
                 speed = 1;
 
-            if((gamepad1.back && gamepad1.a) || (gamepad2.back && gamepad2.a))
+            if(gamepad1.back && gamepad1.a)
                 singleDriverMode = true;
-            else if((gamepad1.back && gamepad1.b) || (gamepad2.back && gamepad2.b))
+            else if(gamepad2.back && gamepad2.b)
                 singleDriverMode = false;
 
             if(singleDriverMode)
@@ -92,11 +94,13 @@ public class TeleOp extends LinearOpMode {
                 robot.intake.raise();
 
             // a/b and x/y control the 2 grippers
-            if(gamepad.a && !gamepad.start && !gamepad.back)
+            if(gamepad.a && !gamepad.start && !gamepad.back) {
                 robot.gripper1.downFully();
-            else if(gamepad.b && !gamepad.start && !gamepad.back)
+                reverseDirection = -1;
+            } else if(gamepad.b && !gamepad.start && !gamepad.back) {
                 robot.gripper1.upFully();
-            else if(gamepad.x && !gamepad.start && !gamepad.back)
+                reverseDirection = 1;
+            } else if(gamepad.x && !gamepad.start && !gamepad.back)
                 robot.gripper2.downFully();
             else if(gamepad.y && !gamepad.start && !gamepad.back)
                 robot.gripper2.upFully();
@@ -111,44 +115,35 @@ public class TeleOp extends LinearOpMode {
             else if(gamepad.dpad_left)
                 robot.rotator.retractFully();
 
-            // short press moves at half speed, after half a second it starts moving at full speed
-//            if(gamepad2.y || (singleDriverMode && gamepad1.y)) {
-//                y.down();
-//                if(y.getTimeDown() < 500) // short press
-//                    robot.rotator.rotate(.5); // just move a little bit (small adjustments)
-//                else // long press
-//                    robot.rotator.rotate(1); // move as fast as possible
-//            } else if(gamepad2.x || (singleDriverMode && gamepad1.x)) {
-//                x.down();
-//                if(x.getTimeDown() < 500)
-//                    robot.rotator.unrotate(.5);
-//                else
-//                    robot.rotator.unrotate(1);
-//            } else {
-//                x.up();
-//                y.up();
-//                robot.rotator.stop();
-//            }
+            // raise outtake
+            if(gamepad.dpad_up || gamepad.dpad_down)
+                usingEncoder = true;
+            else if(gamepad2.left_stick_y != 0)
+                usingEncoder = false;
 
-            // left stick y or d-pad up/down raises the outtake
-            if(gamepad2.left_stick_y != 0)
+            if(usingEncoder) {
+                if(gamepad.dpad_up) {
+                    robot.outtakeRaiser.goToPosition1(this);
+                    armTimer.reset();
+                } else if (gamepad.dpad_down) {
+                    robot.outtakeRaiser.goDown(this);
+                    armTimer.reset();
+                } else if (!robot.outtakeRaiser.isBusy() || armTimer.seconds() > 2)
+                    robot.outtakeRaiser.stop();
+            } else {
+                robot.outtakeRaiser.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                 robot.outtakeRaiser.setPower(-gamepad2.left_stick_y);
-            else if(gamepad.dpad_up)
-                robot.outtakeRaiser.up();
-            else if(gamepad.dpad_down)
-                robot.outtakeRaiser.down();
-            else
-                robot.outtakeRaiser.stop();
+            }
 
             // hang
-            if(!singleDriverMode || (singleDriverMode && gamepad1.back))
+            if(!singleDriverMode || gamepad1.back)
                 robot.hangMotor.setPower(-gamepad.right_stick_y);
 
             // auto claw
             if(gamepad.back && gamepad.y)
-                robot.autoClaw.outIncrementally();
+                robot.autoClaw.out();
             else if(gamepad.back && gamepad.x)
-                robot.autoClaw.inIncrementally();
+                robot.autoClaw.in();
 
             // gamepad1 a/b control launcher
 //            if(gamepad1.a && !singleDriverMode && !gamepad1.start && !gamepad1.back)
@@ -157,18 +152,18 @@ public class TeleOp extends LinearOpMode {
 //                robot.launcher.reset();
 
             telemetry.addData("Single driver mode (back + a/b)", singleDriverMode);
-            telemetry.addData("Reverse direction (start/back + y)", reverseDirection == 1);
-            telemetry.addData("Wheel speed", speed);
-            telemetry.addData("\nGamepad1 left_stick_y", gamepad1.left_stick_y);
-            telemetry.addData("Average wheel power", robot.drive.getAverageDriveMotorPower());
+            telemetry.addData("Reverse direction (start/back + y)", reverseDirection == -1);
+            telemetry.addData("Wheel speed (RB or start)", speed);
+//            telemetry.addData("\nGamepad1 left_stick_y", gamepad1.left_stick_y);
+//            telemetry.addData("Average wheel power", robot.drive.getAverageDriveMotorPower());
             telemetry.addData("\nIntake (triggers)", robot.intake.getPower());
             telemetry.addData(" raise/lower (bumpers)", "%s (%.2f)", robot.intake.getStatus(), robot.intake.lowerer.getPosition());
-            telemetry.addData("Gripper1 (a/b)", "%s (%.3f)", robot.gripper1.getStatus(), robot.gripper1.getPosition());
-            telemetry.addData("Gripper2 (x/y)", "%s (%.3f)", robot.gripper2.getStatus(), robot.gripper2.getPosition());
-            telemetry.addData("Rotator (d-pad L/R)", "%s (%.3f)", robot.rotator.getStatus(), robot.rotator.getPosition());
-            telemetry.addData("Raise outtake (left stick or d-pad U/D)", robot.outtakeRaiser.getPower());
+            telemetry.addData("Gripper1 (a/b)", "%s (%.2f)", robot.gripper1.getStatus(), robot.gripper1.getPosition());
+            telemetry.addData("Gripper2 (x/y)", "%s (%.2f)", robot.gripper2.getStatus(), robot.gripper2.getPosition());
+            telemetry.addData("Rotator (d-pad L/R)", "%s (%.2f)", robot.rotator.getStatus(), robot.rotator.getPosition());
+            telemetry.addData("Raise outtake (left stick or d-pad U/D)", "%s (%d)", robot.outtakeRaiser.getPower(), robot.outtakeRaiser.getPosition());
             telemetry.addData("Hang (right stick y)", robot.hangMotor.getPower());
-            telemetry.addData("Auto claw (back + x/y)", "%s (%.3f)", robot.autoClaw.getStatus(), robot.autoClaw.getPosition());
+            telemetry.addData("Auto claw (back + x/y)", "%s (%.2f)", robot.autoClaw.getStatus(), robot.autoClaw.getPosition());
 //            telemetry.addData("Launcher psn", "%.2f", robot.launcher.getPosition());
             telemetry.update();
         }
