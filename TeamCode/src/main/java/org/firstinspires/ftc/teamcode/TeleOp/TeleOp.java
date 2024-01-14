@@ -43,18 +43,20 @@ public class TeleOp extends LinearOpMode {
         // as soon as it starts, lower intake
         //robot.intake.lower();
 
-        while (opModeIsActive() && !(gamepad1.start && gamepad1.x) && !(gamepad2.start && gamepad2.x)) {
+        while (opModeIsActive() && !(gamepad1.start && gamepad1.back) && !(gamepad2.start && gamepad2.back)) {
             robot.drive.setWeightedDrivePower(
                     new Pose2d(
                             reverseDirection * speed * gamepad1.left_stick_y,
                             reverseDirection * speed * gamepad1.left_stick_x,
-                            reverseDirection * speed * gamepad1.right_stick_x
+                            speed * gamepad1.right_stick_x
                     )
             );
             robot.drive.update();
 
-            if(gamepad1.start && gamepad1.y)
-                reverseDirection *= -1;
+            if(gamepad1.start && gamepad1.x)
+                reverseDirection = 1;
+            else if(gamepad1.start && gamepad1.y)
+                reverseDirection = -1;
 
             if(gamepad1.right_bumper && !singleDriverMode)
                 speed = .5;
@@ -155,7 +157,8 @@ public class TeleOp extends LinearOpMode {
 //                robot.launcher.reset();
 
             telemetry.addData("Single driver mode (back + a/b)", singleDriverMode);
-            telemetry.addData("Reverse direction (start + y)", reverseDirection == 1);
+            telemetry.addData("Reverse direction (start/back + y)", reverseDirection == 1);
+            telemetry.addData("Wheel speed", speed);
             telemetry.addData("\nGamepad1 left_stick_y", gamepad1.left_stick_y);
             telemetry.addData("Average wheel power", robot.drive.getAverageDriveMotorPower());
             telemetry.addData("\nIntake (triggers)", robot.intake.getPower());
