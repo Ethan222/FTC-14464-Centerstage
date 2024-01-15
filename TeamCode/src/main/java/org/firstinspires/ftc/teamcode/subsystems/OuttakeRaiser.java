@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 // controls the motor that raises the outtake
 public class OuttakeRaiser extends Motor { // inherits from the Motor parent class
-    private static final int POSITION_1 = 850;
+    private static final int POSITION_1 = 650, POSITION_2 = 900;
     public OuttakeRaiser(HardwareMap hardwareMap, String name) // constructor
     {
         super(hardwareMap, name);       // calls parent constructor

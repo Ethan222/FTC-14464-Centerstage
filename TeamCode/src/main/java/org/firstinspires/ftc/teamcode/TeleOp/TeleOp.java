@@ -117,9 +117,9 @@ public class TeleOp extends LinearOpMode {
                 robot.rotator.retractFully();
 
             // raise outtake
-            if(gamepad.dpad_up || gamepad.dpad_down)
+            if((gamepad.dpad_up && !gamepad.back) || (gamepad.dpad_down && !gamepad.back))
                 usingEncoder = true;
-            else if(gamepad2.left_stick_y != 0)
+            else if(gamepad2.left_stick_y != 0 || gamepad.dpad_up || gamepad.dpad_down)
                 usingEncoder = false;
 
             if(usingEncoder) {
@@ -133,7 +133,12 @@ public class TeleOp extends LinearOpMode {
                     robot.outtakeRaiser.stop();
             } else {
                 robot.outtakeRaiser.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                robot.outtakeRaiser.setPower(-gamepad2.left_stick_y);
+                if(gamepad.dpad_up)
+                    robot.outtakeRaiser.up();
+                else if(gamepad.dpad_down)
+                    robot.outtakeRaiser.down();
+                else
+                    robot.outtakeRaiser.setPower(-gamepad2.left_stick_y);
             }
 
             // hang
