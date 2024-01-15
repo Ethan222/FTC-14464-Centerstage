@@ -18,7 +18,7 @@ public class Robot {
         intake = new Intake(hardwareMap, "intake", "servo4");
         gripper1 = new Gripper(hardwareMap, "servo1", .39, .64);
         gripper2 = new Gripper(hardwareMap, "servo2", .7, 1);
-        rotator = new Rotator(hardwareMap, "servo0", .52, .09);
+        rotator = new Rotator(hardwareMap, "servo0", .52, .14);
         outtakeRaiser = new OuttakeRaiser(hardwareMap, "armMotor");
         hangMotor = new HangMotor(hardwareMap, "hangMotor");
         autoClaw = new AutoClaw(hardwareMap, "servo3", .06, .54);

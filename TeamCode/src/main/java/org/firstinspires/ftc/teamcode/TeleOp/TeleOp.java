@@ -24,7 +24,7 @@ public class TeleOp extends LinearOpMode {
         Robot robot = new Robot(hardwareMap);
         robot.drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        int reverseDirection = 1;
+        int direction = 1;
         double speed = 1;
 
         boolean usingEncoder = true;
@@ -48,24 +48,25 @@ public class TeleOp extends LinearOpMode {
         while (opModeIsActive() && !(gamepad1.start && gamepad1.back) && !(gamepad2.start && gamepad2.back)) {
             robot.drive.setWeightedDrivePower(
                     new Pose2d(
-                            reverseDirection * speed * gamepad1.left_stick_y,
-                            reverseDirection * speed * gamepad1.left_stick_x,
+                            direction * speed * gamepad1.left_stick_y,
+                            direction * speed * gamepad1.left_stick_x,
                             speed * -gamepad1.right_stick_x
                     )
             );
             robot.drive.update();
 
-            if(gamepad1.start && gamepad1.x)
-                reverseDirection = 1;
-            else if(gamepad1.start && gamepad1.y)
-                reverseDirection = -1;
+            // reverse direction
+            if((!singleDriverMode && gamepad1.left_trigger > .1) || (gamepad1.start && gamepad1.y))
+                direction = -1;
+            else if((!singleDriverMode && gamepad1.right_trigger > .1) || (gamepad1.start && gamepad1.x))
+                direction = 1;
 
             if((!singleDriverMode && gamepad1.right_bumper) || gamepad1.start)
                 speed = SLOW_SPEED;
             else
                 speed = 1;
 
-            if(gamepad1.back && gamepad1.a)
+            if((gamepad1.back && gamepad1.a) || (gamepad2.back && gamepad2.a))
                 singleDriverMode = true;
             else if((gamepad1.back && gamepad1.b) || (gamepad2.back && gamepad2.b))
                 singleDriverMode = false;
@@ -96,10 +97,10 @@ public class TeleOp extends LinearOpMode {
             // a/b and x/y control the 2 grippers
             if(gamepad.a && !gamepad.start && !gamepad.back) {
                 robot.gripper1.downFully();
-                reverseDirection = -1;
+                direction = -1;
             } else if(gamepad.b && !gamepad.start && !gamepad.back) {
                 robot.gripper1.upFully();
-                reverseDirection = 1;
+                direction = 1;
             } else if(gamepad.x && !gamepad.start && !gamepad.back)
                 robot.gripper2.downFully();
             else if(gamepad.y && !gamepad.start && !gamepad.back)
@@ -152,16 +153,16 @@ public class TeleOp extends LinearOpMode {
 //                robot.launcher.reset();
 
             telemetry.addData("Single driver mode (back + a/b)", singleDriverMode);
-            telemetry.addData("Reverse direction (start/back + y)", reverseDirection == -1);
-            telemetry.addData("Wheel speed (RB or start)", speed);
+            telemetry.addData("Direction (RT/LT)", direction == 1 ? "forward (intake)" : "reverse (outtake)");
+            telemetry.addData("Wheel speed (RB)", speed);
 //            telemetry.addData("\nGamepad1 left_stick_y", gamepad1.left_stick_y);
 //            telemetry.addData("Average wheel power", robot.drive.getAverageDriveMotorPower());
             telemetry.addData("\nIntake (triggers)", robot.intake.getPower());
-            telemetry.addData(" raise/lower (bumpers)", "%s (%.2f)", robot.intake.getStatus(), robot.intake.lowerer.getPosition());
-            telemetry.addData("Gripper1 (a/b)", "%s (%.2f)", robot.gripper1.getStatus(), robot.gripper1.getPosition());
-            telemetry.addData("Gripper2 (x/y)", "%s (%.2f)", robot.gripper2.getStatus(), robot.gripper2.getPosition());
+            telemetry.addData("   raise/lower (bumpers)", "%s (%.2f)", robot.intake.getStatus(), robot.intake.lowerer.getPosition());
+            telemetry.addData("Claw 1 (a/b)", "%s (%.2f)", robot.gripper1.getStatus(), robot.gripper1.getPosition());
+            telemetry.addData("Claw 2 (x/y)", "%s (%.2f)", robot.gripper2.getStatus(), robot.gripper2.getPosition());
             telemetry.addData("Rotator (d-pad L/R)", "%s (%.2f)", robot.rotator.getStatus(), robot.rotator.getPosition());
-            telemetry.addData("Raise outtake (left stick or d-pad U/D)", "%s (%d)", robot.outtakeRaiser.getPower(), robot.outtakeRaiser.getPosition());
+            telemetry.addData("Raise outtake (d-pad U/D or left stick)", "%s (%d)", robot.outtakeRaiser.getPower(), robot.outtakeRaiser.getPosition());
             telemetry.addData("Hang (right stick y)", robot.hangMotor.getPower());
             telemetry.addData("Auto claw (back + x/y)", "%s (%.2f)", robot.autoClaw.getStatus(), robot.autoClaw.getPosition());
 //            telemetry.addData("Launcher psn", "%.2f", robot.launcher.getPosition());
