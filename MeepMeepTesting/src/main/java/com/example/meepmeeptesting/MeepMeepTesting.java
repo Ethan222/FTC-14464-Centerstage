@@ -2,8 +2,6 @@ package com.example.meepmeeptesting;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
-import com.acmerobotics.roadrunner.trajectory.Trajectory;
-import com.acmerobotics.roadrunner.trajectory.constraints.TrajectoryVelocityConstraint;
 import com.noahbres.meepmeep.MeepMeep;
 import com.noahbres.meepmeep.core.colorscheme.scheme.ColorSchemeBlueLight;
 import com.noahbres.meepmeep.core.colorscheme.scheme.ColorSchemeRedDark;
@@ -11,18 +9,18 @@ import com.noahbres.meepmeep.roadrunner.DefaultBotBuilder;
 import com.noahbres.meepmeep.roadrunner.SampleMecanumDrive;
 import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 
-import org.jetbrains.annotations.NotNull;
-
 public class MeepMeepTesting {
     public static void main(String[] args) {
         MeepMeep meepMeep = new MeepMeep(600);
 
         double waitTime = 1;
-        double spikeMarkBackDistance = 15, backdropBackDistance = 8;
+        double spikeMarkBackDistance = 5, backdropBackDistance = 4;
         double slowSpeed = 5;
 
         // blue
         Pose2d blueBackdrop = new Pose2d(44, 37, 0);
+        Pose2d blueStack = new Pose2d(-63, 23, 0);
+        Vector2d blueGate = new Vector2d(-6, 14);
 
         // blue back
         Pose2d blueBackStart = new Pose2d(12, 62.5, -Math.PI / 2);
@@ -41,6 +39,18 @@ public class MeepMeepTesting {
                                         SampleMecanumDrive.getVelocityConstraint(slowSpeed, Math.PI, 15),
                                         SampleMecanumDrive.getAccelerationConstraint(60))
                                 .waitSeconds(waitTime)
+                                .back(backdropBackDistance)
+                                .splineTo(blueGate, Math.PI)
+                                .splineToSplineHeading(blueStack, Math.PI)
+                                .back(5,
+                                        SampleMecanumDrive.getVelocityConstraint(slowSpeed, Math.PI, 15),
+                                        SampleMecanumDrive.getAccelerationConstraint(60))
+                                .waitSeconds(waitTime)
+                                .splineTo(blueGate, 0)
+                                .splineToSplineHeading(blueBackdrop, 0)
+                                .forward(5,
+                                        SampleMecanumDrive.getVelocityConstraint(slowSpeed, Math.PI, 15),
+                                        SampleMecanumDrive.getAccelerationConstraint(60))
                                 .back(backdropBackDistance)
                                 .splineToLinearHeading(blueBackPark, blueBackPark.getHeading())
                                 .build()
@@ -77,9 +87,6 @@ public class MeepMeepTesting {
 
         // blue front
         Pose2d blueFrontStart = new Pose2d(-36, 62, -Math.PI / 2);
-        Pose2d blueStack = new Pose2d(-63, 23, 0);
-        Pose2d blueWait = new Pose2d(-36, 14, 0);
-        Vector2d blueEnRouteToBackdrop = new Vector2d(10, 14);
         Pose2d blueFrontPark = new Pose2d(56, 14, 0);
 
         RoadRunnerBotEntity blueFrontLeft = new DefaultBotBuilder(meepMeep)
@@ -93,9 +100,8 @@ public class MeepMeepTesting {
                                 .back(spikeMarkBackDistance)
                                 .splineToSplineHeading(blueStack, Math.PI)
                                 .waitSeconds(waitTime)
-                                .splineToSplineHeading(blueWait, blueWait.getHeading())
+                                .splineTo(blueGate, 0)
                                 .waitSeconds(waitTime)
-                                .lineTo(blueEnRouteToBackdrop)
                                 .splineToSplineHeading(blueBackdrop, blueBackdrop.getHeading())
                                 .forward(5,
                                         SampleMecanumDrive.getVelocityConstraint(slowSpeed, Math.PI, 15),
@@ -112,8 +118,7 @@ public class MeepMeepTesting {
                                 .splineToSplineHeading(new Pose2d(-15, 21, -Math.PI / 2), -Math.PI / 2)
                                 .waitSeconds(waitTime)
                                 .back(spikeMarkBackDistance)
-                                .splineToSplineHeading(blueWait, blueWait.getHeading())
-                                .lineTo(blueEnRouteToBackdrop)
+                                .splineTo(blueGate, 0)
                                 .splineToSplineHeading(blueBackdrop, blueBackdrop.getHeading())
                                 .waitSeconds(waitTime)
                                 .splineToSplineHeading(blueFrontPark, blueFrontPark.getHeading())
@@ -121,13 +126,15 @@ public class MeepMeepTesting {
                 );
         RoadRunnerBotEntity blueFrontRight = new DefaultBotBuilder(meepMeep)
                 .setColorScheme(new ColorSchemeBlueLight())
+                .setConstraints(30, 60, Math.toRadians(180), Math.toRadians(180), 15)
                 .followTrajectorySequence(drive ->
                         drive.trajectorySequenceBuilder(blueFrontStart)
-                                .splineToSplineHeading(new Pose2d(-24, 31, -Math.PI / 2), -Math.PI / 2)
+                                .splineToSplineHeading(new Pose2d(-45, 27, Math.PI), -Math.PI / 2)
                                 .waitSeconds(waitTime)
                                 .back(spikeMarkBackDistance)
-                                .splineToSplineHeading(blueWait, blueWait.getHeading())
-                                .lineTo(blueEnRouteToBackdrop)
+                                .lineTo(blueGate.plus(new Vector2d(-10, 0)))
+                                .splineTo(blueGate.plus(new Vector2d(10, 0)), 0)
+                                .waitSeconds(waitTime)
                                 .splineToSplineHeading(blueBackdrop, blueBackdrop.getHeading())
                                 .waitSeconds(waitTime)
                                 .splineToSplineHeading(blueFrontPark, blueFrontPark.getHeading())
@@ -136,6 +143,8 @@ public class MeepMeepTesting {
 
         // red
         Pose2d redBackdrop = new Pose2d(44, -35, 0);
+        Pose2d redStack = new Pose2d(-58, -35, 0);
+        Vector2d redGate = new Vector2d(-6, -11);
 
         // red back
         Pose2d redBackStart = new Pose2d(12, -61, Math.PI / 2);
@@ -187,9 +196,6 @@ public class MeepMeepTesting {
 
         // red front
         Pose2d redFrontStart = new Pose2d(-36, -61, Math.PI / 2);
-        Pose2d redStack = new Pose2d(-58, -35, 0);
-        Pose2d redWait = new Pose2d(-36, -11, 0);
-        Vector2d redEnRouteToBackdrop = new Vector2d(10, -11);
         Pose2d redFrontPark = new Pose2d(60, -11, 0);
 
         RoadRunnerBotEntity redFrontLeft = new DefaultBotBuilder(meepMeep)
@@ -202,9 +208,8 @@ public class MeepMeepTesting {
                                 .back(spikeMarkBackDistance)
                                 .splineToSplineHeading(redStack, Math.PI)
                                 .waitSeconds(waitTime)
-                                .splineToSplineHeading(redWait, redWait.getHeading())
+                                .splineTo(redGate, 0)
                                 .waitSeconds(waitTime)
-                                .lineTo(redEnRouteToBackdrop)
                                 .splineToSplineHeading(redBackdrop, redBackdrop.getHeading())
                                 .forward(5,
                                         SampleMecanumDrive.getVelocityConstraint(slowSpeed, Math.PI, 15),
@@ -222,8 +227,7 @@ public class MeepMeepTesting {
                                 .splineToSplineHeading(new Pose2d(-28, -30, Math.PI / 2), Math.PI / 2)
                                 .waitSeconds(waitTime)
                                 .back(spikeMarkBackDistance)
-                                .splineToSplineHeading(redWait, redWait.getHeading())
-                                .lineTo(redEnRouteToBackdrop)
+                                .splineTo(redGate, 0)
                                 .splineToSplineHeading(redBackdrop, redBackdrop.getHeading())
                                 .waitSeconds(waitTime)
                                 .splineToSplineHeading(redFrontPark, redFrontPark.getHeading())
@@ -238,8 +242,7 @@ public class MeepMeepTesting {
                                 .splineToSplineHeading(new Pose2d(-36, -35, 0), 0)
                                 .waitSeconds(waitTime)
                                 .back(spikeMarkBackDistance)
-                                .splineToSplineHeading(redWait, redWait.getHeading())
-                                .lineTo(redEnRouteToBackdrop)
+                                .splineTo(redGate, 0)
                                 .splineToSplineHeading(redBackdrop, redBackdrop.getHeading())
                                 .waitSeconds(waitTime)
                                 .splineToSplineHeading(redFrontPark, redFrontPark.getHeading())
@@ -249,10 +252,10 @@ public class MeepMeepTesting {
         meepMeep.setBackground(MeepMeep.Background.FIELD_CENTERSTAGE_JUICE_DARK)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
-                .addEntity(blueBackLeft)
-                .addEntity(blueFrontLeft)
-                .addEntity(redBackLeft)
-                .addEntity(redFrontLeft)
+//                .addEntity(blueBackLeft)
+                .addEntity(blueFrontRight)
+//                .addEntity(redBackLeft)
+//                .addEntity(redFrontLeft)
                 .start();
     }
 }

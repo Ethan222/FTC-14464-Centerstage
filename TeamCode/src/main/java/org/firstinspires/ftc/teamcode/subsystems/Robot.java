@@ -18,10 +18,10 @@ public class Robot {
         intake = new Intake(hardwareMap, "intake", "servo4");
         claw1 = new Claw(hardwareMap, "servo1", .39, .64);
         claw2 = new Claw(hardwareMap, "servo2", .7, 1);
-        rotator = new Rotator(hardwareMap, "servo0", .52, .08);
+        rotator = new Rotator(hardwareMap, "servo0", .52, .09);
         outtakeRaiser = new OuttakeRaiser(hardwareMap, "armMotor");
         hangMotor = new HangMotor(hardwareMap, "hangMotor");
-        autoClaw = new AutoClaw(hardwareMap, "servo3", .06, .54);
+        autoClaw = new AutoClaw(hardwareMap, "servo3", .06, .35);
 //        launcher = new DroneLauncher(hardwareMap, "servo5");
     }
 }

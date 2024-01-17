@@ -56,9 +56,9 @@ public class TeleOp extends LinearOpMode {
             robot.drive.update();
 
             // reverse direction
-            if((!singleDriverMode && gamepad1.left_trigger > .1) || (gamepad1.start && gamepad1.y))
+            if((!singleDriverMode && gamepad1.left_trigger > .1) || (gamepad1.back && gamepad1.left_trigger > .1))
                 direction = -1;
-            else if((!singleDriverMode && gamepad1.right_trigger > .1) || (gamepad1.start && gamepad1.x))
+            else if((!singleDriverMode && gamepad1.right_trigger > .1) || (gamepad1.back && gamepad1.right_trigger > .1))
                 direction = 1;
 
             if((!singleDriverMode && gamepad1.right_bumper) || gamepad1.start)
@@ -77,9 +77,9 @@ public class TeleOp extends LinearOpMode {
                 gamepad = gamepad2;
 
             // use the triggers to control the intake - right trigger intakes, left trigger outtakes
-            if(gamepad.right_trigger > 0)
+            if(gamepad.right_trigger > 0 && !gamepad.back)
                 robot.intake.in(gamepad.right_trigger);
-            else if(gamepad.left_trigger > 0)
+            else if(gamepad.left_trigger > 0 && !gamepad.back)
                 robot.intake.out(gamepad.left_trigger);
             else
                 robot.intake.stop();
@@ -122,9 +122,13 @@ public class TeleOp extends LinearOpMode {
             else if(gamepad2.left_stick_y != 0 || gamepad.dpad_up || gamepad.dpad_down)
                 usingEncoder = false;
 
-            if(usingEncoder) {
-                if(gamepad.dpad_up) {
-                    robot.outtakeRaiser.goToPosition1(this);
+            if (usingEncoder) {
+                if (gamepad.start && gamepad.dpad_up)
+                    robot.outtakeRaiser.setUpPosition();
+                else if (gamepad.start && gamepad.dpad_down)
+                    robot.outtakeRaiser.setDownPosition();
+                else if (gamepad.dpad_up) {
+                    robot.outtakeRaiser.goToUpPosition(this);
                     armTimer.reset();
                 } else if (gamepad.dpad_down) {
                     robot.outtakeRaiser.goDown(this);

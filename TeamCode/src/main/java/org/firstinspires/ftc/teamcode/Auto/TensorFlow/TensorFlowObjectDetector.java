@@ -35,12 +35,20 @@ public class TensorFlowObjectDetector {
 
         if(recognitions.size() != 0) {
             mostConfidentRecognition = recognitions.get(0);
-            float maxConfidence = mostConfidentRecognition.getConfidence();
-            for (Recognition recognition : recognitions) {
-                if (recognition.getConfidence() > maxConfidence)
-                    mostConfidentRecognition = recognition;
+            if(mostConfidentRecognition.getWidth() > 300 || mostConfidentRecognition.getHeight() > 300) { // if invalid
+                if(recognitions.size() > 1) { // set to next one if possible
+                    mostConfidentRecognition = recognitions.get(1);
+                } else // if no others set to null
+                    mostConfidentRecognition = null;
             }
-            previousRecognition = mostConfidentRecognition;
+            if(mostConfidentRecognition != null) { // if not null must be valid
+                float maxConfidence = mostConfidentRecognition.getConfidence();
+                for (Recognition recognition : recognitions) {
+                    if (recognition.getConfidence() > maxConfidence && recognition.getWidth() < 300 && recognition.getHeight() < 300)
+                        mostConfidentRecognition = recognition;
+                }
+                previousRecognition = mostConfidentRecognition;
+            }
         } else {
             mostConfidentRecognition = null;
         }
@@ -95,7 +103,10 @@ public class TensorFlowObjectDetector {
 
         telemetry.addLine(String.format("%s found (%.0f %% conf.)", recognition.getLabel(), recognition.getConfidence() * 100));
         telemetry.addData("- Position", "%s (%.0f, %.0f)", getLocation(recognition), x, y);
-        telemetry.addData("- Size", "%.0f x %.0f", recognition.getWidth(), recognition.getHeight());
+        String sizeLine = String.format("- Size: %.0f x %.0f", recognition.getWidth(), recognition.getHeight());
+        if(recognition.getWidth() > 300 || recognition.getHeight() > 300)
+            sizeLine += " (too big)";
+        telemetry.addLine(sizeLine);
     }
     public void stopDetecting() { // save CPU resources when camera is no longer needed
         visionPortal.close();

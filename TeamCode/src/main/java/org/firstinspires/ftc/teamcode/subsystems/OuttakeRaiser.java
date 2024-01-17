@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 // controls the motor that raises the outtake
 public class OuttakeRaiser extends Motor { // inherits from the Motor parent class
-    private static final int POSITION_1 = 650, POSITION_2 = 900;
+    private static int downPosition = 10, upPosition = 580;
     public OuttakeRaiser(HardwareMap hardwareMap, String name) // constructor
     {
         super(hardwareMap, name);       // calls parent constructor
@@ -36,13 +36,19 @@ public class OuttakeRaiser extends Motor { // inherits from the Motor parent cla
         else
             down();
     }
-    public void goToPosition1(LinearOpMode opMode) {
-        goToPosition(opMode, POSITION_1);
+    public void goToUpPosition(LinearOpMode opMode) {
+        goToPosition(opMode, upPosition);
     }
     public void goDown(LinearOpMode opMode) {
-        goToPosition(opMode, 10);
+        goToPosition(opMode, downPosition);
     }
     public boolean isBusy() {
         return motor.isBusy();
+    }
+    public void setDownPosition() {
+        downPosition = getPosition();
+    }
+    public void setUpPosition() {
+        upPosition = getPosition();
     }
 }
