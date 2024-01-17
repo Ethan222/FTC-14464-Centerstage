@@ -7,7 +7,7 @@ import org.firstinspires.ftc.teamcode.Auto.roadrunner.drive.SampleMecanumDrive;
 public class Robot {
     public SampleMecanumDrive drive;
     public Intake intake;
-    public Gripper gripper1, gripper2;
+    public Claw claw1, claw2;
     public Rotator rotator;
     public OuttakeRaiser outtakeRaiser;
     public HangMotor hangMotor;
@@ -16,8 +16,8 @@ public class Robot {
     public Robot(HardwareMap hardwareMap) {
         drive = new SampleMecanumDrive(hardwareMap);
         intake = new Intake(hardwareMap, "intake", "servo4");
-        gripper1 = new Gripper(hardwareMap, "servo1", .39, .64);
-        gripper2 = new Gripper(hardwareMap, "servo2", .7, 1);
+        claw1 = new Claw(hardwareMap, "servo1", .39, .64);
+        claw2 = new Claw(hardwareMap, "servo2", .7, 1);
         rotator = new Rotator(hardwareMap, "servo0", .52, .08);
         outtakeRaiser = new OuttakeRaiser(hardwareMap, "armMotor");
         hangMotor = new HangMotor(hardwareMap, "hangMotor");

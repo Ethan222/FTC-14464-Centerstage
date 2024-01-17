@@ -189,7 +189,7 @@ public class BackdropAuto extends LinearOpMode
         while(time.milliseconds() < 700 && opModeIsActive());
         robot.outtakeRaiser.stop();
 
-        robot.gripper1.upFully();
+        robot.claw1.up();
         time.reset();
         while(time.milliseconds() < 1900 && opModeIsActive());
 

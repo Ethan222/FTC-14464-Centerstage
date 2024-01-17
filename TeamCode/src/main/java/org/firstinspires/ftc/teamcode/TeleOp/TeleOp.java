@@ -94,17 +94,17 @@ public class TeleOp extends LinearOpMode {
             else if(gamepad.left_bumper)
                 robot.intake.raise();
 
-            // a/b and x/y control the 2 grippers
+            // a/b and x/y control the 2 claws
             if(gamepad.a && !gamepad.start && !gamepad.back) {
-                robot.gripper1.downFully();
+                robot.claw1.down();
                 direction = -1;
             } else if(gamepad.b && !gamepad.start && !gamepad.back) {
-                robot.gripper1.upFully();
+                robot.claw1.up();
                 direction = 1;
             } else if(gamepad.x && !gamepad.start && !gamepad.back)
-                robot.gripper2.downFully();
+                robot.claw2.down();
             else if(gamepad.y && !gamepad.start && !gamepad.back)
-                robot.gripper2.upFully();
+                robot.claw2.up();
 
             // left/right on d-pad rotate
             if(gamepad.dpad_right && gamepad.back)
@@ -164,8 +164,8 @@ public class TeleOp extends LinearOpMode {
 //            telemetry.addData("Average wheel power", robot.drive.getAverageDriveMotorPower());
             telemetry.addData("\nIntake (triggers)", robot.intake.getPower());
             telemetry.addData("   raise/lower (bumpers)", "%s (%.2f)", robot.intake.getStatus(), robot.intake.lowerer.getPosition());
-            telemetry.addData("Claw 1 (a/b)", "%s (%.2f)", robot.gripper1.getStatus(), robot.gripper1.getPosition());
-            telemetry.addData("Claw 2 (x/y)", "%s (%.2f)", robot.gripper2.getStatus(), robot.gripper2.getPosition());
+            telemetry.addData("Claw 1 (a/b)", "%s (%.2f)", robot.claw1.getStatus(), robot.claw1.getPosition());
+            telemetry.addData("Claw 2 (x/y)", "%s (%.2f)", robot.claw2.getStatus(), robot.claw2.getPosition());
             telemetry.addData("Rotator (d-pad L/R)", "%s (%.2f)", robot.rotator.getStatus(), robot.rotator.getPosition());
             telemetry.addData("Raise outtake (d-pad U/D or left stick)", "%s (%d)", robot.outtakeRaiser.getPower(), robot.outtakeRaiser.getPosition());
             telemetry.addData("Hang (right stick y)", robot.hangMotor.getPower());

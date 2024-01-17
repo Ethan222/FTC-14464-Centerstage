@@ -29,6 +29,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
 import org.firstinspires.ftc.teamcode.Auto.Alliance;
 import org.firstinspires.ftc.teamcode.Auto.Location;
+import org.firstinspires.ftc.teamcode.Auto.roadrunner.drive.DriveConstants;
+import org.firstinspires.ftc.teamcode.Auto.roadrunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.Auto.roadrunner.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.subsystems.Robot;
 
@@ -44,6 +46,7 @@ public class TensorFlowAuto extends LinearOpMode
 
     private static Alliance alliance = Alliance.RED;
     private static Side side = Side.FRONT;
+    private static boolean simple = false;
 
     Robot robot;
     TensorFlowObjectDetector propDetector;
@@ -81,6 +84,10 @@ public class TensorFlowAuto extends LinearOpMode
                 propLocationOverride = false;
             else if ((gamepad1.start && gamepad1.back) || (gamepad2.start && gamepad2.back))
                 requestOpModeStop();
+            else if(gamepad1.right_bumper || gamepad2.right_bumper)
+                simple = true;
+            else if(gamepad1.left_bumper || gamepad2.left_bumper)
+                simple = false;
 
             if (propLocationOverride) {
                 if (gamepad1.dpad_left || gamepad2.dpad_left)
@@ -94,8 +101,10 @@ public class TensorFlowAuto extends LinearOpMode
             telemetry.addLine(initialized ? "Initialized" : String.format(Locale.ENGLISH, "Initializing... %.1f", 3 - getRuntime()));
             telemetry.addData("Runtime", "%.1f", getRuntime());
             telemetry.addData("Camera init time", "%.2f", timeToCameraInit);
-            telemetry.addLine(String.format("\nAlliance: %s (x = blue, b = red)", alliance));
-            telemetry.addLine(String.format("Side: %s (a = front, y = back)", side));
+            telemetry.addData("\nAlliance", "%s (x = blue, b = red)", alliance);
+            telemetry.addData("Side", "%s (a = front, y = back)", side);
+            if(simple)
+                telemetry.addData("Simple", simple);
             if (propLocationOverride)
                 telemetry.addData("\nProp location", "%s (override)", propLocation);
             else
@@ -130,6 +139,10 @@ public class TensorFlowAuto extends LinearOpMode
         }
 
         // start of op mode
+
+        if(!opModeIsActive())
+            return;
+
         try {
             propDetector.stopDetecting();
         } catch (Exception e) {
@@ -137,178 +150,213 @@ public class TensorFlowAuto extends LinearOpMode
         }
         //telemetry.setMsTransmissionInterval(250);
 
-        String run = String.format("Running %s %s, prop location = %s", alliance, side, propLocation);
+        String run = String.format("Running %s %s %s, prop location = %s", alliance, side, simple ? "simple" : "", propLocation);
         telemetry.addLine(run);
         telemetry.update();
 
         // trajectories
-        Pose2d startPose, backdropPose = null, waitPose = null, parkPose;
+        Pose2d startPose = null, backdropPose = null, stackPose = null, waitPose = null, parkPose = null;
         Vector2d enRouteToBackdrop = null;
-        TrajectorySequence spikeMarkTraj = null, toBackdrop, parkTraj;
-        double spikeMarkbackDistance = 15, backdropBackDistance = 8;
+        TrajectorySequence spikeMarkTraj = null, toBackdrop = null, parkTraj = null;
+        double spikeMarkBackDistance = 15, backdropBackDistance = 8;
+        double slowSpeed = 15;
 
-        if (alliance == Alliance.BLUE) {
-            double backdropY = 0;
-            switch(propLocation) {
-                case LEFT:
-                    backdropY = 46;
-                    break;
-                case CENTER:
-                    backdropY = 39;
-                    break;
-                case RIGHT:
-                    backdropY = 23;
-            }
-            backdropPose = new Pose2d(50, backdropY, 0);
-            if (side == Side.BACK) {
-                // BLUE BACK (left)
-                startPose = new Pose2d(12, 62.5, -Math.PI / 2);
-                switch (propLocation) {
+        // backdrop coords
+        double backdropY = 0;
+        switch (alliance) {
+            case BLUE:
+                switch(propLocation) {
                     case LEFT:
-                        spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                                .splineToLinearHeading(new Pose2d(22, 40, -Math.PI / 2), -Math.PI / 2)
-                                .build();
+                        backdropY = 46;
                         break;
                     case CENTER:
-                        spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                                .splineToLinearHeading(new Pose2d(15, 34, -Math.PI / 2), -Math.PI / 2)
-                                .build();
+                        backdropY = 39;
                         break;
                     case RIGHT:
-                        spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                                .splineToLinearHeading(new Pose2d(20, 39, -3 * Math.PI / 4), -3 * Math.PI / 4)
-                                .splineToLinearHeading(new Pose2d(11, 32, Math.PI), Math.PI)
-                                .build();
+                        backdropY = 23;
                 }
-                parkPose = new Pose2d(64, propLocation == Location.RIGHT ? 65 : 68, 0);
-            } else {
-                // BLUE FRONT (right)
-                startPose = new Pose2d(-36, 62, -Math.PI / 2);
-                waitPose = new Pose2d(-36, 14, 0);
-                enRouteToBackdrop = new Vector2d(10, 14);
-                parkPose = new Pose2d(56, 14, 0);
-                switch (propLocation) {
+                backdropPose = new Pose2d(46, backdropY, 0);
+                break;
+            case RED:
+                switch(propLocation) {
                     case LEFT:
-                        spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                                .splineToLinearHeading(new Pose2d(-20, 39, -Math.PI / 4), -Math.PI / 4)
-                                .splineToLinearHeading(new Pose2d(0, 30, 0), 0)
-                                .build();
+                        backdropY = -35;
                         break;
                     case CENTER:
-                        spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                                .splineToLinearHeading(new Pose2d(-15, 21, -Math.PI / 2), -Math.PI / 2)
-                                .build();
+                        backdropY = -40;
                         break;
                     case RIGHT:
-                        spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                                .splineToLinearHeading(new Pose2d(-24, 31, -Math.PI / 2), -Math.PI / 2)
-                                .build();
+                        backdropY = -45;
                 }
-            }
-        } else {
-            // red
-            double backdropY = 0;
-            switch(propLocation) {
-                case LEFT:
-                    backdropY = -35;
-                    break;
-                case CENTER:
-                    backdropY = -40;
-                    break;
-                case RIGHT:
-                    backdropY = -45;
-            }
-            backdropPose = new Pose2d(51, backdropY, 0);
-            if (side == Side.BACK) {
-                // RED BACK (right)
-                startPose = new Pose2d(12, -61, Math.PI / 2);
-                parkPose = new Pose2d(56, -61, 0);
-                switch (propLocation) {
-                    case LEFT:
-                        spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                                .splineToLinearHeading(new Pose2d(16, -47, 3 * Math.PI / 4), 3 * Math.PI / 4)
-                                .splineToLinearHeading(new Pose2d(10, -26, Math.PI), Math.PI)
-                                .build();
-                        break;
-                    case CENTER:
-                        spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                                .splineToLinearHeading(new Pose2d(17, -32, Math.PI / 2), Math.PI / 2)
-                                .build();
-                        break;
-                    case RIGHT:
-                        spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                                .splineToLinearHeading(new Pose2d(24.5, -42, Math.PI / 2), Math.PI / 2)
-                                .build();
-                }
-            } else {
-                // RED FRONT (left)
-                startPose = new Pose2d(-36, -61, Math.PI / 2);
-                waitPose = new Pose2d(-36, -11, 0);
-                enRouteToBackdrop = new Vector2d(10, -11);
-                parkPose = new Pose2d(60, -11, Math.PI);
-                switch (propLocation) {
-                    case LEFT:
-                        spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                                .splineToLinearHeading(new Pose2d(-24, -31, Math.PI / 2), Math.PI / 2)
-                                .build();
-                        break;
-                    case CENTER:
-                        spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                                .splineToLinearHeading(new Pose2d(-28, -30, Math.PI / 2), Math.PI / 2)
-                                .build();
-                        break;
-                    case RIGHT:
-                        spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                                .splineToLinearHeading(new Pose2d(-38, -45, Math.PI / 4), Math.PI / 4)
-                                .splineToLinearHeading(new Pose2d(-36, -35, 0), 0)
-                                .build();
-                }
-            }
+                backdropPose = new Pose2d(51, backdropY, 0);
         }
 
-        if(side == Side.BACK) {
-            toBackdrop = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
-                    .addTemporalMarker(() -> {
-                        robot.rotator.rotateFully();
-                        robot.outtakeRaiser.goToPosition1(this);
-                    })
-                    .back(spikeMarkbackDistance)
-                    .splineToLinearHeading(backdropPose, backdropPose.getHeading())
-                    .build();
-            parkTraj = robot.drive.trajectorySequenceBuilder(toBackdrop.end())
-                    .waitSeconds(1)
-                    .back(backdropBackDistance)
-                    .addTemporalMarker(2, () -> {
-                        robot.rotator.retractFully();
-                        robot.outtakeRaiser.goDown(this);
-                    })
-                    .splineToLinearHeading(parkPose, parkPose.getHeading()) // park in backstage
-                    .build();
-        } else {
-            toBackdrop = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
-                    .back(spikeMarkbackDistance)
-                    .splineToLinearHeading(waitPose, waitPose.getHeading())
-                    .waitSeconds(3)
-                    .lineTo(enRouteToBackdrop)
-                    .addSpatialMarker(enRouteToBackdrop, () -> {
-                        robot.rotator.rotateFully();
-                        robot.outtakeRaiser.goToPosition1(this);
-                    })
-                    .splineToLinearHeading(backdropPose, backdropPose.getHeading())
-                    .build();
-            parkTraj = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
-                    .waitSeconds(1)
-                    .back(backdropBackDistance)
-                    .addTemporalMarker(2, () -> {
-                        robot.rotator.retractFully();
-                        robot.outtakeRaiser.goDown(this);
-                    })
-                    .splineToLinearHeading(parkPose, parkPose.getHeading())
-                    .build();
+        switch(side) {
+            case BACK:
+                switch(alliance) {
+                    case BLUE: // BLUE BACK
+                        startPose = new Pose2d(12, 62.5, -Math.PI / 2);
+                        switch (propLocation) {
+                            case LEFT:
+                                spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
+                                        .splineToSplineHeading(new Pose2d(22, 40, -Math.PI / 2), -Math.PI / 2)
+                                        .build();
+                                break;
+                            case CENTER:
+                                spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
+                                        .splineToSplineHeading(new Pose2d(15, 34, -Math.PI / 2), -Math.PI / 2)
+                                        .build();
+                                break;
+                            case RIGHT:
+                                spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
+                                        //.splineToSplineHeading(new Pose2d(20, 39, -3 * Math.PI / 4), -3 * Math.PI / 4)
+                                        .forward(10)
+                                        .splineToSplineHeading(new Pose2d(11, 32, Math.PI), Math.PI)
+                                        .build();
+                        }
+                        parkPose = new Pose2d(64, propLocation == Location.RIGHT ? 65 : 68, 0);
+                        break;
+                    case RED: // RED BACK
+                        startPose = new Pose2d(12, -61, Math.PI / 2);
+                        parkPose = new Pose2d(56, -61, 0);
+                        switch (propLocation) {
+                            case LEFT:
+                                spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
+                                        .splineToSplineHeading(new Pose2d(16, -47, 3 * Math.PI / 4), 3 * Math.PI / 4)
+                                        .splineToSplineHeading(new Pose2d(10, -26, Math.PI), Math.PI)
+                                        .build();
+                                break;
+                            case CENTER:
+                                spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
+                                        .splineToSplineHeading(new Pose2d(17, -32, Math.PI / 2), Math.PI / 2)
+                                        .build();
+                                break;
+                            case RIGHT:
+                                spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
+                                        .splineToSplineHeading(new Pose2d(24.5, -42, Math.PI / 2), Math.PI / 2)
+                                        .build();
+                        }
+                }
+
+                toBackdrop = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
+                        .addTemporalMarker(() -> {
+                            robot.rotator.rotateFully();
+                            robot.outtakeRaiser.goToPosition1(this);
+                        })
+                        .back(spikeMarkBackDistance)
+                        .splineToSplineHeading(backdropPose, backdropPose.getHeading())
+                        .forward(3,
+                                SampleMecanumDrive.getVelocityConstraint(slowSpeed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                                SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
+                        .build();
+                parkTraj = robot.drive.trajectorySequenceBuilder(toBackdrop.end())
+                        .waitSeconds(1)
+                        .back(backdropBackDistance)
+                        .addDisplacementMarker(() -> {
+                            robot.rotator.retractFully();
+                            robot.outtakeRaiser.goDown(this);
+                        })
+                        .splineToLinearHeading(parkPose, parkPose.getHeading()) // park in backstage
+                        .build();
+                break;
+            case FRONT:
+                switch(alliance) {
+                    case BLUE: // blue front
+                        startPose = new Pose2d(-36, 62, -Math.PI / 2);
+                        switch (propLocation) {
+                            case LEFT:
+                                spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
+                                        .splineToSplineHeading(new Pose2d(-20, 39, -Math.PI / 4), -Math.PI / 4)
+                                        .splineToSplineHeading(new Pose2d(0, 30, 0), 0)
+                                        .build();
+                                break;
+                            case CENTER:
+                                spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
+                                        .splineToSplineHeading(new Pose2d(-15, 21, -Math.PI / 2), -Math.PI / 2)
+                                        .build();
+                                break;
+                            case RIGHT:
+                                spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
+                                        .splineToSplineHeading(new Pose2d(-24, 31, -Math.PI / 2), -Math.PI / 2)
+                                        .build();
+                        }
+                        stackPose = new Pose2d(-56, 23, 0);
+                        waitPose = new Pose2d(-36, 14, 0);
+                        enRouteToBackdrop = new Vector2d(10, 14);
+                        parkPose = new Pose2d(56, 14, 0);
+                        break;
+                    case RED: // red front
+                        startPose = new Pose2d(-36, -61, Math.PI / 2);
+                        switch (propLocation) {
+                            case LEFT:
+                                spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
+                                        .splineToSplineHeading(new Pose2d(-24, -31, Math.PI / 2), Math.PI / 2)
+                                        .build();
+                                break;
+                            case CENTER:
+                                spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
+                                        .splineToSplineHeading(new Pose2d(-28, -30, Math.PI / 2), Math.PI / 2)
+                                        .build();
+                                break;
+                            case RIGHT:
+                                spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
+                                        .splineToSplineHeading(new Pose2d(-38, -45, Math.PI / 4), Math.PI / 4)
+                                        .splineToSplineHeading(new Pose2d(-36, -35, 0), 0)
+                                        .build();
+                        }
+                        stackPose = new Pose2d(-56, -35, 0);
+                        waitPose = new Pose2d(-36, -11, 0);
+                        enRouteToBackdrop = new Vector2d(10, -11);
+                        parkPose = new Pose2d(60, -11, Math.PI);
+                }
+
+                toBackdrop = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
+                        .back(spikeMarkBackDistance)
+                        .splineToSplineHeading(stackPose, Math.PI)
+                        .addDisplacementMarker(() -> {
+                            robot.intake.lower();
+                            robot.intake.in();
+                        })
+                        .forward(3, SampleMecanumDrive.getVelocityConstraint(slowSpeed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
+                        .waitSeconds(1)
+                        .splineToSplineHeading(waitPose, waitPose.getHeading())
+                        .addDisplacementMarker(() -> {
+                            robot.intake.stop();
+                            robot.claw1.down();
+                            robot.claw2.down();
+                            telemetry.addLine(run);
+                            telemetry.addData("Status", "waiting");
+                            telemetry.update();
+                        })
+                        .waitSeconds(3)
+                        .addDisplacementMarker(() -> {
+                            telemetry.addLine(run);
+                            telemetry.addData("Status", "moving to backdrop");
+                            telemetry.update();
+                        })
+                        .lineTo(enRouteToBackdrop)
+                        .addDisplacementMarker(() -> {
+                            robot.rotator.rotateFully();
+                            robot.outtakeRaiser.goToPosition1(this);
+                        })
+                        .splineToSplineHeading(backdropPose, backdropPose.getHeading())
+                        .forward(3,
+                                SampleMecanumDrive.getVelocityConstraint(slowSpeed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                                SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
+                        .build();
+                parkTraj = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
+                        .waitSeconds(1)
+                        .back(backdropBackDistance)
+                        .addDisplacementMarker(() -> {
+                            robot.rotator.retractFully();
+                            robot.outtakeRaiser.goDown(this);
+                        })
+                        .splineToLinearHeading(parkPose, parkPose.getHeading())
+                        .build();
         }
 
         robot.drive.setPoseEstimate(startPose);
-        robot.gripper1.downFully();
+        robot.claw1.down();
 
         telemetry.addLine(run);
         telemetry.addData("Status", "moving to spike mark");
@@ -334,8 +382,8 @@ public class TensorFlowAuto extends LinearOpMode
         telemetry.update();
         timer.reset();
         while(timer.milliseconds() < intakeWaitTime && opModeIsActive());
-        robot.gripper1.upFully();
-        robot.gripper2.upFully();
+        robot.claw1.up();
+        robot.claw2.up();
 
         telemetry.addLine(run);
         telemetry.addData("Status", "parking");
