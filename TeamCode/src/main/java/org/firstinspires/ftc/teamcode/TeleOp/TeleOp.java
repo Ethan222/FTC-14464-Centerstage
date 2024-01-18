@@ -28,7 +28,7 @@ public class TeleOp extends LinearOpMode {
         double speed = 1;
 
         boolean usingEncoder = true;
-        ElapsedTime armTimer = new ElapsedTime();
+        ElapsedTime armTimer = new ElapsedTime(), hangTimer = new ElapsedTime();
 
         Gamepad gamepad;
         while(opModeInInit() && !(gamepad1.start && gamepad1.back) && !(gamepad2.start && gamepad2.back)) {
@@ -118,25 +118,24 @@ public class TeleOp extends LinearOpMode {
 
             // raise outtake
             if((gamepad.dpad_up && !gamepad.back) || (gamepad.dpad_down && !gamepad.back))
-                usingEncoder = true;
+                robot.outtakeRaiser.runUsingEncoder();
             else if(gamepad2.left_stick_y != 0 || gamepad.dpad_up || gamepad.dpad_down)
-                usingEncoder = false;
+                robot.outtakeRaiser.runWithoutEncoder();
 
-            if (usingEncoder) {
+            if (robot.outtakeRaiser.isUsingEncoder()) {
                 if (gamepad.start && gamepad.dpad_up)
                     robot.outtakeRaiser.setUpPosition();
                 else if (gamepad.start && gamepad.dpad_down)
                     robot.outtakeRaiser.setDownPosition();
                 else if (gamepad.dpad_up) {
-                    robot.outtakeRaiser.goToUpPosition(this);
+                    robot.outtakeRaiser.goToUpPosition();
                     armTimer.reset();
                 } else if (gamepad.dpad_down) {
-                    robot.outtakeRaiser.goDown(this);
+                    robot.outtakeRaiser.goToDownPosition();
                     armTimer.reset();
                 } else if (!robot.outtakeRaiser.isBusy() || armTimer.seconds() > 2)
                     robot.outtakeRaiser.stop();
             } else {
-                robot.outtakeRaiser.motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                 if(gamepad.dpad_up)
                     robot.outtakeRaiser.up();
                 else if(gamepad.dpad_down)
@@ -146,14 +145,33 @@ public class TeleOp extends LinearOpMode {
             }
 
             // hang
-            if(!singleDriverMode || gamepad1.back)
+            if(gamepad2.right_stick_y != 0 && gamepad2.back)
+                robot.hangMotor.runUsingEncoder();
+            else if((gamepad2.right_stick_y != 0 && !gamepad2.back && !gamepad2.start) || (gamepad1.back && gamepad1.right_stick_y != 0))
+                robot.hangMotor.runWithoutEncoder();
+
+            if(robot.hangMotor.isUsingEncoder()) {
+                if(gamepad2.start && gamepad2.right_stick_y < 0)
+                    robot.hangMotor.setUpPosition();
+                else if(gamepad2.start && gamepad2.right_stick_y > 0)
+                    robot.hangMotor.setDownPosition();
+                else if(gamepad2.right_stick_y < 0) {
+                    robot.hangMotor.goToUpPosition();
+                    hangTimer.reset();
+                } else if(gamepad2.right_stick_y > 0) {
+                    robot.hangMotor.goToDownPosition();
+                    hangTimer.reset();
+                } else if (!robot.hangMotor.isBusy() || hangTimer.seconds() > 6)
+                    robot.hangMotor.stop();
+            } else {
                 robot.hangMotor.setPower(-gamepad.right_stick_y);
+            }
 
             // auto claw
             if(gamepad.back && gamepad.y)
-                robot.autoClaw.out();
+                robot.autoClaw.outIncrementally();
             else if(gamepad.back && gamepad.x)
-                robot.autoClaw.in();
+                robot.autoClaw.inIncrementally();
 
             // gamepad1 a/b control launcher
 //            if(gamepad1.a && !singleDriverMode && !gamepad1.start && !gamepad1.back)
@@ -172,7 +190,7 @@ public class TeleOp extends LinearOpMode {
             telemetry.addData("Claw 2 (x/y)", "%s (%.2f)", robot.claw2.getStatus(), robot.claw2.getPosition());
             telemetry.addData("Rotator (d-pad L/R)", "%s (%.2f)", robot.rotator.getStatus(), robot.rotator.getPosition());
             telemetry.addData("Raise outtake (d-pad U/D or left stick)", "%s (%d)", robot.outtakeRaiser.getPower(), robot.outtakeRaiser.getPosition());
-            telemetry.addData("Hang (right stick y)", robot.hangMotor.getPower());
+            telemetry.addData("Hang (right stick y)", "%s (%d) %s", robot.hangMotor.getPower(), robot.hangMotor.getPosition(), robot.hangMotor.isUsingEncoder() ? "(using encoder)" : "");
             telemetry.addData("Auto claw (back + x/y)", "%s (%.2f)", robot.autoClaw.getStatus(), robot.autoClaw.getPosition());
 //            telemetry.addData("Launcher psn", "%.2f", robot.launcher.getPosition());
             telemetry.update();

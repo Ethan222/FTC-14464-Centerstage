@@ -7,16 +7,18 @@ public class Intake extends Motor { // inherits from parent class Motor
     public CustomServo lowerer;     // servo to raise/lower the intake
     private static final double UP_PSN = .6, DOWN_PSN = 1;   // up and down positions of the servo
     public Intake(HardwareMap hardwareMap, String motorName, String servoName) {        // constructor
-        super(hardwareMap, motorName, 1, 1);   // calls parent constructor to initialize intake motor
+        super(hardwareMap, motorName);   // calls parent constructor to initialize intake motor
         // initializes lowerer servo
         lowerer = new CustomServo(hardwareMap, servoName, Math.min(DOWN_PSN, UP_PSN), Math.max(DOWN_PSN, UP_PSN));
     }
     public void in(double power) {
         setPower(power);
     } // positive intakes
-    public void in() { in(DEFAULT_SPEED); }     // function overload: if no power given, use the default speed
+    public void in() {
+        in(1);
+    }
     public void out(double power) { setPower(-power); } // negative outtakes
-    public void out() { out(DEFAULT_SPEED); }   // function overload: if no power given, use the default speed
+    public void out() { out(1); }
     public void lower() { // lower intake
         lowerer.setPosition(DOWN_PSN);
     }
