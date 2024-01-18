@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
+import org.firstinspires.ftc.teamcode.Auto.Alliance;
 import org.firstinspires.ftc.teamcode.Auto.Location;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.tfod.TfodProcessor;
@@ -16,9 +17,11 @@ public class TensorFlowObjectDetector {
     private static final String[] LABELS = { "blueProp", "redProp" };
     private static final float MIN_CONFIDENCE = .4f;
     private static final double CENTER_DIVISION = 350;
+    private static final double MAX_SIZE = 200;
     private TfodProcessor tfod; // stores instance of TFOD processor
     public VisionPortal visionPortal; // stores instance of vision portal
     private Recognition mostConfidentRecognition, previousRecognition;
+    public Alliance alliance;
     public TensorFlowObjectDetector(HardwareMap hardwareMap) {
         tfod = new TfodProcessor.Builder() // create the TF processor using a builder
                 .setModelAssetName(MODEL_ASSET)
@@ -35,7 +38,7 @@ public class TensorFlowObjectDetector {
 
         if(recognitions.size() != 0) {
             mostConfidentRecognition = recognitions.get(0);
-            if(mostConfidentRecognition.getWidth() > 300 || mostConfidentRecognition.getHeight() > 300) { // if invalid
+            if(mostConfidentRecognition.getWidth() > MAX_SIZE || mostConfidentRecognition.getHeight() > MAX_SIZE) { // if invalid
                 if(recognitions.size() > 1) { // set to next one if possible
                     mostConfidentRecognition = recognitions.get(1);
                 } else // if no others set to null
@@ -44,7 +47,7 @@ public class TensorFlowObjectDetector {
             if(mostConfidentRecognition != null) { // if not null must be valid
                 float maxConfidence = mostConfidentRecognition.getConfidence();
                 for (Recognition recognition : recognitions) {
-                    if (recognition.getConfidence() > maxConfidence && recognition.getWidth() < 300 && recognition.getHeight() < 300)
+                    if (recognition.getConfidence() > maxConfidence && recognition.getWidth() < MAX_SIZE && recognition.getHeight() < MAX_SIZE)
                         mostConfidentRecognition = recognition;
                 }
                 previousRecognition = mostConfidentRecognition;
@@ -101,10 +104,13 @@ public class TensorFlowObjectDetector {
         double x = (recognition.getLeft() + recognition.getRight()) / 2;
         double y = (recognition.getTop() + recognition.getBottom()) / 2;
 
-        telemetry.addLine(String.format("%s found (%.0f %% conf.)", recognition.getLabel(), recognition.getConfidence() * 100));
+        String line = String.format("%s found (%.0f %% conf.)", recognition.getLabel(), recognition.getConfidence() * 100);
+        if((alliance == Alliance.BLUE && !recognition.getLabel().equals("blueProp")) || (alliance == Alliance.RED && !recognition.getLabel().equals("redProp")))
+            line += " (wrong color)";
+        telemetry.addLine(line);
         telemetry.addData("- Position", "%s (%.0f, %.0f)", getLocation(recognition), x, y);
         String sizeLine = String.format("- Size: %.0f x %.0f", recognition.getWidth(), recognition.getHeight());
-        if(recognition.getWidth() > 300 || recognition.getHeight() > 300)
+        if(recognition.getWidth() > MAX_SIZE || recognition.getHeight() > MAX_SIZE)
             sizeLine += " (too big)";
         telemetry.addLine(sizeLine);
     }
