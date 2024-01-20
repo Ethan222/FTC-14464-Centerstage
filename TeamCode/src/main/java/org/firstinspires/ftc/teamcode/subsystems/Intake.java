@@ -29,13 +29,13 @@ public class Intake extends Motor { // inherits from parent class Motor
     public void raise(double val) { lowerer.changePosition(-val); }
 
     // return the status of the intake (up or down)
-    public String getStatus() {
+    public Status getStatus() {
         double psn = lowerer.getPosition();
         if(Math.abs(psn - UP_PSN) < .03)
-            return "up";
+            return Status.UP;
         else if(Math.abs(psn - DOWN_PSN) < .03)
-            return "down";
+            return Status.DOWN;
         else
-            return "partially down";
+            return Status.UNSURE;
     }
 }

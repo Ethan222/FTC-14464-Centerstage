@@ -22,4 +22,16 @@ public class OuttakeRaiser extends Motor { // inherits from the Motor parent cla
     public void down() {
         down(1);
     }
+    public void accelerateUp(double acceleration) {
+        acceleratePositive(acceleration);
+    }
+    public void accelerateUp() {
+        accelerateUp(DEFAULT_ACCELERATION);
+    }
+    public void accelerateDown(double acceleration) {
+        accelerateNegative(acceleration);
+    }
+    public void accelerateDown() {
+        accelerateDown(DEFAULT_ACCELERATION);
+    }
 }

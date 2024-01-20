@@ -115,17 +115,17 @@ public class TensorFlowAuto extends LinearOpMode
                 try {
                     exposureControl = propDetector.visionPortal.getCameraControl(ExposureControl.class);
                     //exposureControl.setMode(ExposureControl.Mode.Manual);
-                    timeToCameraInit = time;
+//                    timeToCameraInit = time;
                     initialized = true;
                 } catch (Exception e) {
                     telemetry.addLine("camera isn't initialized yet");
                 }
             } else if (!propLocationOverride) {
-                //telemetry.addData("exposure mode", exposureControl.getMode()); // default is AperaturePriority
+                //telemetry.addData("exposure mode", exposureControl.getMode()); // default is AperturePriority
                 telemetry.addData("exposure", exposureControl.getExposure(TimeUnit.MILLISECONDS));
-                /* if(gamepad1.right_trigger > 0)
+                /* if(gamepad1.right_trigger > .5)
                     exposure++;
-                else if(gamepad1.left_trigger > 0)
+                else if(gamepad1.left_trigger > .5)
                     exposure--;
                 exposureControl.setExposure(exposure, TimeUnit.MILLISECONDS); */
 
