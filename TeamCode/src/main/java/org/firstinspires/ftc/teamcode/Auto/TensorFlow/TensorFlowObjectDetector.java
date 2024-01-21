@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.Auto.TensorFlow;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -13,14 +14,15 @@ import org.firstinspires.ftc.vision.tfod.TfodProcessor;
 import java.util.List;
 
 public class TensorFlowObjectDetector {
-    private static final String MODEL_ASSET = "blue_red_prop_model_2.tflite";
+    private static final String MODEL_ASSET = "blue_red_prop_model_3.tflite";
     private static final String[] LABELS = { "blueProp", "redProp" };
     private static final float MIN_CONFIDENCE = .4f;
     private static final double CENTER_DIVISION = 350;
     private static final double MAX_SIZE = 200;
-    private TfodProcessor tfod; // stores instance of TFOD processor
+    private final TfodProcessor tfod; // stores instance of TFOD processor
     public VisionPortal visionPortal; // stores instance of vision portal
     private Recognition mostConfidentRecognition, previousRecognition;
+    ElapsedTime previousRecognitionTimer;
     public Alliance alliance;
     public TensorFlowObjectDetector(HardwareMap hardwareMap) {
         tfod = new TfodProcessor.Builder() // create the TF processor using a builder
@@ -32,13 +34,14 @@ public class TensorFlowObjectDetector {
         builder.addProcessor(tfod); // set and enable processor
         visionPortal = builder.build(); // build the vision portal using the above settings
         tfod.setMinResultConfidence(MIN_CONFIDENCE); // set confidence threshold for TFOD recognitions
+        previousRecognitionTimer = new ElapsedTime();
     }
     public void update() {
         List<Recognition> recognitions = tfod.getRecognitions();
 
         if(recognitions.size() != 0) {
             mostConfidentRecognition = recognitions.get(0);
-            if(mostConfidentRecognition.getWidth() > MAX_SIZE || mostConfidentRecognition.getHeight() > MAX_SIZE) { // if invalid
+            if(!isValid(mostConfidentRecognition)) { // if invalid
                 if(recognitions.size() > 1) { // set to next one if possible
                     mostConfidentRecognition = recognitions.get(1);
                 } else // if no others set to null
@@ -47,21 +50,30 @@ public class TensorFlowObjectDetector {
             if(mostConfidentRecognition != null) { // if not null must be valid
                 float maxConfidence = mostConfidentRecognition.getConfidence();
                 for (Recognition recognition : recognitions) {
-                    if (recognition.getConfidence() > maxConfidence && recognition.getWidth() < MAX_SIZE && recognition.getHeight() < MAX_SIZE)
+                    if (recognition.getConfidence() > maxConfidence && isValid(recognition))
                         mostConfidentRecognition = recognition;
                 }
                 previousRecognition = mostConfidentRecognition;
+                previousRecognitionTimer.reset();
             }
         } else {
             mostConfidentRecognition = null;
         }
     }
-    public List<Recognition> getRecognitions() {
-        return tfod.getRecognitions();
+
+    public boolean isValid(Recognition recognition) {
+        return isRightColor(recognition) && !isTooBig(recognition);
     }
-    public Location getLocation() {
-        return getLocation(mostConfidentRecognition);
+    private boolean isRightColor(Recognition recognition) {
+        if(alliance == Alliance.BLUE)
+            return recognition.getLabel().equals("blueProp");
+        else
+            return recognition.getLabel().equals("redProp");
     }
+    private boolean isTooBig(Recognition recognition) {
+        return recognition.getWidth() > MAX_SIZE || recognition.getHeight() > MAX_SIZE;
+    }
+
     public Location getLocation(Recognition recognition)
     {
         // if it doesn't see anything it must be left
@@ -74,6 +86,10 @@ public class TensorFlowObjectDetector {
         else
             return Location.CENTER;
     }
+    public Location getLocation() {
+        return getLocation(mostConfidentRecognition);
+    }
+
     // sends info to telemetry about all found objects
     public void telemetryAll(Telemetry telemetry) {
         List<Recognition> currentRecognitions = tfod.getRecognitions();
@@ -88,7 +104,7 @@ public class TensorFlowObjectDetector {
             telemetrySingle(telemetry, recognition);
         }
         if(currentRecognitions.size() == 0 && previousRecognition != null) {
-            telemetry.addLine("\nPreviously seen:");
+            telemetry.addData("\nPreviously seen", "%.1f seconds ago", previousRecognitionTimer.seconds());
             telemetrySingle(telemetry, previousRecognition);
         }
     }
@@ -104,15 +120,9 @@ public class TensorFlowObjectDetector {
         double x = (recognition.getLeft() + recognition.getRight()) / 2;
         double y = (recognition.getTop() + recognition.getBottom()) / 2;
 
-        String line = String.format("%s found (%.0f %% conf.)", recognition.getLabel(), recognition.getConfidence() * 100);
-        if((alliance == Alliance.BLUE && !recognition.getLabel().equals("blueProp")) || (alliance == Alliance.RED && !recognition.getLabel().equals("redProp")))
-            line += " (wrong color)";
-        telemetry.addLine(line);
+        telemetry.addData("Found","%s (%.0f %% conf.) %s", recognition.getLabel(), recognition.getConfidence() * 100, isRightColor(recognition) ? "" : "(wrong color)");
         telemetry.addData("- Position", "%s (%.0f, %.0f)", getLocation(recognition), x, y);
-        String sizeLine = String.format("- Size: %.0f x %.0f", recognition.getWidth(), recognition.getHeight());
-        if(recognition.getWidth() > MAX_SIZE || recognition.getHeight() > MAX_SIZE)
-            sizeLine += " (too big)";
-        telemetry.addLine(sizeLine);
+        telemetry.addData("- Size", "%.0f x %.0f %s", recognition.getWidth(), recognition.getHeight(), isTooBig(recognition) ? "(too big)" : "");
     }
     public void stopDetecting() { // save CPU resources when camera is no longer needed
         visionPortal.close();

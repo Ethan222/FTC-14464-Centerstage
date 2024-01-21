@@ -26,6 +26,7 @@ import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
 import org.firstinspires.ftc.teamcode.Auto.Alliance;
 import org.firstinspires.ftc.teamcode.Auto.Location;
@@ -130,10 +131,15 @@ public class TensorFlowAuto extends LinearOpMode
                 exposureControl.setExposure(exposure, TimeUnit.MILLISECONDS); */
 
                 propDetector.alliance = alliance;
-                propDetector.update();
-                propLocation = propDetector.getLocation();
-                telemetry.addLine();
-                propDetector.telemetryAll(telemetry);
+                telemetry.addAction(new Runnable() {
+                    @Override
+                    public void run() {
+                        propDetector.update();
+                        propLocation = propDetector.getLocation();
+                        telemetry.addLine();
+                        propDetector.telemetryAll(telemetry);
+                    }
+                });
             }
 
             telemetry.update();
@@ -152,8 +158,9 @@ public class TensorFlowAuto extends LinearOpMode
         }
         //telemetry.setMsTransmissionInterval(250);
 
-        String run = String.format("Running %s %s %s, prop location = %s", alliance, side, pickFromStack ? "simple" : "", propLocation);
-        telemetry.addLine(run);
+        telemetry.setAutoClear(false);
+        telemetry.addLine(String.format("Running %s %s %s, prop location = %s", alliance, side, pickFromStack ? "simple" : "", propLocation));
+        Telemetry.Item status = telemetry.addData("Status", "loading...");
         telemetry.update();
 
         // trajectories
@@ -360,8 +367,7 @@ public class TensorFlowAuto extends LinearOpMode
             backdropToStack = robot.drive.trajectorySequenceBuilder(toBackdrop.end())
                     .back(3)
                     .addDisplacementMarker(() -> {
-                        telemetry.addLine(run);
-                        telemetry.addData("Status", "moving to stack");
+                        status.setValue("Status", "moving to stack");
                         telemetry.update();
                         robot.rotator.retractFully();
                         robot.outtakeRaiser.goToDownPosition();
@@ -369,8 +375,7 @@ public class TensorFlowAuto extends LinearOpMode
                     .splineTo(stageDoor, Math.PI)
                     .splineToSplineHeading(stackPose, Math.PI)
                     .addDisplacementMarker(() -> {
-                        telemetry.addLine(run);
-                        telemetry.addData("Status", "picking from stack");
+                        status.setValue("Status", "picking from stack");
                         telemetry.update();
                         robot.intake.lower();
                         robot.intake.in();
@@ -385,8 +390,7 @@ public class TensorFlowAuto extends LinearOpMode
                         robot.claw2.down();
                         robot.rotator.rotateFully();
                         robot.outtakeRaiser.goToUpPosition();
-                        telemetry.addLine(run);
-                        telemetry.addData("Status", "moving to backdrop");
+                        status.setValue("Status", "moving to backdrop");
                         telemetry.update();
                     })
                     .splineToSplineHeading(backdropPose, 0)
@@ -397,13 +401,11 @@ public class TensorFlowAuto extends LinearOpMode
         robot.drive.setPoseEstimate(startPose);
         robot.claw1.down();
 
-        telemetry.addLine(run);
-        telemetry.addData("Status", "moving to spike mark");
+        status.setValue("Status", "moving to spike mark");
         telemetry.update();
         robot.drive.followTrajectorySequence(spikeMarkTraj);
 
-        telemetry.addLine(run);
-        telemetry.addData("Status", "releasing pixel");
+        status.setValue("Status", "releasing pixel");
         telemetry.update();
         robot.autoClaw.out();
         timer.reset();
@@ -411,26 +413,22 @@ public class TensorFlowAuto extends LinearOpMode
         while(timer.milliseconds() < intakeWaitTime && opModeIsActive());
         robot.autoClaw.in();
 
-        telemetry.addLine(run);
-        telemetry.addData("Status", "moving to backdrop");
+        status.setValue("Status", "moving to backdrop");
         telemetry.update();
         robot.drive.followTrajectorySequence(toBackdrop);
 
-        telemetry.addLine(run);
-        telemetry.addData("Status", "placing pixel");
+        status.setValue("Status", "placing pixel");
         telemetry.update();
         timer.reset();
         while(timer.milliseconds() < intakeWaitTime && opModeIsActive());
         robot.claw1.up();
         robot.claw2.up();
 
-        telemetry.addLine(run);
-        telemetry.addData("Status", "parking");
+        status.setValue("Status", "parking");
         telemetry.update();
         robot.drive.followTrajectorySequence(parkTraj);
 
-        telemetry.addLine(run);
-        telemetry.addData("Status", "parked");
+        status.setValue("Status", "parked");
         telemetry.update();
         timer.reset();
         while(timer.seconds() < 1 && opModeIsActive());
