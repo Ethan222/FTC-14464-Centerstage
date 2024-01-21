@@ -8,9 +8,8 @@ public class Robot {
     public SampleMecanumDrive drive;
     public Intake intake;
     public Claw claw1, claw2;
-    public Rotator rotator;
-    public OuttakeRaiser outtakeRaiser;
-    public HangMotor hangMotor;
+    public Outtake outtake;
+    public HangSubsystem hangSubsystem;
     public AutoClaw autoClaw;
     public DroneLauncher launcher;
     public Robot(HardwareMap hardwareMap) {
@@ -18,10 +17,9 @@ public class Robot {
         intake = new Intake(hardwareMap, "intake", "servo4");
         claw1 = new Claw(hardwareMap, "servo1", .39, .64);
         claw2 = new Claw(hardwareMap, "servo2", .7, 1);
-        rotator = new Rotator(hardwareMap, "servo0", .52, .07);
-        outtakeRaiser = new OuttakeRaiser(hardwareMap, "armMotor");
-        hangMotor = new HangMotor(hardwareMap, "hangMotor");
-        autoClaw = new AutoClaw(hardwareMap, "servo3", .06, .28);
-//        launcher = new DroneLauncher(hardwareMap, "servo5");
+        outtake = new Outtake(hardwareMap, "armMotor", "servo0");
+        hangSubsystem = new HangSubsystem(hardwareMap, "hangMotor", "servo5");
+        autoClaw = new AutoClaw(hardwareMap, "servo3", .10, .4);
+        launcher = new DroneLauncher(hardwareMap, "droneLauncher");
     }
 }

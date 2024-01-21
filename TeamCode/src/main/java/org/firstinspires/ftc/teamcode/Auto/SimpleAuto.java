@@ -34,8 +34,8 @@ import org.firstinspires.ftc.teamcode.Auto.roadrunner.trajectorysequence.Traject
 
 import java.util.concurrent.TimeUnit;
 @Disabled
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "Simple Backdrop Auto", group = "auto", preselectTeleOp = "TeleOp")
-public class BackdropAuto extends LinearOpMode
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "Simple Auto", group = "auto", preselectTeleOp = "TeleOp")
+public class SimpleAuto extends LinearOpMode
 {
     private Alliance alliance = Alliance.RED;
 
@@ -167,38 +167,38 @@ public class BackdropAuto extends LinearOpMode
         robot.drive.setPoseEstimate(startPose);
         robot.drive.followTrajectorySequence(moveToBackdrop);
 
-        robot.outtakeRaiser.up();
+        robot.outtake.up();
         time.reset();
         while(time.milliseconds() < 900 && opModeIsActive());
         //robot.armFlipper.stop();
 
-        robot.rotator.retractFully();
+        robot.outtake.rotator.retractFully();
         //time.reset();
         while(time.milliseconds() < 1500 && opModeIsActive());
-        robot.outtakeRaiser.stop();
+        robot.outtake.stop();
 
 //        robot.armFlipper.flip();
 //        time.reset();
 //        while(time.milliseconds() < 600 && opModeIsActive());
 //        robot.armFlipper.stop();
 
-        robot.rotator.rotateFully();
+        robot.outtake.rotator.rotateFully();
 
-        robot.outtakeRaiser.up();
+        robot.outtake.up();
         time.reset();
         while(time.milliseconds() < 700 && opModeIsActive());
-        robot.outtakeRaiser.stop();
+        robot.outtake.stop();
 
         robot.claw1.up();
         time.reset();
         while(time.milliseconds() < 1900 && opModeIsActive());
 
-        robot.rotator.retractFully();
+        robot.outtake.rotator.retractFully();
 
-        robot.outtakeRaiser.down();
+        robot.outtake.down();
         time.reset();
         while(time.milliseconds() < 1400 && opModeIsActive());
-        robot.outtakeRaiser.stop();
+        robot.outtake.stop();
 
         robot.drive.followTrajectorySequence(moveForward);
         robot.drive.followTrajectory(park);

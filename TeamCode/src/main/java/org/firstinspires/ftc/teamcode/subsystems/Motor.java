@@ -7,19 +7,19 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-// Generic motor class that can handle one motor
+// Generic motor class that controls one motor
 @Config
 public abstract class Motor {
     public enum Status {
         DOWN, UP, UNSURE
     }
     protected final DcMotorEx motor;
-    public double DEFAULT_ACCELERATION = .1;
+    public static double DEFAULT_ACCELERATION = .1;
     private boolean usingEncoder;
-    private int downPosition, upPosition;
+    protected int downPosition, upPosition;
     private boolean holding;
     private int holdPosition;
-    public int HOLD_PRECISION = 10;
+    public static int HOLD_PRECISION = 5;
 
     // constructors
     public Motor(HardwareMap hm, String name, boolean usingEncoder, int downPsn, int upPsn) { // constructor
@@ -85,14 +85,15 @@ public abstract class Motor {
         return !motor.isBusy();
     }
 
-    public void goToPosition(int position) {
+    public void goToPosition(int position, double power) {
         motor.setTargetPosition(position);
         motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         if(position > getPosition())
-            setPower(1);
+            setPower(power);
         else
-            setPower(-1);
+            setPower(-power);
     }
+    public void goToPosition(int position) { goToPosition(position, 1); }
     public void goToUpPosition() {
         goToPosition(upPosition);
     }
@@ -113,9 +114,12 @@ public abstract class Motor {
             holding = true;
         } else if (Math.abs(getPosition() - holdPosition) > HOLD_PRECISION) {
             goToPosition(holdPosition);
-        }
+        } else
+            decelerate();
     }
     public void stopHolding() { holding = false; }
+    public boolean isHolding() { return holding; }
+    public int getHoldPosition() { return holdPosition; }
 
     public Status getStatus() {
         double position = getPosition();

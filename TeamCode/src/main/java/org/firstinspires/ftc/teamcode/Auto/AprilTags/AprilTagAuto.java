@@ -129,11 +129,11 @@ public class AprilTagAuto extends LinearOpMode
                 .turn(Math.PI)
                 // place pixel on spike mark
                 .addTemporalMarker(armFlipStartTime, () -> {
-                    robot.outtakeRaiser.up();
+                    robot.outtake.up();
                 })
                 .waitSeconds(3)
                 .addTemporalMarker(armFlipStartTime + armFlipTime, () -> {
-                    robot.outtakeRaiser.stop();
+                    robot.outtake.stop();
                     robot.claw1.up();
                 })
                 //.turn(multiplier * Math.PI / 2)

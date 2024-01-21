@@ -2,15 +2,25 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import java.util.Objects;
+
 public class DroneLauncher extends CustomServo {
-    private static final double INCREMENT = .01;
     public DroneLauncher(HardwareMap hardwareMap, String name) {
-        super(hardwareMap, name, 0, .5);
+        super(hardwareMap, name, .6, 1);
     }
     public void launch() {
-        changePosition(INCREMENT);
+        decreasePosition();
     }
     public void reset() {
-        changePosition(-INCREMENT);
+        increasePosition();
+    }
+    public String getStatus() {
+        String status = super.getStatus();
+        if(status.equals(Status.LEFT.toString()))
+            return "forward";
+        else if(status.equals(Status.RIGHT.toString()))
+            return "back (ready)";
+        else
+            return "partly forward";
     }
 }
