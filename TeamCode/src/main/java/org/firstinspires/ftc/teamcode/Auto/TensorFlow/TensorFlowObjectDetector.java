@@ -18,7 +18,7 @@ public class TensorFlowObjectDetector {
     private static final String[] LABELS = { "blueProp", "redProp" };
     private static final float MIN_CONFIDENCE = .4f;
     private static final double CENTER_DIVISION = 350;
-    private static final double MAX_SIZE = 200;
+    private static final double MAX_SIZE = 250;
     private final TfodProcessor tfod; // stores instance of TFOD processor
     public VisionPortal visionPortal; // stores instance of vision portal
     private Recognition mostConfidentRecognition, previousRecognition;

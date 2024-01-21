@@ -38,15 +38,15 @@ import org.firstinspires.ftc.teamcode.subsystems.Robot;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "TensorFlow Auto", group = "auto", preselectTeleOp = "TeleOp")
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "Autonomous", group = "auto", preselectTeleOp = "TeleOp")
 public class TensorFlowAuto extends LinearOpMode
 {
     private enum Side {
         BACK, FRONT
     }
 
-    private static Alliance alliance = Alliance.RED;
-    private static Side side = Side.BACK;
+    private static Alliance alliance = Alliance.BLUE;
+    private static Side side = Side.FRONT;
     private static boolean pickFromStack = false;
 
     Robot robot;
@@ -70,7 +70,7 @@ public class TensorFlowAuto extends LinearOpMode
         ElapsedTime timer = new ElapsedTime();
 
         // init loop - select alliance and side
-        while (opModeInInit()) {
+        while (opModeInInit() || !initialized) {
             if ((gamepad1.x) || gamepad2.x)
                 alliance = Alliance.BLUE;
             else if ((gamepad1.b && !gamepad1.start) || (gamepad2.b && !gamepad2.start))
@@ -100,7 +100,8 @@ public class TensorFlowAuto extends LinearOpMode
             }
 
             telemetry.addLine(initialized ? "Initialized" : String.format(Locale.ENGLISH, "Initializing please wait... %.1f", Math.max(3 - getRuntime(), 0)));
-            telemetry.addData("Runtime", "%.1f", getRuntime());
+            telemetry.addLine().addData("Runtime", "%.1f", getRuntime()).addData("loop time", "%.2f ms", timer.milliseconds());
+            timer.reset();
             telemetry.addData("\nAlliance", "%s (x = blue, b = red)", alliance);
             telemetry.addData("Side", "%s (a = front, y = back)", side);
 //            if(initialized)
@@ -112,17 +113,18 @@ public class TensorFlowAuto extends LinearOpMode
             else
                 telemetry.addData("\nProp location", initialized ? propLocation : null);
 
-            if (!initialized && !propLocationOverride) {
+            if (!initialized) {
                 try {
                     exposureControl = propDetector.visionPortal.getCameraControl(ExposureControl.class);
-                    //exposureControl.setMode(ExposureControl.Mode.Manual);
+//                    if(exposureControl.isModeSupported(ExposureControl.Mode.Manual))
+//                        exposureControl.setMode(ExposureControl.Mode.Manual);
 //                    timeToCameraInit = time;
                     initialized = true;
                 } catch (Exception e) {
                     telemetry.addLine("camera isn't initialized yet");
                 }
             } else if (!propLocationOverride) {
-                //telemetry.addData("exposure mode", exposureControl.getMode()); // default is AperturePriority
+                telemetry.addData("exposure mode", exposureControl.getMode()); // default is AperturePriority
                 telemetry.addData("exposure", exposureControl.getExposure(TimeUnit.MILLISECONDS));
                 /* if(gamepad1.right_trigger > .5)
                     exposure++;
@@ -131,19 +133,14 @@ public class TensorFlowAuto extends LinearOpMode
                 exposureControl.setExposure(exposure, TimeUnit.MILLISECONDS); */
 
                 propDetector.alliance = alliance;
-                telemetry.addAction(new Runnable() {
-                    @Override
-                    public void run() {
-                        propDetector.update();
-                        propLocation = propDetector.getLocation();
-                        telemetry.addLine();
-                        propDetector.telemetryAll(telemetry);
-                    }
-                });
+                propDetector.update();
+                propLocation = propDetector.getLocation();
+                telemetry.addLine();
+                propDetector.telemetryAll(telemetry);
             }
 
             telemetry.update();
-            sleep(10);
+            //sleep(10);
         }
 
         // start of op mode
@@ -169,22 +166,22 @@ public class TensorFlowAuto extends LinearOpMode
         TrajectorySequence spikeMarkTraj = null, toBackdrop = null, parkTraj = null;
         TrajectorySequence backdropToStack = null, stackToBackdrop = null;
         double spikeMarkBackDistance = 2, backdropBackDistance = 5;
-        double slowSpeed = 6;
+        double slowSpeed = 5;
 
         double backdropY = 0;
         switch (alliance) {
             case BLUE: // blue common
                 switch(propLocation) { // blue backdrop
                     case LEFT:
-                        backdropY = 42+1;
+                        backdropY = 41-.5;
                         break;
                     case CENTER:
-                        backdropY = 38+1;
+                        backdropY = side == Side.BACK ? 34 : 35.5;
                         break;
                     case RIGHT:
-                        backdropY = 33;
+                        backdropY = side == Side.BACK ? 31 : 31-2;
                 }
-                backdropPose = new Pose2d(45, backdropY, 0);
+                backdropPose = new Pose2d(47, backdropY, 0);
                 stackPose = new Pose2d(-56, 23, 0);
                 stageDoor = new Vector2d(-3, 10);
                 break;
@@ -213,22 +210,22 @@ public class TensorFlowAuto extends LinearOpMode
                         switch (propLocation) {
                             case LEFT:
                                 spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                                        .splineToSplineHeading(new Pose2d(22, 40, -Math.PI / 2), -Math.PI / 2)
-                                        .back(2)
+                                        .splineToSplineHeading(new Pose2d(23+1, 40, -Math.PI / 2), -Math.PI / 2)
+                                        .back(2.5)
                                         .build();
                                 break;
                             case CENTER:
                                 spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                                        .splineToSplineHeading(new Pose2d(15, 30, -Math.PI / 2), -Math.PI / 2)
-                                        .back(2)
+                                        .splineToSplineHeading(new Pose2d(15, 31, -Math.PI / 2), -Math.PI / 2)
+                                        .back(4.5)
                                         .build();
                                 break;
                             case RIGHT:
                                 spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
                                         //.splineToSplineHeading(new Pose2d(20, 39, -3 * Math.PI / 4), -3 * Math.PI / 4)
                                         .forward(10)
-                                        .splineToSplineHeading(new Pose2d(5, 34, Math.PI), Math.PI)
-                                        .back(2)
+                                        .splineToSplineHeading(new Pose2d(7, 36, Math.PI), Math.PI)
+                                        .back(2.5-.5)
                                         .build();
                         }
                         break;
@@ -259,13 +256,13 @@ public class TensorFlowAuto extends LinearOpMode
 
                 toBackdrop = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
                         .addTemporalMarker(() -> {
-                            robot.rotator.rotateFully();
-                            robot.outtakeRaiser.goToUpPosition();
+                            robot.outtake.rotator.rotateFully();
+                            robot.outtake.goToUpPosition();
                         })
                         .back(spikeMarkBackDistance)
                         .splineToSplineHeading(backdropPose, backdropPose.getHeading())
                         .waitSeconds(1)
-                        .forward(2.5,
+                        .forward(4,
                                 SampleMecanumDrive.getVelocityConstraint(slowSpeed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
                                 SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
                         .build();
@@ -285,14 +282,15 @@ public class TensorFlowAuto extends LinearOpMode
                                 break;
                             case CENTER:
                                 spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                                        .splineToSplineHeading(new Pose2d(-47, 24, 0), -Math.PI / 2)
-                                        //.back(5)
+                                        .splineToSplineHeading(new Pose2d(-47+8, 24, 0), -Math.PI / 2)
+                                        .back(1)
                                         .build();
+                                spikeMarkBackDistance += 2;
                                 break;
                             case RIGHT:
                                 spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
                                         .splineToSplineHeading(new Pose2d(-45, 28, Math.PI), -Math.PI / 2)
-                                        .back(2)
+                                        .back(4.5)
                                         .build();
                         }
                         break;
@@ -341,12 +339,12 @@ public class TensorFlowAuto extends LinearOpMode
 //                            telemetry.addLine(run);
 //                            telemetry.addData("Status", "moving to backdrop");
 //                            telemetry.update();
-                            robot.rotator.rotateFully();
-                            robot.outtakeRaiser.goToUpPosition();
+                            robot.outtake.rotator.rotateFully();
+                            robot.outtake.goToUpPosition();
                         })
                         .splineToSplineHeading(backdropPose, backdropPose.getHeading())
                         .waitSeconds(1)
-                        .forward(2,
+                        .forward(3,
                                 SampleMecanumDrive.getVelocityConstraint(slowSpeed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
                                 SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
                         .build();
@@ -354,10 +352,10 @@ public class TensorFlowAuto extends LinearOpMode
 
         parkTraj = robot.drive.trajectorySequenceBuilder(toBackdrop.end())
                 .waitSeconds(1)
-                .back(backdropBackDistance)
+                .back(backdropBackDistance, SampleMecanumDrive.getVelocityConstraint(slowSpeed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
                 .addDisplacementMarker(() -> {
-                    robot.rotator.retractFully();
-                    robot.outtakeRaiser.goToDownPosition();
+                    robot.outtake.rotator.retractFully();
+                    robot.outtake.goToDownPosition();
                 })
                 .splineToLinearHeading(parkPose,
                         (alliance == Alliance.BLUE && side == Side.BACK) || (alliance == Alliance.RED && side == Side.FRONT) ? Math.PI/2 : -Math.PI/2)
@@ -369,8 +367,8 @@ public class TensorFlowAuto extends LinearOpMode
                     .addDisplacementMarker(() -> {
                         status.setValue("Status", "moving to stack");
                         telemetry.update();
-                        robot.rotator.retractFully();
-                        robot.outtakeRaiser.goToDownPosition();
+                        robot.outtake.rotator.retractFully();
+                        robot.outtake.goToDownPosition();
                     })
                     .splineTo(stageDoor, Math.PI)
                     .splineToSplineHeading(stackPose, Math.PI)
@@ -388,8 +386,8 @@ public class TensorFlowAuto extends LinearOpMode
                         robot.intake.stop();
                         robot.claw1.down();
                         robot.claw2.down();
-                        robot.rotator.rotateFully();
-                        robot.outtakeRaiser.goToUpPosition();
+                        robot.outtake.rotator.rotateFully();
+                        robot.outtake.goToUpPosition();
                         status.setValue("Status", "moving to backdrop");
                         telemetry.update();
                     })
@@ -420,9 +418,12 @@ public class TensorFlowAuto extends LinearOpMode
         status.setValue("Status", "placing pixel");
         telemetry.update();
         timer.reset();
-        while(timer.milliseconds() < intakeWaitTime && opModeIsActive());
+        while(timer.seconds() < 1 && opModeIsActive());
         robot.claw1.up();
         robot.claw2.up();
+        while(timer.seconds() < 2 && opModeIsActive());
+        robot.outtake.goToPosition(robot.outtake.getPosition() + 200, .5);
+        while(!robot.outtake.isIdle() && timer.seconds() < 4 && opModeIsActive());
 
         status.setValue("Status", "parking");
         telemetry.update();
@@ -431,8 +432,8 @@ public class TensorFlowAuto extends LinearOpMode
         status.setValue("Status", "parked");
         telemetry.update();
         timer.reset();
-        while(timer.seconds() < 1 && opModeIsActive());
-        robot.outtakeRaiser.stop();
+        while(timer.seconds() < 3 && opModeIsActive());
+        robot.outtake.stop();
         //while(opModeIsActive());
     }
 }
