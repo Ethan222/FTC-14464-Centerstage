@@ -8,7 +8,7 @@ public class Outtake extends Motor { // inherits from the Motor parent class
     public Rotator rotator;
     public Outtake(HardwareMap hardwareMap, String motorName, String servoName) // constructor
     {
-        super(hardwareMap, motorName, true, 10, 500);       // calls parent constructor
+        super(hardwareMap, motorName, true, 40, 530);       // calls parent constructor
         motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rotator = new Rotator(hardwareMap, servoName, .52, .11);
     }

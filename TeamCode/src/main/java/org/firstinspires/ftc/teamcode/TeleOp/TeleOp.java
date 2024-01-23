@@ -15,7 +15,7 @@ import org.firstinspires.ftc.teamcode.subsystems.Robot;
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(group = "drive")
 public class TeleOp extends LinearOpMode {
     private static boolean singleDriverMode = false;
-    public static double SLOW_SPEED = .5;
+    public static double SLOW_SPEED = .3;
     @SuppressLint("DefaultLocale")
     @Override
     public void runOpMode() throws InterruptedException {
@@ -32,36 +32,30 @@ public class TeleOp extends LinearOpMode {
 
         Gamepad gamepad;
 
-        // calibrate servos
-        robot.intake.raise();
-        robot.claw1.up();
-        robot.claw2.up();
-        robot.outtake.rotator.retractFully();
-        robot.hangSubsystem.rotateDown();
-        robot.autoClaw.in();
-
         while(opModeInInit() && !(gamepad1.start && gamepad1.back) && !(gamepad2.start && gamepad2.back)) {
             telemetry.addLine("Initialized");
             telemetry.addData("Single driver mode (back + a/b)", singleDriverMode);
             telemetry.update();
 
-            if(gamepad1.back && gamepad1.a)
+            if((gamepad1.back && gamepad1.a) || (gamepad2.back && gamepad2.a))
                 singleDriverMode = true;
             else if((gamepad1.back && gamepad1.b) || (gamepad2.back && gamepad2.b))
                 singleDriverMode = false;
         }
 
         // as soon as it starts, lower intake
-        //robot.intake.lower();
+        robot.intake.lower();
 
         while (opModeIsActive() && !(gamepad1.start && gamepad1.back) && !(gamepad2.start && gamepad2.back)) {
-            robot.drive.setWeightedDrivePower(
-                    new Pose2d(
-                            direction * speed * gamepad1.left_stick_y,
-                            direction * speed * gamepad1.left_stick_x,
-                            speed * -gamepad1.right_stick_x
-                    )
-            );
+            if(!singleDriverMode || !gamepad1.back) {
+                robot.drive.setWeightedDrivePower(
+                        new Pose2d(
+                                direction * speed * gamepad1.left_stick_y,
+                                direction * speed * gamepad1.left_stick_x,
+                                speed * -gamepad1.right_stick_x
+                        )
+                );
+            }
             robot.drive.update();
 
             // reverse direction
@@ -70,7 +64,7 @@ public class TeleOp extends LinearOpMode {
             else if((!singleDriverMode && gamepad1.right_trigger > .1) || (gamepad1.back && gamepad1.right_trigger > .1))
                 direction = 1;
 
-            if((!singleDriverMode && gamepad1.right_bumper) || gamepad1.start)
+            if((!singleDriverMode && gamepad1.right_bumper) || gamepad1.left_stick_button || gamepad1.right_stick_button)
                 speed = SLOW_SPEED;
             else
                 speed = 1;
@@ -94,13 +88,9 @@ public class TeleOp extends LinearOpMode {
                 robot.intake.stop();
 
             // bumpers raise/lower the intake
-            if(gamepad.right_bumper && gamepad.back)
-                robot.intake.lower(.1);
-            else if(gamepad.left_bumper && gamepad.back)
-                robot.intake.raise(.1);
-            else if(gamepad.right_bumper)
+            if(gamepad.right_bumper && !gamepad.back)
                 robot.intake.lower();
-            else if(gamepad.left_bumper)
+            else if(gamepad.left_bumper && !gamepad.back)
                 robot.intake.raise();
 
             // a/b and x/y control the 2 claws
@@ -167,9 +157,9 @@ public class TeleOp extends LinearOpMode {
             }
 
             // hang
-            if(gamepad2.start && gamepad2.right_stick_y < 0)
+            if(gamepad.start && gamepad.right_stick_y < 0)
                 robot.hangSubsystem.setUpPosition();
-            else if(gamepad2.start && gamepad2.right_stick_y > 0)
+            else if(gamepad.start && gamepad.right_stick_y > 0)
                 robot.hangSubsystem.setDownPosition();
             else if(gamepad2.right_stick_y != 0 && gamepad2.back)
                 robot.hangSubsystem.runUsingEncoder();
@@ -185,17 +175,18 @@ public class TeleOp extends LinearOpMode {
                     hangTimer.reset();
                 } else if (robot.hangSubsystem.isIdle() || hangTimer.seconds() > 6)
                     robot.hangSubsystem.stop();
-            } else
+            } else if(!singleDriverMode || gamepad1.back)
                 robot.hangSubsystem.setPower(-gamepad.right_stick_y);
 
             // rotate hang
-            if(gamepad2.back && gamepad2.right_stick_x > 0)
+            double threshold = .8;
+            if(gamepad2.back && gamepad2.right_stick_x > threshold)
                 robot.hangSubsystem.rotateUp(.01);
-            else if(gamepad2.back && gamepad2.right_stick_x < 0)
+            else if(gamepad2.back && gamepad2.right_stick_x < -threshold)
                 robot.hangSubsystem.rotateDown(.01);
-            else if(gamepad2.right_stick_x > 0 || (singleDriverMode && gamepad1.back && gamepad1.right_stick_x > 0))
+            else if(gamepad2.right_stick_x > threshold || (singleDriverMode && gamepad1.back && gamepad1.right_stick_x > threshold))
                 robot.hangSubsystem.rotateUp();
-            else if(gamepad2.right_stick_x < 0 || (singleDriverMode && gamepad1.back && gamepad1.right_stick_x < 0))
+            else if(gamepad2.right_stick_x < -threshold || (singleDriverMode && gamepad1.back && gamepad1.right_stick_x < -threshold))
                 robot.hangSubsystem.rotateDown();
             else if(!singleDriverMode && gamepad1.dpad_right)
                 robot.hangSubsystem.rotateUp();
@@ -203,9 +194,9 @@ public class TeleOp extends LinearOpMode {
                 robot.hangSubsystem.rotateDown();
 
             // gamepad1 a/b control launcher
-            if(gamepad1.a && !singleDriverMode && !gamepad1.start && !gamepad1.back)
+            if((gamepad1.a && !singleDriverMode && !gamepad1.start && !gamepad1.back) || (gamepad.right_bumper && gamepad.back))
                 robot.launcher.launch();
-            else if(gamepad1.b && !singleDriverMode && !gamepad1.start && !gamepad1.back)
+            else if((gamepad1.b && !singleDriverMode && !gamepad1.start && !gamepad1.back) || (gamepad.left_bumper && gamepad.back))
                 robot.launcher.reset();
 
             // auto claw

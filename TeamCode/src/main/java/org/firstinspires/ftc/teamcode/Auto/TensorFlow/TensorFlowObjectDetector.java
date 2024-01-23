@@ -16,15 +16,18 @@ import java.util.List;
 public class TensorFlowObjectDetector {
     private static final String MODEL_ASSET = "blue_red_prop_model_3.tflite";
     private static final String[] LABELS = { "blueProp", "redProp" };
-    private static final float MIN_CONFIDENCE = .4f;
+    private static final float MIN_CONFIDENCE = .5f;
     private static final double CENTER_DIVISION = 350;
     private static final double MAX_SIZE = 250;
     private final TfodProcessor tfod; // stores instance of TFOD processor
     public VisionPortal visionPortal; // stores instance of vision portal
+    private List<Recognition> recognitions;
     private Recognition mostConfidentRecognition, previousRecognition;
     ElapsedTime previousRecognitionTimer;
     public Alliance alliance;
+    private boolean initialized;
     public TensorFlowObjectDetector(HardwareMap hardwareMap) {
+        initialized = false;
         tfod = new TfodProcessor.Builder() // create the TF processor using a builder
                 .setModelAssetName(MODEL_ASSET)
                 .setModelLabels(LABELS)
@@ -35,9 +38,11 @@ public class TensorFlowObjectDetector {
         visionPortal = builder.build(); // build the vision portal using the above settings
         tfod.setMinResultConfidence(MIN_CONFIDENCE); // set confidence threshold for TFOD recognitions
         previousRecognitionTimer = new ElapsedTime();
+        initialized = true;
     }
+    public boolean isInitialized() { return initialized; }
     public void update() {
-        List<Recognition> recognitions = tfod.getRecognitions();
+        recognitions = tfod.getRecognitions();
 
         if(recognitions.size() != 0) {
             mostConfidentRecognition = recognitions.get(0);
@@ -92,18 +97,17 @@ public class TensorFlowObjectDetector {
 
     // sends info to telemetry about all found objects
     public void telemetryAll(Telemetry telemetry) {
-        List<Recognition> currentRecognitions = tfod.getRecognitions();
-        if(currentRecognitions.size() == 0)
+        if(recognitions.size() == 0)
             telemetry.addLine("No objects detected");
         else
-            telemetry.addData("# Objects Detected", currentRecognitions.size());
+            telemetry.addData("# Objects Detected", recognitions.size());
 
         // Step through the list of recognitions and display info for each one.
-        for (Recognition recognition : currentRecognitions) {
+        for (Recognition recognition : recognitions) {
             telemetry.addLine();
             telemetrySingle(telemetry, recognition);
         }
-        if(currentRecognitions.size() == 0 && previousRecognition != null) {
+        if(recognitions.size() == 0 && previousRecognition != null) {
             telemetry.addData("\nPreviously seen", "%.1f seconds ago", previousRecognitionTimer.seconds());
             telemetrySingle(telemetry, previousRecognition);
         }
