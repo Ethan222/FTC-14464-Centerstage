@@ -43,12 +43,12 @@ public class CustomServo {
     }
     public String getStatus() {
         double psn = getPosition();
-        if (Math.abs(psn - leftPosition) < .03) {
+        if (Math.abs(psn - leftPosition) < .05) {
             return LEFT;
-        } else if (Math.abs(psn - rightPosition) < .03) {
-            return MIDDLE;
-        } else {
+        } else if (Math.abs(psn - rightPosition) < .05) {
             return RIGHT;
+        } else {
+            return MIDDLE;
         }
     }
 }

@@ -15,7 +15,7 @@ public class HangSubsystem {
                 new Motor(hm, motorNames[1])
         };
         motors[0].motor.setDirection(DcMotorSimple.Direction.REVERSE);
-        rotator = new CustomServo(hm, servoName, .1, .6);
+        rotator = new CustomServo(hm, servoName, .4, 1);
     }
     public void setPowers(double power) {
         for(Motor motor : motors)
@@ -57,22 +57,22 @@ public class HangSubsystem {
 
 
     public void rotateUp(double increment) {
-        rotator.changePosition(-increment);
-    }
-    public void rotateUp() {
-        rotator.goToLeft();
-    }
-    public void rotateDown(double increment) {
         rotator.changePosition(increment);
     }
-    public void rotateDown() {
+    public void rotateUp() {
         rotator.goToRight();
+    }
+    public void rotateDown(double increment) {
+        rotator.changePosition(-increment);
+    }
+    public void rotateDown() {
+        rotator.goToLeft();
     }
     public String getRotatorStatus() {
         String status = rotator.getStatus();
-        if(status.equals(CustomServo.RIGHT))
+        if(status.equals(CustomServo.LEFT))
             return DOWN;
-        else if(status.equals(CustomServo.LEFT))
+        else if(status.equals(CustomServo.RIGHT))
             return UP;
         else
             return IN_BETWEEN;

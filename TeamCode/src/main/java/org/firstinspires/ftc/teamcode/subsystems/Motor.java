@@ -14,7 +14,7 @@ public class Motor {
         DOWN, UP, UNSURE
     }
     protected final DcMotorEx motor;
-    public static double DEFAULT_ACCELERATION = .1;
+    public static double DEFAULT_ACCELERATION = .01;
     private boolean usingEncoder;
     private int downPosition, upPosition;
     private boolean holding;
