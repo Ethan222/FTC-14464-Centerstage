@@ -153,9 +153,7 @@ public class TeleOp extends LinearOpMode {
                     armTimer.reset();
                     // when arm goes down, also retract outtake
                     robot.outtake.rotator.retractFully();
-                } else if(armTimer.seconds() > 10)
-                    robot.outtake.setDownPosition();
-                else if (robot.outtake.isIdle() || armTimer.seconds() > 2) {
+                } else if (robot.outtake.isIdle() || armTimer.seconds() > 2) {
                     if(robot.outtake.getStatus().equals(Motor.Status.DOWN)) {
                         robot.outtake.stopHolding();
                         robot.outtake.stop();
@@ -175,11 +173,11 @@ public class TeleOp extends LinearOpMode {
                 } else if(robot.outtake.getStatus().equals(Motor.Status.DOWN)) {
                     robot.outtake.stopHolding();
                     robot.outtake.stop();
-                } else if(armTimer.seconds() > 10)
-                    robot.outtake.setDownPosition();
-                else
+                } else
                     robot.outtake.hold();
             }
+            if(robot.outtake.getPosition() - robot.outtake.getDownPosition() < 200 && robot.outtake.getPower() < -.5)
+                robot.outtake.setPower(robot.outtake.getPower() / 2.0);
 
             // hang
 //            if(gamepad.start && gamepad.right_stick_y < 0)

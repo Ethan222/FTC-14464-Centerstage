@@ -107,6 +107,8 @@ public class Motor {
     public void setUpPosition() {
         upPosition = getPosition();
     }
+    public double getDownPosition() { return downPosition; }
+    public double getUpPosition() { return upPosition; }
 
     // hold at the current position
     public void hold() {
