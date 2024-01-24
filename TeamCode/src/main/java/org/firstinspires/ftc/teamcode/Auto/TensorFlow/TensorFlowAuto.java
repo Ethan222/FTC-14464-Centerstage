@@ -331,7 +331,7 @@ public class TensorFlowAuto extends LinearOpMode
             if(side == Side.BACK) {
                 parkTraj = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
                         .back(spikeMarkBackDistance)
-                        .splineToSplineHeading(parkPose, 0)
+                        .splineToSplineHeading(parkPose, alliance == Alliance.BLUE ? -Math.PI/2 : Math.PI/2)
                         .build();
             } else if(side == Side.FRONT) {
                 parkTraj = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())

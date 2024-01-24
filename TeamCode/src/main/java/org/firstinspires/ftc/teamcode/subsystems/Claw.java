@@ -4,8 +4,9 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 // represents a servo that controls a gripper
 public class Claw extends CustomServo {
+    public final static String UP = "UP", DOWN = "DOWN", PARTLY_DOWN = "PARTLY DOWN";
     private static final double INCREMENT = .01;    // this relates to how fast the gripper will move
-    private double UP_PSN, DOWN_PSN;
+    private final double UP_PSN, DOWN_PSN;
     // constructor
     public Claw(HardwareMap hm, String name, double upPsn, double downPsn) {
         super(hm, name, Math.min(upPsn, downPsn), Math.max(upPsn, downPsn)); // calls parent constructor
@@ -27,11 +28,11 @@ public class Claw extends CustomServo {
     // returns the current status of the claw as a String
     public String getStatus() {
         String status = super.getStatus();
-        if(status.equals(Status.LEFT.toString()))
-            return UP_PSN < DOWN_PSN ? "up" : "down";
-        else if(status.equals(Status.RIGHT.toString()))
-            return UP_PSN > DOWN_PSN ? "up" : "down";
+        if(status.equals(LEFT))
+            return UP_PSN < DOWN_PSN ? UP : DOWN;
+        else if(status.equals(RIGHT))
+            return UP_PSN > DOWN_PSN ? UP : DOWN;
         else
-            return "partway up";
+            return PARTLY_DOWN;
     }
 }

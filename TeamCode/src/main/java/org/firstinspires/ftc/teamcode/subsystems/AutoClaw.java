@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 // claw that releases a pixel in auto
 public class AutoClaw extends CustomServo {
+    public final static String IN = "IN", OUT = "OUT", PARTLY_OUT = "PARTLY OUT";
     private static final double INCREMENT = .01;    // how fast the claw will move
     private double IN_PSN, OUT_PSN;
     // constructor
@@ -27,11 +28,11 @@ public class AutoClaw extends CustomServo {
     // returns the current status of the gripper as a String
     public String getStatus() {
         String status = super.getStatus();
-        if(status.equals(CustomServo.Status.LEFT.toString()))
-            return "in";
-        else if(status.equals(CustomServo.Status.RIGHT.toString()))
-            return "out";
+        if(status.equals(CustomServo.LEFT))
+            return IN;
+        else if(status.equals(CustomServo.RIGHT))
+            return OUT;
         else
-            return "partway out";
+            return PARTLY_OUT;
     }
 }

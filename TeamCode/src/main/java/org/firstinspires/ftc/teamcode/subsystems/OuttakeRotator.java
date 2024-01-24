@@ -3,16 +3,18 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 // controls the servo that rotates the outtake mechanism
-public class Rotator extends CustomServo {
+public class OuttakeRotator extends CustomServo {
+    public final static String EXTRA_RETRACTED = "EXTRA RETRACTED", RETRACTED = "RETRACTED", PARTLY_EXTENDED = "PARTLY EXTENDED",
+            EXTENDED = "EXTENDED", EXTRA_EXTENDED = "EXTRA EXTENDED";
     private static final double INCREMENT = .01;    // this relates to how fast the gripper will move
     private double EXTENDED_PSN, RETRACTED_PSN;
     // constructor
-    public Rotator(HardwareMap hm, String name, double retractedPsn, double extendedPsn) {
+    public OuttakeRotator(HardwareMap hm, String name, double retractedPsn, double extendedPsn) {
         super(hm, name, 0, 1); // calls parent constructor
         RETRACTED_PSN = retractedPsn;
         EXTENDED_PSN = extendedPsn;
     }
-    public Rotator(HardwareMap hm, String name) {
+    public OuttakeRotator(HardwareMap hm, String name) {
         this(hm, name, 0, 1);
     }
     public void rotateFully() {
@@ -28,14 +30,14 @@ public class Rotator extends CustomServo {
     public String getStatus() {
         double psn = getPosition();
         if(Math.abs(psn - RETRACTED_PSN) < .03)
-            return "retracted";
+            return RETRACTED;
         else if(Math.abs(psn - EXTENDED_PSN) < .03)
-            return "extended";
+            return EXTENDED;
         else if(psn > RETRACTED_PSN)
-            return "extra retracted";
+            return EXTRA_RETRACTED;
         else if(psn < EXTENDED_PSN)
-            return "extra extended";
+            return EXTRA_EXTENDED;
         else
-            return "partly extended";
+            return PARTLY_EXTENDED;
     }
 }

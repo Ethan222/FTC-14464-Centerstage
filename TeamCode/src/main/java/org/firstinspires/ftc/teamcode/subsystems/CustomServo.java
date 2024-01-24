@@ -5,12 +5,10 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 // Generic class to represent a servo
 public class CustomServo {
+    public final static String LEFT = "LEFT", MIDDLE = "MIDDLE", RIGHT = "RIGHT";
     private Servo servo;                                // field representing the actual Servo object
-    private double leftPosition, rightPosition;         // fields representing the farthest left and right the servo can go
+    private final double leftPosition, rightPosition;         // fields representing the farthest left and right the servo can go
     private double DEFAULT_INCREMENT = .01;
-    public enum Status {
-        LEFT, MIDDLE, RIGHT
-    }
     public CustomServo(HardwareMap hm, String name, double leftPsn, double rightPsn, double increment) {
         servo = hm.get(Servo.class, name);
         leftPosition = leftPsn;
@@ -46,11 +44,11 @@ public class CustomServo {
     public String getStatus() {
         double psn = getPosition();
         if (Math.abs(psn - leftPosition) < .03) {
-            return Status.LEFT.toString();
+            return LEFT;
         } else if (Math.abs(psn - rightPosition) < .03) {
-            return Status.RIGHT.toString();
+            return MIDDLE;
         } else {
-            return Status.MIDDLE.toString();
+            return RIGHT;
         }
     }
 }

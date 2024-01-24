@@ -9,28 +9,29 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 // Generic motor class that controls one motor
 @Config
-public abstract class Motor {
+public class Motor {
     public enum Status {
         DOWN, UP, UNSURE
     }
     protected final DcMotorEx motor;
     public static double DEFAULT_ACCELERATION = .1;
     private boolean usingEncoder;
-    protected int downPosition, upPosition;
+    private int downPosition, upPosition;
     private boolean holding;
     private int holdPosition;
     public static int HOLD_PRECISION = 5;
 
     // constructors
-    public Motor(HardwareMap hm, String name, boolean usingEncoder, int downPsn, int upPsn) { // constructor
+    public Motor(HardwareMap hm, String name, boolean usingEncoder, int downPsn, int upPsn) {
         motor = hm.get(DcMotorEx.class, name); // get motor from the hardwareMap
         downPosition = downPsn;
         upPosition = upPsn;
         if(usingEncoder)
             motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
+    public Motor(HardwareMap hm, String name, boolean usingEncoder) { this(hm, name, usingEncoder, 0, 0); }
     public Motor(HardwareMap hm, String name) {
-        this(hm, name, false, 0, 0);
+        this(hm, name, false);
     }
     public void setPower(double power) {
             motor.setPower(power);
@@ -123,9 +124,9 @@ public abstract class Motor {
 
     public Status getStatus() {
         double position = getPosition();
-        if(Math.abs(position - downPosition) < 15)
+        if(Math.abs(position - downPosition) < 30)
             return Status.DOWN;
-        else if(Math.abs(position - upPosition) < 15)
+        else if(Math.abs(position - upPosition) < 30)
             return Status.UP;
         else
             return Status.UNSURE;

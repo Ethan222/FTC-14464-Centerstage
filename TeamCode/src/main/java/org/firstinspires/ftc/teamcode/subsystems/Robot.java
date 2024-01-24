@@ -18,7 +18,7 @@ public class Robot {
         claw1 = new Claw(hardwareMap, "servo1", .39, .64);
         claw2 = new Claw(hardwareMap, "servo2", .7, 1);
         outtake = new Outtake(hardwareMap, "armMotor", "servo0");
-        hangSubsystem = new HangSubsystem(hardwareMap, "hangMotor", "servo5");
+        hangSubsystem = new HangSubsystem(hardwareMap, new String[]{"hangMotor", "hang2"}, "servo5");
         autoClaw = new AutoClaw(hardwareMap, "servo3", .10, .4);
         launcher = new DroneLauncher(hardwareMap, "droneLauncher");
     }
