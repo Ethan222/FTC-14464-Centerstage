@@ -11,7 +11,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 @Config
 public class Motor {
     public enum Status {
-        DOWN, UP, UNSURE
+        DOWN, UP, UNSURE, MOVING_DOWN, MOVING_UP
     }
     protected final DcMotorEx motor;
     public static double DEFAULT_ACCELERATION = .01;
@@ -125,10 +125,15 @@ public class Motor {
     public int getHoldPosition() { return holdPosition; }
 
     public Status getStatus() {
+        double power = getPower();
         double position = getPosition();
-        if(Math.abs(position - downPosition) < 30)
+        if(power > 0)
+            return Status.MOVING_UP;
+        else if(power < 0)
+            return Status.MOVING_DOWN;
+        else if(Math.abs(position - downPosition) < 50)
             return Status.DOWN;
-        else if(Math.abs(position - upPosition) < 30)
+        else if(Math.abs(position - upPosition) < 50)
             return Status.UP;
         else
             return Status.UNSURE;

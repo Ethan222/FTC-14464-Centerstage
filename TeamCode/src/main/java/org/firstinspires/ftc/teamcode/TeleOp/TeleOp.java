@@ -176,7 +176,7 @@ public class TeleOp extends LinearOpMode {
                 } else
                     robot.outtake.hold();
             }
-            if(robot.outtake.getPosition() - robot.outtake.getDownPosition() < 200 && robot.outtake.getPower() < -.5)
+            if(robot.outtake.getPosition() - robot.outtake.getDownPosition() < 400 && robot.outtake.getPower() < -.5)
                 robot.outtake.setPower(robot.outtake.getPower() / 2.0);
 
             // hang
@@ -199,7 +199,7 @@ public class TeleOp extends LinearOpMode {
 //                } else if (robot.hangSubsystem.isIdle() || hangTimer.seconds() > 6)
 //                    robot.hangSubsystem.stop();
             if(!singleDriverMode || gamepad1.back) {
-//                robot.hangSubsystem.setPowers(-gamepad.right_stick_y);
+                robot.hangSubsystem.setPowers(-gamepad.right_stick_y);
                 if(-gamepad.right_stick_y > .9 && robot.hangSubsystem.getRotatorStatus().equals(HangSubsystem.DOWN))
                     robot.hangSubsystem.rotateUp();
             }

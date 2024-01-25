@@ -12,8 +12,8 @@ public class Outtake extends Motor { // inherits from the Motor parent class
         motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rotator = new OuttakeRotator(hardwareMap, servoName, .52, .11);
     }
-    public void up(double power) {    // a negative power flips the arm
-        setPower(power);               // the setPower() method is inherited from Motor
+    public void up(double power) {
+        setPower(power);
     }
     public void down(double power) {  // a positive power unflips the arm
         setPower(-power);
