@@ -25,9 +25,7 @@ public class TensorFlowObjectDetector {
     private Recognition mostConfidentRecognition, previousRecognition;
     ElapsedTime previousRecognitionTimer;
     public Alliance alliance;
-    private boolean initialized;
     public TensorFlowObjectDetector(HardwareMap hardwareMap) {
-        initialized = false;
         tfod = new TfodProcessor.Builder() // create the TF processor using a builder
                 .setModelAssetName(MODEL_ASSET)
                 .setModelLabels(LABELS)
@@ -38,9 +36,7 @@ public class TensorFlowObjectDetector {
         visionPortal = builder.build(); // build the vision portal using the above settings
         tfod.setMinResultConfidence(MIN_CONFIDENCE); // set confidence threshold for TFOD recognitions
         previousRecognitionTimer = new ElapsedTime();
-        initialized = true;
     }
-    public boolean isInitialized() { return initialized; }
     public void update() {
         recognitions = tfod.getRecognitions();
 

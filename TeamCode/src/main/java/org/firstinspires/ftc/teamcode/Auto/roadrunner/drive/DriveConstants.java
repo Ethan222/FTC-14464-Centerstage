@@ -92,7 +92,7 @@ public class DriveConstants {
     public static double MAX_VEL = 40; // 80% of max velocity
     public static double MAX_ACCEL = 40;
     public static double MAX_ANG_VEL = Math.toRadians(200);
-    public static double MAX_ANG_ACCEL = Math.toRadians(200);
+    public static double MAX_ANG_ACCEL = Math.toRadians(280);
 
     public static RevHubOrientationOnRobot.LogoFacingDirection LOGO_FACING_DIR =
             RevHubOrientationOnRobot.LogoFacingDirection.UP;

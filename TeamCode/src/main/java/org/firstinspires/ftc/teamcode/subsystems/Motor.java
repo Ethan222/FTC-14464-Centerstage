@@ -127,9 +127,9 @@ public class Motor {
     public Status getStatus() {
         double power = getPower();
         double position = getPosition();
-        if(power > 0)
+        if(power > .4)
             return Status.MOVING_UP;
-        else if(power < 0)
+        else if(power < -.4)
             return Status.MOVING_DOWN;
         else if(Math.abs(position - downPosition) < 50)
             return Status.DOWN;
