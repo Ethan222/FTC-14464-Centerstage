@@ -6,11 +6,12 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 // controls the motor that raises the outtake
 public class Outtake extends Motor { // inherits from the Motor parent class
     public OuttakeRotator rotator;
+    public static final int UP_POSITION_2 = 600;
     public Outtake(HardwareMap hardwareMap, String motorName, String servoName) // constructor
     {
-        super(hardwareMap, motorName, true, 0, 400);       // calls parent constructor
+        super(hardwareMap, motorName, true, 0, 380-20);       // calls parent constructor
         motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rotator = new OuttakeRotator(hardwareMap, servoName, .52, .09);
+        rotator = new OuttakeRotator(hardwareMap, servoName, .52, .009);
     }
     public void up(double power) {
         setPower(power);

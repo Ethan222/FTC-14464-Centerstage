@@ -122,7 +122,11 @@ public class TeleOp extends LinearOpMode {
                 robot.claw2.up();
 
             // left/right on d-pad rotate
-            if(gamepad.dpad_right && gamepad.back)
+            if(gamepad.dpad_right && gamepad.start)
+                robot.outtake.rotator.EXTENDED_PSN = robot.outtake.rotator.getPosition();
+            else if(gamepad.dpad_left && gamepad.start)
+                robot.outtake.rotator.RETRACTED_PSN = robot.outtake.rotator.getPosition();
+            else if(gamepad.dpad_right && gamepad.back)
                 robot.outtake.rotator.rotateIncrementally();
             else if(gamepad.dpad_left && gamepad.back)
                 robot.outtake.rotator.retractIncrementally();
@@ -206,7 +210,15 @@ public class TeleOp extends LinearOpMode {
 //                } else if (robot.hangSubsystem.isIdle() || hangTimer.seconds() > 6)
 //                    robot.hangSubsystem.stop();
             if((!singleDriverMode || gamepad1.back) && gamepad.right_stick_x < .3) {
-                robot.hangSubsystem.setPowers(-gamepad.right_stick_y);
+//                robot.hangSubsystem.setPowers(-gamepad.right_stick_y);
+                if(Math.abs(gamepad.right_stick_y) == 1)
+                    robot.hangSubsystem.setPowers(.8 * -gamepad.right_stick_y);
+                else if(Math.abs(gamepad.right_stick_y) > .4)
+                    robot.hangSubsystem.setPowers(.5 * gamepad.right_stick_y < 0 ? 1 : -1);
+                else if(Math.abs(gamepad.right_stick_y) > 0)
+                    robot.hangSubsystem.setPowers(.2 * gamepad.right_stick_y < 0 ? 1 : -1);
+                else
+                    robot.hangSubsystem.setPowers(0);
                 if(gamepad.right_stick_y < -.9 && robot.hangSubsystem.getRotatorStatus().equals(HangSubsystem.DOWN))
                     robot.hangSubsystem.rotateUp();
             }

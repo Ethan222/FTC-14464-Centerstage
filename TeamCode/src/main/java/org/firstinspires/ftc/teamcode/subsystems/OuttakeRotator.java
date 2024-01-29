@@ -7,7 +7,7 @@ public class OuttakeRotator extends CustomServo {
     public final static String EXTRA_RETRACTED = "EXTRA RETRACTED", RETRACTED = "RETRACTED", PARTLY_EXTENDED = "PARTLY EXTENDED",
             EXTENDED = "EXTENDED", EXTRA_EXTENDED = "EXTRA EXTENDED";
     private static final double INCREMENT = .01;    // this relates to how fast the gripper will move
-    private double EXTENDED_PSN, RETRACTED_PSN;
+    public double EXTENDED_PSN, RETRACTED_PSN;
     // constructor
     public OuttakeRotator(HardwareMap hm, String name, double retractedPsn, double extendedPsn) {
         super(hm, name, 0, 1); // calls parent constructor

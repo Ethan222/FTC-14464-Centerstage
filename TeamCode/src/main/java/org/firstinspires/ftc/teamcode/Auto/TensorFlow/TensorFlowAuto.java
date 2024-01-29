@@ -32,6 +32,7 @@ import org.firstinspires.ftc.teamcode.Auto.Location;
 import org.firstinspires.ftc.teamcode.Auto.roadrunner.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.Auto.roadrunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.Auto.roadrunner.trajectorysequence.TrajectorySequence;
+import org.firstinspires.ftc.teamcode.subsystems.Outtake;
 import org.firstinspires.ftc.teamcode.subsystems.Robot;
 
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "Autonomous", group = "auto", preselectTeleOp = "TeleOp")
@@ -137,13 +138,18 @@ public class TensorFlowAuto extends LinearOpMode
             waitTime = 4;
         resetRuntime();
         while(getRuntime() < waitTime) {
-            telemetry.addLine(String.format("Detecting prop location...%.1f", waitTime - getRuntime()));
-            propDetector.update();
-            propLocation = propDetector.getLocation();
-            telemetry.addData("Prop location", propLocation);
-            telemetry.addLine();
-            propDetector.telemetryAll(telemetry);
-            telemetry.update();
+            if(!propLocationOverride) {
+                telemetry.addLine(String.format("Detecting prop location...%.1f", waitTime - getRuntime()));
+                propDetector.update();
+                propLocation = propDetector.getLocation();
+                telemetry.addData("Prop location", propLocation);
+                telemetry.addLine();
+                propDetector.telemetryAll(telemetry);
+                telemetry.update();
+            } else {
+                telemetry.addLine(String.format("Waiting...%.1f", waitTime - getRuntime()));
+                telemetry.addData("Prop location", propLocation);
+            }
         }
 
         propDetector.stopDetecting();
@@ -161,16 +167,16 @@ public class TensorFlowAuto extends LinearOpMode
         Pose2d startPose = null, backdropPose = null, stackPose = null, parkPose = null;
         Vector2d truss = null;
         TrajectorySequence spikeMarkTraj = null, toBackdrop = null, parkTraj = null;
-        double spikeMarkBackDistance = 2, backdropBackDistance = 5;
+        double spikeMarkBackDistance = 2-.5, backdropBackDistance = 5;
         double slowSpeed = 2;
 
         double backdropX, backdropY = 0;
         switch (alliance) {
             case BLUE: // blue common
-                backdropX = 49.5;
+                backdropX = 49.5+.3;
                 switch(propLocation) { // blue backdrop
                     case LEFT:
-                        backdropX -= 1.8;
+                        backdropX -= side == Side.BACK ? 1.8-.4 : 1.8;
                         backdropY = side == Side.BACK ? 39.1 : 41.3;
                         break;
                     case CENTER:
@@ -186,15 +192,15 @@ public class TensorFlowAuto extends LinearOpMode
                 truss = goThroughStageDoor ? new Vector2d(-3, 10-.5) : new Vector2d(-3, 63);
                 break;
             case RED: // red common
-                backdropX = 45;
+                backdropX = side == Side.BACK ? 48.6 : 49.4+.6;
                 switch(propLocation) { // red backdrop
                     case LEFT:
                         backdropX += 1;
-                        backdropY = side == Side.BACK ? -27 : -25-.5;
+                        backdropY = side == Side.BACK ? -27 : -28.3+.6;
                         break;
                     case CENTER:
                         backdropX += side == Side.BACK ? 2.7 : 3.1;
-                        backdropY = -30;
+                        backdropY = side == Side.BACK ? -30 : -28+2;
                         break;
                     case RIGHT:
                         backdropX += 2.7;
@@ -202,7 +208,7 @@ public class TensorFlowAuto extends LinearOpMode
                 }
                 backdropPose = new Pose2d(backdropX, backdropY, Math.toRadians(0));
                 stackPose = new Pose2d(-56, -35, 0);
-                truss = goThroughStageDoor ? new Vector2d(-6, -8+2) : new Vector2d(-6, -60);
+                truss = goThroughStageDoor ? new Vector2d(-6, -6) : new Vector2d(-6, -60);
         }
 
         switch(side) {
@@ -210,7 +216,7 @@ public class TensorFlowAuto extends LinearOpMode
                 switch(alliance) {
                     case BLUE: // BLUE BACK
                         startPose = new Pose2d(12, 64, -Math.PI / 2);
-                        parkPose = new Pose2d(52, 62, 0);
+                        parkPose = new Pose2d(52+3, 62, 0);
                         switch (propLocation) {
                             case LEFT:
                                 spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
@@ -253,7 +259,7 @@ public class TensorFlowAuto extends LinearOpMode
                                 break;
                             case RIGHT:
                                 spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                                        .splineToSplineHeading(new Pose2d(20.5-.5, -34, Math.PI / 2), Math.PI / 2)
+                                        .splineToSplineHeading(new Pose2d(21.6+.4, -34, Math.PI / 2), Math.PI / 2)
                                         .back(4)
                                         .build();
                         }
@@ -342,17 +348,17 @@ public class TensorFlowAuto extends LinearOpMode
                 }
 
                 // front traj
-                waitTime = placeOnBackdrop ? 6 - waitTime : 0;
+                waitTime = placeOnBackdrop ? 12-2 - waitTime : 0;
                 if(alliance == Alliance.BLUE && propLocation == Location.CENTER && goThroughStageDoor)
                     toBackdrop = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
                             .back(spikeMarkBackDistance)
                             .splineToConstantHeading(truss.plus(new Vector2d(-46, 3)), -Math.PI/2)
                             .splineToConstantHeading(truss.plus(new Vector2d(-33, 0)), 0)
                             .waitSeconds(waitTime)
-                            .lineToConstantHeading(truss.plus(new Vector2d(12, 0)))
+                            .lineToConstantHeading(truss.plus(new Vector2d(12+21, 0)))
                             .addDisplacementMarker(() -> {
                                 robot.outtake.rotator.rotateFully();
-                                robot.outtake.goToUpPosition();
+                                robot.outtake.goToPosition(Outtake.UP_POSITION_2);
                             })
                             .splineToSplineHeading(backdropPose, backdropPose.getHeading())
                             .waitSeconds(1)
@@ -365,7 +371,7 @@ public class TensorFlowAuto extends LinearOpMode
                         .back(spikeMarkBackDistance)
                         .lineToConstantHeading(truss.plus(new Vector2d(-35, 0)))
                         .waitSeconds(waitTime)
-                        .lineToConstantHeading(truss.plus(new Vector2d(12, 0)))
+                        .lineToConstantHeading(truss.plus(new Vector2d(12+21, 0)))
                         .addDisplacementMarker(() -> {
                             robot.outtake.rotator.rotateFully();
                             robot.outtake.goToUpPosition();

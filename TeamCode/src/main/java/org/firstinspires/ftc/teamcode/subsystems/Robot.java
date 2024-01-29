@@ -12,6 +12,7 @@ public class Robot {
     public HangSubsystem hangSubsystem;
     public AutoClaw autoClaw;
     public DroneLauncher launcher;
+//    public CustomServo droneHolder;
     public Robot(HardwareMap hardwareMap) {
         drive = new SampleMecanumDrive(hardwareMap);
         intake = new Intake(hardwareMap, "intake", "servo4");
@@ -21,5 +22,6 @@ public class Robot {
         hangSubsystem = new HangSubsystem(hardwareMap, new String[]{"hangMotor", "hang2"}, "servo5");
         autoClaw = new AutoClaw(hardwareMap, "servo3", .10, .4);
         launcher = new DroneLauncher(hardwareMap, "droneLauncher");
+//        droneHolder = new CustomServo(hardwareMap, "")
     }
 }

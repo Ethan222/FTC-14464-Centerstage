@@ -252,10 +252,9 @@ public class MeepMeepTesting {
         RoadRunnerBotEntity test = new DefaultBotBuilder(meepMeep)
                 .setColorScheme(new ColorSchemeBlueLight())
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
-                .followTrajectorySequence(drive -> drive.trajectorySequenceBuilder(new Pose2d(-40, 22, 0))
-                        .back(2)
-                        .splineToConstantHeading(new Vector2d(-3, 10).plus(new Vector2d(-53, 4)), -Math.PI / 2)
-                        .splineToConstantHeading(new Vector2d(-3, 10).plus(new Vector2d(-33, 0)), 0)
+                .followTrajectorySequence(drive -> drive.trajectorySequenceBuilder(new Pose2d(-6-35, -6, 0))
+                        .lineToConstantHeading(new Vector2d(-6, -6).plus(new Vector2d(12+21, 0)))
+                        .splineToConstantHeading(new Vector2d(48.6, -36.2), 0)
                 .build()
         );
 
