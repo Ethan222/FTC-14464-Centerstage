@@ -1,24 +1,35 @@
 package org.firstinspires.ftc.teamcode.Auto.AprilTags;
 
-public class AprilTagIDs {
-    //public final static int BlueBackdropLeft = 1;
+import org.firstinspires.ftc.teamcode.Auto.Alliance;
+import org.firstinspires.ftc.teamcode.Auto.Location;
 
-    public Backdrop blueBackdrop, redBackdrop;
-    public AprilTagIDs() {
-        blueBackdrop = new Backdrop("blue", 1, 2, 3);
-        redBackdrop = new Backdrop("red", 4, 5, 6);
+public class AprilTagIDs {
+    public static Backdrop blueBackdrop = new Backdrop(Alliance.BLUE, 1, 2, 3);
+    public static Backdrop redBackdrop = new Backdrop(Alliance.RED, 4, 5, 6);
+    public static Backdrop getBackdrop(Alliance alliance) {
+        if(alliance == Alliance.BLUE)
+            return blueBackdrop;
+        else
+            return redBackdrop;
     }
 }
 
 class Backdrop {
-    public String color;
-    public int left, center, right;
-    public int[] arr;
-    public Backdrop(String clr, int l, int c, int r) {
-        color = clr;
-        left = l;
-        center = c;
-        right = r;
-        arr = new int[]{l, c, r};
+    public Alliance alliance;
+    public int LEFT, CENTER, RIGHT;
+    public Backdrop(Alliance alliance, int l, int c, int r) {
+        this.alliance = alliance;
+        LEFT = l; CENTER = c; RIGHT = r;
+    }
+    public int getId(Location location) {
+        switch(location) {
+            case LEFT:
+                return LEFT;
+            case CENTER:
+                return CENTER;
+            case RIGHT:
+                return RIGHT;
+        }
+        return 0;
     }
 }

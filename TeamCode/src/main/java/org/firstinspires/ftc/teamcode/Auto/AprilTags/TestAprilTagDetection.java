@@ -26,13 +26,13 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.Auto.Alliance;
 import org.openftc.apriltag.AprilTagDetection;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 
 import java.util.ArrayList;
-@Disabled
 @TeleOp(group = "test")
 public class TestAprilTagDetection extends LinearOpMode
 {
@@ -53,11 +53,9 @@ public class TestAprilTagDetection extends LinearOpMode
     // UNITS ARE METERS
     double tagsize = 0.166;
 
-    AprilTagIDs ids = new AprilTagIDs();
-    Backdrop backdrop = ids.blueBackdrop;
-
-    AprilTagDetection[] detectedTags = {null, null, null};
-    boolean[] currentlyDetecting = {false, false, false};
+    Backdrop backdrop = AprilTagIDs.getBackdrop(Alliance.RED);
+    AprilTagDetection[] detectedTags = new AprilTagDetection[3];
+    boolean[] currentlyDetecting = new boolean[3];
 
     @Override
     public void runOpMode()
@@ -74,7 +72,6 @@ public class TestAprilTagDetection extends LinearOpMode
             {
                 camera.startStreaming(800,448, OpenCvCameraRotation.UPRIGHT);
             }
-
             @Override
             public void onError(int errorCode)
             {
@@ -85,14 +82,14 @@ public class TestAprilTagDetection extends LinearOpMode
         telemetry.setMsTransmissionInterval(50);
 
         // init loop
-        while (!isStarted() && !isStopRequested())
+        while (opModeInInit())
         {
             if(gamepad1.x) {
-                backdrop = ids.blueBackdrop;
+                backdrop = AprilTagIDs.getBackdrop(Alliance.BLUE);
                 detectedTags = new AprilTagDetection[3];
             }
             else if(gamepad1.b) {
-                backdrop = ids.redBackdrop;
+                backdrop = AprilTagIDs.getBackdrop(Alliance.RED);
                 detectedTags = new AprilTagDetection[3];
             }
 
@@ -103,13 +100,13 @@ public class TestAprilTagDetection extends LinearOpMode
             {
                 for(AprilTagDetection tag : currentDetections)
                 {
-                    if(tag.id == backdrop.left) {
+                    if(tag.id == backdrop.LEFT) {
                         detectedTags[0] = tag;
                         currentlyDetecting[0] = true;
-                    } else if(tag.id == backdrop.center) {
+                    } else if(tag.id == backdrop.CENTER) {
                         detectedTags[1] = tag;
                         currentlyDetecting[1] = true;
-                    } else if(tag.id == backdrop.right) {
+                    } else if(tag.id == backdrop.RIGHT) {
                         detectedTags[2] = tag;
                         currentlyDetecting[2] = true;
                     }
@@ -127,11 +124,11 @@ public class TestAprilTagDetection extends LinearOpMode
 
     private void telemetrizeDetectedAprilTags()
     {
-        telemetry.addLine(backdrop.color + " backdrop");
+        telemetry.addLine(backdrop.alliance + " backdrop");
         String[] strings = {
-                "LEFT (tag " + backdrop.arr[0] + ")",
-                "CENTER (tag " + backdrop.arr[1] + ")",
-                "RIGHT (tag " + backdrop.arr[2] + ")"
+                "LEFT (tag " + backdrop.LEFT + ")",
+                "CENTER (tag " + backdrop.CENTER + ")",
+                "RIGHT (tag " + backdrop.RIGHT + ")"
         };
         for(int i = 0; i < 3; i++) {
             telemetry.addLine(strings[i]);

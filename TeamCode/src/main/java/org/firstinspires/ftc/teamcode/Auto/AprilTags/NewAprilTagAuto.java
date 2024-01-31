@@ -19,7 +19,7 @@
  * SOFTWARE.
  */
 
-package org.firstinspires.ftc.teamcode.Auto.TensorFlow;
+package org.firstinspires.ftc.teamcode.Auto.AprilTags;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
@@ -27,16 +27,26 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.Auto.Alliance;
 import org.firstinspires.ftc.teamcode.Auto.Location;
+import org.firstinspires.ftc.teamcode.Auto.TensorFlow.TensorFlowObjectDetector;
 import org.firstinspires.ftc.teamcode.Auto.roadrunner.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.Auto.roadrunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.Auto.roadrunner.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.subsystems.Outtake;
 import org.firstinspires.ftc.teamcode.subsystems.Robot;
+import org.openftc.apriltag.AprilTagDetection;
+import org.openftc.apriltag.AprilTagPose;
+import org.openftc.easyopencv.OpenCvCamera;
+import org.openftc.easyopencv.OpenCvCameraFactory;
+import org.openftc.easyopencv.OpenCvCameraRotation;
 
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "old no april tag auto", group = "auto", preselectTeleOp = "TeleOp")
-public class TensorFlowAuto extends LinearOpMode
+import java.util.ArrayList;
+import java.util.List;
+
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "New April Tag Auto", group = "auto", preselectTeleOp = "TeleOp")
+public class NewAprilTagAuto extends LinearOpMode
 {
     private enum Side {
         BACK, FRONT
@@ -46,12 +56,30 @@ public class TensorFlowAuto extends LinearOpMode
     private static Side side = Side.BACK;
     private static boolean placeOnBackdrop = true, goThroughStageDoor = true;
 
+    private Robot robot;
+    private TensorFlowObjectDetector propDetector;
+    private OpenCvCamera camera;
+    private AprilTagDetectionPipeline aprilTagDetectionPipeline;
+
+    static final double FEET_PER_METER = 3.28084;
+
+    // Lens intrinsics
+    // UNITS ARE PIXELS
+    // NOTE: this calibration is for the C920 webcam at 800x448. You will need to do your own calibration for other configurations!
+    double fx = 578.272, fy = 578.272, cx = 402.145, cy = 221.506;
+
+    double tagsize = 0.166; // UNITS ARE METERS
+
+    Location propLocation = Location.LEFT;
+    List<AprilTagDetection> currentAprilTagDetections;
+    AprilTagDetection tagOfInterest;
+
     @Override
     public void runOpMode() {
-        Robot robot = new Robot(hardwareMap);
-        TensorFlowObjectDetector propDetector = new TensorFlowObjectDetector(hardwareMap);
-        Location propLocation = Location.LEFT;
+        robot = new Robot(hardwareMap);
+        propDetector = new TensorFlowObjectDetector(hardwareMap);
         boolean propLocationOverride = false;
+
         ElapsedTime timer = new ElapsedTime();
         boolean initialized = false;
         double initTime = 5;
@@ -368,20 +396,20 @@ public class TensorFlowAuto extends LinearOpMode
                             .build();
                 else
                     toBackdrop = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
-                        .back(spikeMarkBackDistance)
-                        .lineToConstantHeading(truss.plus(new Vector2d(-35, 0)))
-                        .waitSeconds(waitTime)
-                        .lineToConstantHeading(truss.plus(new Vector2d(12+21, 0)))
-                        .addDisplacementMarker(() -> {
-                            robot.outtake.rotator.rotateFully();
-                            robot.outtake.goToUpPosition();
-                        })
-                        .splineToSplineHeading(backdropPose, backdropPose.getHeading())
-                        .waitSeconds(1)
-                        .forward(4.3,
-                                SampleMecanumDrive.getVelocityConstraint(slowSpeed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
-                                SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
-                        .build();
+                            .back(spikeMarkBackDistance)
+                            .lineToConstantHeading(truss.plus(new Vector2d(-35, 0)))
+                            .waitSeconds(waitTime)
+                            .lineToConstantHeading(truss.plus(new Vector2d(12+21, 0)))
+                            .addDisplacementMarker(() -> {
+                                robot.outtake.rotator.rotateFully();
+                                robot.outtake.goToUpPosition();
+                            })
+                            .splineToSplineHeading(backdropPose, backdropPose.getHeading())
+                            .waitSeconds(1)
+                            .forward(4.3,
+                                    SampleMecanumDrive.getVelocityConstraint(slowSpeed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                                    SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
+                            .build();
                 if(placeOnBackdrop) {
                     parkTraj = robot.drive.trajectorySequenceBuilder(toBackdrop.end())
                             .waitSeconds(1)
@@ -445,5 +473,42 @@ public class TensorFlowAuto extends LinearOpMode
 
         timer.reset();
         while(timer.seconds() < 2 && opModeIsActive());
+    }
+    private void initializeAprilTagDetection() {
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
+        aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
+
+        camera.setPipeline(aprilTagDetectionPipeline);
+        camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
+        {
+            @Override
+            public void onOpened()
+            {
+                camera.startStreaming(800,448, OpenCvCameraRotation.UPRIGHT);
+            }
+            @Override
+            public void onError(int errorCode)
+            {
+
+            }
+        });
+    }
+    private void updateAprilTags() {
+        int idOfInterest = AprilTagIDs.getBackdrop(alliance).getId(propLocation);
+        telemetry.addData("looking for", "%s %s (id %d)", alliance, propLocation, idOfInterest);
+        currentAprilTagDetections = aprilTagDetectionPipeline.getLatestDetections();
+        if(currentAprilTagDetections.size() == 0)
+            telemetry.addLine("can't see any tags");
+        else {
+            for (AprilTagDetection tag : currentAprilTagDetections)
+                if (tag.id == idOfInterest)
+                    tagOfInterest = tag;
+            if(tagOfInterest == null)
+                telemetry.addLine("can see tags but not the right one");
+            else
+                telemetry.addData("can see tag at", tagOfInterest.pose);
+        }
+        telemetry.update();
     }
 }
