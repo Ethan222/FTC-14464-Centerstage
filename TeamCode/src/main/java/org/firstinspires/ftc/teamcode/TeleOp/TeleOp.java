@@ -254,7 +254,7 @@ public class TeleOp extends LinearOpMode {
             telemetry.addData("\nclaw 1", "%s (%.2f)", robot.claw1.getStatus(), robot.claw1.getPosition());
             telemetry.addData("claw 2", "%s (%.2f)", robot.claw2.getStatus(), robot.claw2.getPosition());
             telemetry.addData("outtake", "%s %s (%d) [%s]", robot.outtake.getStatus().toString(), robot.outtake.isHolding() ? "(holding at " + robot.outtake.getHoldPosition() + ")" : "", robot.outtake.getPosition(), robot.outtake.getPowerAsString());
-            telemetry.addData("- rotator", "%s (%.2f)", robot.outtake.rotator.getStatus(), robot.outtake.rotator.getPosition());
+            telemetry.addData("- rotator", "%s (%.3f)", robot.outtake.rotator.getStatus(), robot.outtake.rotator.getPosition());
             telemetry.addData("\nhang", "[%s] (%s)", robot.hangSubsystem.getPowersAsString(), robot.hangSubsystem.getPositionsAsStrings());
             telemetry.addData("- rotator", "%s (%.2f)", robot.hangSubsystem.getRotatorStatus(), robot.hangSubsystem.rotator.getPosition());
             telemetry.addData("\nlauncher", "%s (%.2f)", robot.launcher.getStatus(), robot.launcher.getPosition());

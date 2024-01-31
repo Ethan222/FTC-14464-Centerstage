@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 public class OuttakeRotator extends CustomServo {
     public final static String EXTRA_RETRACTED = "EXTRA RETRACTED", RETRACTED = "RETRACTED", PARTLY_EXTENDED = "PARTLY EXTENDED",
             EXTENDED = "EXTENDED", EXTRA_EXTENDED = "EXTRA EXTENDED";
-    private static final double INCREMENT = .01;    // this relates to how fast the gripper will move
+    private static final double INCREMENT = .005;
     public double EXTENDED_PSN, RETRACTED_PSN;
     // constructor
     public OuttakeRotator(HardwareMap hm, String name, double retractedPsn, double extendedPsn) {
@@ -23,8 +23,8 @@ public class OuttakeRotator extends CustomServo {
     public void retractFully() {
         setPosition(RETRACTED_PSN);
     }
-    public void rotateIncrementally() { changePosition(-INCREMENT); }
-    public void retractIncrementally() { changePosition(INCREMENT); }
+    public void rotateIncrementally() { changePosition(INCREMENT); }
+    public void retractIncrementally() { changePosition(-INCREMENT); }
 
     // returns the current status as a String
     public String getStatus() {

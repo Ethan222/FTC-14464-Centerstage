@@ -249,12 +249,25 @@ public class MeepMeepTesting {
                                 .build()
                 );
 
-        RoadRunnerBotEntity test = new DefaultBotBuilder(meepMeep)
+        RoadRunnerBotEntity test1 = new DefaultBotBuilder(meepMeep)
                 .setColorScheme(new ColorSchemeBlueLight())
                 .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
-                .followTrajectorySequence(drive -> drive.trajectorySequenceBuilder(new Pose2d(-6-35, -6, 0))
-                        .lineToConstantHeading(new Vector2d(-6, -6).plus(new Vector2d(12+21, 0)))
-                        .splineToConstantHeading(new Vector2d(48.6, -36.2), 0)
+                .followTrajectorySequence(drive -> drive.trajectorySequenceBuilder(new Pose2d())
+                        .splineTo(new Vector2d(30, 30), Math.PI/2)
+                .build()
+        );
+        RoadRunnerBotEntity test2 = new DefaultBotBuilder(meepMeep)
+                .setColorScheme(new ColorSchemeBlueLight())
+                .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
+                .followTrajectorySequence(drive -> drive.trajectorySequenceBuilder(new Pose2d())
+                        .splineToLinearHeading(new Pose2d(30, 30, Math.PI/2), Math.PI/2)
+                .build()
+        );
+        RoadRunnerBotEntity test3 = new DefaultBotBuilder(meepMeep)
+                .setColorScheme(new ColorSchemeBlueLight())
+                .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
+                .followTrajectorySequence(drive -> drive.trajectorySequenceBuilder(new Pose2d())
+                        .splineToSplineHeading(new Pose2d(30, 30, Math.PI/2), Math.PI/2)
                 .build()
         );
 
@@ -265,7 +278,9 @@ public class MeepMeepTesting {
 //                .addEntity(blueFrontRight)
 //                .addEntity(redBackLeft)
 //                .addEntity(redFrontLeft)
-                .addEntity(test)
+                .addEntity(test1)
+                .addEntity(test2)
+                .addEntity(test3)
                 .start();
     }
 }
