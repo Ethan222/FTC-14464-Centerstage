@@ -33,9 +33,9 @@ public class OuttakeRotator extends CustomServo {
             return RETRACTED;
         else if(Math.abs(psn - EXTENDED_PSN) < .03)
             return EXTENDED;
-        else if(psn > RETRACTED_PSN)
+        else if(psn < RETRACTED_PSN)
             return EXTRA_RETRACTED;
-        else if(psn < EXTENDED_PSN)
+        else if(psn > EXTENDED_PSN)
             return EXTRA_EXTENDED;
         else
             return PARTLY_EXTENDED;

@@ -23,6 +23,7 @@ package org.firstinspires.ftc.teamcode.Auto.AprilTags;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
+import com.acmerobotics.roadrunner.trajectory.Trajectory;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -42,7 +43,6 @@ import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "New April Tag Auto", group = "auto", preselectTeleOp = "TeleOp")
@@ -55,6 +55,7 @@ public class NewAprilTagAuto extends LinearOpMode
     private static Alliance alliance = Alliance.BLUE;
     private static Side side = Side.BACK;
     private static boolean placeOnBackdrop = true, goThroughStageDoor = true;
+    private static boolean useAprilTags = true;
 
     private Robot robot;
     private TensorFlowObjectDetector propDetector;
@@ -78,14 +79,15 @@ public class NewAprilTagAuto extends LinearOpMode
     public void runOpMode() {
         robot = new Robot(hardwareMap);
         propDetector = new TensorFlowObjectDetector(hardwareMap);
-        boolean propLocationOverride = false;
+        initializeAprilTagDetection();
 
         ElapsedTime timer = new ElapsedTime();
+        boolean propLocationOverride = false;
         boolean initialized = false;
         double initTime = 5;
 
         // init loop - select alliance and side
-        while (opModeInInit()) {
+        while (opModeInInit() && !(gamepad1.start && gamepad1.back) && !(gamepad2.start && gamepad2.back)) {
             if(!initialized && getRuntime() > initTime)
                 initialized = true;
 
@@ -93,26 +95,29 @@ public class NewAprilTagAuto extends LinearOpMode
                 alliance = Alliance.BLUE;
             else if ((gamepad1.b && !gamepad1.start) || (gamepad2.b && !gamepad2.start))
                 alliance = Alliance.RED;
-            else if (gamepad1.y || gamepad2.y)
+            if (gamepad1.y || gamepad2.y)
                 side = Side.BACK;
             else if ((gamepad1.a && !gamepad1.start) || (gamepad2.a && !gamepad2.start))
                 side = Side.FRONT;
-            else if (gamepad1.dpad_left || gamepad1.dpad_up || gamepad1.dpad_right || gamepad2.dpad_left || gamepad2.dpad_up || gamepad2.dpad_right)
+            if (gamepad1.dpad_left || gamepad1.dpad_up || gamepad1.dpad_right || gamepad2.dpad_left || gamepad2.dpad_up || gamepad2.dpad_right)
                 propLocationOverride = true;
             else if (gamepad1.back || gamepad2.back)
                 propLocationOverride = false;
-            else if(gamepad1.right_bumper || gamepad2.right_bumper)
+            if(gamepad1.right_bumper || gamepad2.right_bumper)
                 placeOnBackdrop = true;
             else if(gamepad1.left_bumper || gamepad2.left_bumper) {
                 placeOnBackdrop = false;
                 if(side == Side.FRONT)
                     goThroughStageDoor = false;
-            } else if(gamepad1.right_trigger > .5 || gamepad2.right_trigger > .5)
+            }
+            if(gamepad1.right_trigger > .5 || gamepad2.right_trigger > .5)
                 goThroughStageDoor = true;
             else if(gamepad1.left_trigger > .5 || gamepad2.left_trigger > .5)
                 goThroughStageDoor = false;
-            else if ((gamepad1.start && gamepad1.back) || (gamepad2.start && gamepad2.back))
-                requestOpModeStop();
+            if(gamepad1.right_stick_button || gamepad2.right_stick_button)
+                useAprilTags = true;
+            else if(gamepad1.left_stick_button || gamepad2.left_stick_button)
+                useAprilTags = false;
 
             if (propLocationOverride) {
                 if (gamepad1.dpad_left || gamepad2.dpad_left)
@@ -132,6 +137,8 @@ public class NewAprilTagAuto extends LinearOpMode
             if(side == Side.FRONT)
                 telemetry.addData("Go through stage door (RT/LT)", goThroughStageDoor);
             telemetry.addData("Place on backdrop (RB/LB)", placeOnBackdrop);
+            if(placeOnBackdrop)
+                telemetry.addData("Use april tags (RSB/LSB)", useAprilTags);
 
             if (propLocationOverride)
                 telemetry.addData("\nProp location", "%s (override)", propLocation);
@@ -194,45 +201,45 @@ public class NewAprilTagAuto extends LinearOpMode
         // trajectories
         Pose2d startPose = null, backdropPose = null, stackPose = null, parkPose = null;
         Vector2d truss = null;
-        TrajectorySequence spikeMarkTraj = null, toBackdrop = null, parkTraj = null;
-        double spikeMarkBackDistance = 2-.5, backdropBackDistance = 5;
+        TrajectorySequence spikeMarkTraj = null, toAprilTagDetection = null, toBackdrop = null, parkTraj = null;
+        double spikeMarkBackDistance = 1.5, backdropForwardDistance = 3.5, backdropBackDistance = 5;
         double slowSpeed = 2;
 
         double backdropX, backdropY = 0;
         switch (alliance) {
             case BLUE: // blue common
-                backdropX = 49.5+.3;
+                backdropX = 50-12;
                 switch(propLocation) { // blue backdrop
                     case LEFT:
-                        backdropX -= side == Side.BACK ? 1.8-.4 : 1.8;
-                        backdropY = side == Side.BACK ? 39.1 : 41.3;
+//                        backdropX -= side == Side.BACK ? 1.8-.4 : 1.8;
+                        backdropY = 41-6;
                         break;
                     case CENTER:
 //                        backdropX -= .7-.5;
-                        backdropY = side == Side.BACK ? 32 : 33;
+                        backdropY = 33-6;
                         break;
                     case RIGHT:
-                        backdropX -= 3.5;
-                        backdropY = side == Side.BACK ? 30.1 : 25;
+//                        backdropX -= 3.5;
+                        backdropY = 25-6;
                 }
                 backdropPose = new Pose2d(backdropX, backdropY, 0);
                 stackPose = new Pose2d(-56, 23, 0);
                 truss = goThroughStageDoor ? new Vector2d(-3, 10-.5) : new Vector2d(-3, 63);
                 break;
             case RED: // red common
-                backdropX = side == Side.BACK ? 48.6 : 49.4+.6;
+                backdropX = 50-12;
                 switch(propLocation) { // red backdrop
                     case LEFT:
-                        backdropX += 1;
-                        backdropY = side == Side.BACK ? -27 : -28.3+.6;
+//                        backdropX += 1;
+                        backdropY = -28-6;
                         break;
                     case CENTER:
-                        backdropX += side == Side.BACK ? 2.7 : 3.1;
-                        backdropY = side == Side.BACK ? -30 : -28+2;
+//                        backdropX += side == Side.BACK ? 2.7 : 3.1;
+                        backdropY = -26-6;
                         break;
                     case RIGHT:
-                        backdropX += 2.7;
-                        backdropY = -36.2;
+//                        backdropX += 2.7;
+                        backdropY = -36-6;
                 }
                 backdropPose = new Pose2d(backdropX, backdropY, Math.toRadians(0));
                 stackPose = new Pose2d(-56, -35, 0);
@@ -294,20 +301,16 @@ public class NewAprilTagAuto extends LinearOpMode
                 }
 
                 // back traj
-                toBackdrop = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
+                toAprilTagDetection = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
                         .addTemporalMarker(() -> {
                             robot.outtake.rotator.rotateFully();
                             robot.outtake.goToUpPosition();
                         })
                         .back(spikeMarkBackDistance)
                         .splineToSplineHeading(backdropPose, backdropPose.getHeading())
-                        .waitSeconds(1)
-                        .forward(4-.5,
-                                SampleMecanumDrive.getVelocityConstraint(slowSpeed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
-                                SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
                         .build();
                 if(placeOnBackdrop) {
-                    parkTraj = robot.drive.trajectorySequenceBuilder(toBackdrop.end())
+                    parkTraj = robot.drive.trajectorySequenceBuilder(toAprilTagDetection.end())
                             .waitSeconds(1)
                             .back(backdropBackDistance, SampleMecanumDrive.getVelocityConstraint(slowSpeed * 5, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
                             .addDisplacementMarker(() -> {
@@ -376,9 +379,9 @@ public class NewAprilTagAuto extends LinearOpMode
                 }
 
                 // front traj
-                waitTime = placeOnBackdrop ? 12-2 - waitTime : 0;
+                waitTime = placeOnBackdrop ? 10-2 - waitTime : 0;
                 if(alliance == Alliance.BLUE && propLocation == Location.CENTER && goThroughStageDoor)
-                    toBackdrop = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
+                    toAprilTagDetection = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
                             .back(spikeMarkBackDistance)
                             .splineToConstantHeading(truss.plus(new Vector2d(-46, 3)), -Math.PI/2)
                             .splineToConstantHeading(truss.plus(new Vector2d(-33, 0)), 0)
@@ -389,29 +392,21 @@ public class NewAprilTagAuto extends LinearOpMode
                                 robot.outtake.goToPosition(Outtake.UP_POSITION_2);
                             })
                             .splineToSplineHeading(backdropPose, backdropPose.getHeading())
-                            .waitSeconds(1)
-                            .forward(4.3,
-                                    SampleMecanumDrive.getVelocityConstraint(slowSpeed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
-                                    SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
                             .build();
                 else
-                    toBackdrop = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
+                    toAprilTagDetection = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
                             .back(spikeMarkBackDistance)
                             .lineToConstantHeading(truss.plus(new Vector2d(-35, 0)))
                             .waitSeconds(waitTime)
                             .lineToConstantHeading(truss.plus(new Vector2d(12+21, 0)))
                             .addDisplacementMarker(() -> {
                                 robot.outtake.rotator.rotateFully();
-                                robot.outtake.goToUpPosition();
+                                robot.outtake.goToPosition(Outtake.UP_POSITION_2);
                             })
                             .splineToSplineHeading(backdropPose, backdropPose.getHeading())
-                            .waitSeconds(1)
-                            .forward(4.3,
-                                    SampleMecanumDrive.getVelocityConstraint(slowSpeed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
-                                    SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
                             .build();
                 if(placeOnBackdrop) {
-                    parkTraj = robot.drive.trajectorySequenceBuilder(toBackdrop.end())
+                    parkTraj = robot.drive.trajectorySequenceBuilder(toAprilTagDetection.end())
                             .waitSeconds(1)
                             .back(backdropBackDistance, SampleMecanumDrive.getVelocityConstraint(slowSpeed * 3, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
                             .addTemporalMarker(2, () -> {
@@ -444,6 +439,36 @@ public class NewAprilTagAuto extends LinearOpMode
         robot.autoClaw.in();
 
         if(placeOnBackdrop) {
+            status.setValue("moving to april tag detection");
+            telemetry.update();
+            robot.drive.followTrajectorySequence(toAprilTagDetection);
+
+            // april tag detection
+            status.setValue("detecting april tags...");
+            Telemetry.Item feedback = telemetry.addData("Results", "");
+            double aprilTagDetectionTime = 30; // 4
+            AprilTagPose tagPose = null;
+            timer.reset();
+            while(timer.seconds() < aprilTagDetectionTime && opModeIsActive()) {
+                status.setValue("detecting april tags...%.1f", aprilTagDetectionTime - timer.seconds());
+                tagPose = getAprilTagPose(status, feedback);
+                telemetry.update();
+            }
+            double x = 9, y = 6;
+            if(tagPose != null) {
+                x = tagPose.z*3.28084*4 - 1.6;
+                y = tagPose.x*3.28084*4 - 6;
+            }
+            startPose = toAprilTagDetection.end();
+            toBackdrop = robot.drive.trajectorySequenceBuilder(startPose)
+                    .addTemporalMarker(() -> {
+                        robot.outtake.rotator.rotateFully();
+                        robot.outtake.goToPosition(side == Side.BACK ? Outtake.UP_POSITION_1 : Outtake.UP_POSITION_2);
+                    })
+                    .splineToConstantHeading(poseToVector(startPose).plus(new Vector2d(x, y)), 0)
+                    .forward(backdropForwardDistance, SampleMecanumDrive.getVelocityConstraint(slowSpeed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
+                    .build();
+
             status.setValue("moving to backdrop");
             telemetry.update();
             robot.drive.followTrajectorySequence(toBackdrop);
@@ -455,7 +480,7 @@ public class NewAprilTagAuto extends LinearOpMode
             robot.claw1.up();
             robot.claw2.up();
             while (timer.seconds() < 2 && opModeIsActive()) ;
-            robot.outtake.goToPosition(robot.outtake.getPosition() + 200, .3);
+            robot.outtake.goToPosition(robot.outtake.getPosition() + 200, .3-.1);
             while (!robot.outtake.isIdle() && timer.seconds() < 4 && opModeIsActive()) ;
         }
 
@@ -494,21 +519,27 @@ public class NewAprilTagAuto extends LinearOpMode
             }
         });
     }
-    private void updateAprilTags() {
+    private AprilTagPose getAprilTagPose(Telemetry.Item status, Telemetry.Item feedback) {
         int idOfInterest = AprilTagIDs.getBackdrop(alliance).getId(propLocation);
-        telemetry.addData("looking for", "%s %s (id %d)", alliance, propLocation, idOfInterest);
+        status.addData("looking for", "%s %s (id %d)", alliance, propLocation, idOfInterest);
         currentAprilTagDetections = aprilTagDetectionPipeline.getLatestDetections();
         if(currentAprilTagDetections.size() == 0)
-            telemetry.addLine("can't see any tags");
+            feedback.setValue("can't see any tags");
         else {
             for (AprilTagDetection tag : currentAprilTagDetections)
                 if (tag.id == idOfInterest)
                     tagOfInterest = tag;
             if(tagOfInterest == null)
-                telemetry.addLine("can see tags but not the right one");
+                feedback.setValue("can see tags but not the right one");
             else
-                telemetry.addData("can see tag at", tagOfInterest.pose);
+                feedback.setValue("can see tag at: %s", tagOfInterest.pose);
         }
-        telemetry.update();
+        return tagOfInterest == null ? null : tagOfInterest.pose;
+    }
+    private Vector2d poseToVector(Pose2d pose) {
+        return new Vector2d(pose.getX(), pose.getY());
+    }
+    private Pose2d vectorToPose(Vector2d vector, double heading) {
+        return new Pose2d(vector.getX(), vector.getY(), heading);
     }
 }

@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
-import android.annotation.SuppressLint;
-
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -11,7 +9,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 @Config
 public class Motor {
     public enum Status {
-        DOWN, UP, UNSURE, MOVING_DOWN, MOVING_UP
+        DOWN, UP, UNSURE
     }
     protected final DcMotorEx motor;
     public static double DEFAULT_ACCELERATION = .01;
@@ -125,13 +123,8 @@ public class Motor {
     public int getHoldPosition() { return holdPosition; }
 
     public Status getStatus() {
-        double power = getPower();
         double position = getPosition();
-        if(power > .4)
-            return Status.MOVING_UP;
-        else if(power < -.4)
-            return Status.MOVING_DOWN;
-        else if(Math.abs(position - downPosition) < 50)
+        if(Math.abs(position - downPosition) < 50)
             return Status.DOWN;
         else if(Math.abs(position - upPosition) < 50)
             return Status.UP;

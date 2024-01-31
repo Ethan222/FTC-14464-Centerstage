@@ -167,8 +167,9 @@ public class TeleOp extends LinearOpMode {
                     if(robot.outtake.getStatus().equals(Motor.Status.DOWN) || robot.outtake.getStatus().equals(Motor.Status.MOVING_DOWN)) {
                         robot.outtake.stopHolding();
                         robot.outtake.stop();
-                    } else
-                        robot.outtake.hold();
+                    }
+//                    else
+//                        robot.outtake.hold();
                 }
             } else {
                 if(gamepad2.left_stick_y != 0) {

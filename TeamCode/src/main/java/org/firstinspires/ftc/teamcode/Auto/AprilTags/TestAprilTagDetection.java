@@ -21,12 +21,17 @@
 
 package org.firstinspires.ftc.teamcode.Auto.AprilTags;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.Auto.Alliance;
+import org.firstinspires.ftc.teamcode.Auto.Location;
+import org.firstinspires.ftc.teamcode.Auto.roadrunner.drive.DriveConstants;
+import org.firstinspires.ftc.teamcode.Auto.roadrunner.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.subsystems.Robot;
 import org.openftc.apriltag.AprilTagDetection;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
@@ -36,10 +41,13 @@ import java.util.ArrayList;
 @TeleOp(group = "test")
 public class TestAprilTagDetection extends LinearOpMode
 {
+    Robot robot;
     OpenCvCamera camera;
     AprilTagDetectionPipeline aprilTagDetectionPipeline;
 
-    static final double FEET_PER_METER = 3.28084;
+    final static double WHEEL_SPEED = .3;
+
+    static final double INCHES_PER_METER = 3.28084*4;
 
     // Lens intrinsics
     // UNITS ARE PIXELS
@@ -53,13 +61,26 @@ public class TestAprilTagDetection extends LinearOpMode
     // UNITS ARE METERS
     double tagsize = 0.166;
 
-    Backdrop backdrop = AprilTagIDs.getBackdrop(Alliance.RED);
-    AprilTagDetection[] detectedTags = new AprilTagDetection[3];
-    boolean[] currentlyDetecting = new boolean[3];
+    enum State {
+        DETECTING, AT_BACKDROP
+    }
+    State state = State.DETECTING;
+
+    static Backdrop backdrop = AprilTagIDs.getBackdrop(Alliance.BLUE);
+    static Location location = Location.LEFT;
+    int tagIdToDetect;
+    AprilTagDetection detectedTag = null;
+    boolean currentlyDetecting = false;
+    double timeTo1stDetection = 0;
+    double x = 0, y = 0;
+    Pose2d startPose;
 
     @Override
     public void runOpMode()
     {
+        robot = new Robot(hardwareMap);
+        robot.claw1.down();
+
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
         aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
@@ -71,6 +92,8 @@ public class TestAprilTagDetection extends LinearOpMode
             public void onOpened()
             {
                 camera.startStreaming(800,448, OpenCvCameraRotation.UPRIGHT);
+                telemetry.addLine("Initialized");
+                telemetry.update();
             }
             @Override
             public void onError(int errorCode)
@@ -81,73 +104,126 @@ public class TestAprilTagDetection extends LinearOpMode
 
         telemetry.setMsTransmissionInterval(50);
 
-        // init loop
-        while (opModeInInit())
+        while(!isStopRequested() && !(gamepad1.start && gamepad1.back)) {
+            if(state == State.DETECTING) {
+                telemetry.addData("Claw (RB/LB)", robot.claw1.getStatus());
+                telemetry.addLine();
+                updateDrive();
+                updateAprilTagID();
+                detectAprilTags();
+                if (gamepad1.right_bumper)
+                    robot.claw1.down();
+                else if (gamepad1.left_bumper)
+                    robot.claw1.up();
+                if(gamepad1.a && !gamepad1.start)
+                    goToBackdrop();
+            } else if(state == State.AT_BACKDROP) {
+                telemetry.addData("Placed on", location);
+                telemetry.addLine("Press b to reset");
+                if(gamepad1.b && !gamepad1.start)
+                    reset();
+            }
+            if(!gamepad2.atRest())
+                telemetry.addLine("\nSwitch to gamepad 1");
+            telemetry.update();
+        }
+    }
+    void updateDrive() {
+        robot.drive.setWeightedDrivePower(
+                new Pose2d(
+                        WHEEL_SPEED * -gamepad1.left_stick_y,
+                        WHEEL_SPEED * -gamepad1.left_stick_x,
+                        WHEEL_SPEED * -gamepad1.right_stick_x
+                )
+        );
+        robot.drive.update();
+    }
+    void updateAprilTagID() {
+        if(gamepad1.x)
+            backdrop = AprilTagIDs.getBackdrop(Alliance.BLUE);
+        else if(gamepad1.b && !gamepad1.start)
+            backdrop = AprilTagIDs.getBackdrop(Alliance.RED);
+        if(gamepad1.dpad_left) {
+            location = Location.LEFT;
+            timeTo1stDetection = 0;
+        } else if(gamepad1.dpad_up) {
+            location = Location.CENTER;
+            timeTo1stDetection = 0;
+        } else if(gamepad1.dpad_right) {
+            location = Location.RIGHT;
+            timeTo1stDetection = 0;
+        }
+        tagIdToDetect = backdrop.getId(location);
+    }
+    void detectAprilTags() {
+        ArrayList<AprilTagDetection> currentDetections = aprilTagDetectionPipeline.getLatestDetections();
+        currentlyDetecting = false;
+        if(currentDetections.size() != 0)
         {
-            if(gamepad1.x) {
-                backdrop = AprilTagIDs.getBackdrop(Alliance.BLUE);
-                detectedTags = new AprilTagDetection[3];
-            }
-            else if(gamepad1.b) {
-                backdrop = AprilTagIDs.getBackdrop(Alliance.RED);
-                detectedTags = new AprilTagDetection[3];
-            }
-
-            ArrayList<AprilTagDetection> currentDetections = aprilTagDetectionPipeline.getLatestDetections();
-
-            currentlyDetecting = new boolean[3];
-            if(currentDetections.size() != 0)
+            for(AprilTagDetection tag : currentDetections)
             {
-                for(AprilTagDetection tag : currentDetections)
-                {
-                    if(tag.id == backdrop.LEFT) {
-                        detectedTags[0] = tag;
-                        currentlyDetecting[0] = true;
-                    } else if(tag.id == backdrop.CENTER) {
-                        detectedTags[1] = tag;
-                        currentlyDetecting[1] = true;
-                    } else if(tag.id == backdrop.RIGHT) {
-                        detectedTags[2] = tag;
-                        currentlyDetecting[2] = true;
-                    }
+                if(tag.id == tagIdToDetect) {
+                    detectedTag = tag;
+                    currentlyDetecting = true;
+                    if(timeTo1stDetection == 0)
+                        timeTo1stDetection = getRuntime();
                 }
             }
-
-            telemetrizeDetectedAprilTags();
-            telemetry.update();
-            sleep(20);
         }
 
-        // prevent the opmode from ending
-        while (opModeIsActive()) {sleep(20);}
-    }
-
-    private void telemetrizeDetectedAprilTags()
-    {
-        telemetry.addLine(backdrop.alliance + " backdrop");
-        String[] strings = {
-                "LEFT (tag " + backdrop.LEFT + ")",
-                "CENTER (tag " + backdrop.CENTER + ")",
-                "RIGHT (tag " + backdrop.RIGHT + ")"
-        };
-        for(int i = 0; i < 3; i++) {
-            telemetry.addLine(strings[i]);
-            AprilTagDetection tag = detectedTags[i];
-            if(tag != null) {
-                telemetry.addLine(currentlyDetecting[i] ? "currently detecting" : "not currently detecting");
-                tagToTelemetry(tag);
-            } else {
-                telemetry.addLine("not found");
-            }
-            telemetry.addLine();
+        telemetry.addData("Looking for", "%s %s (id %d)", backdrop.alliance, location, tagIdToDetect);
+        if(detectedTag == null || !currentlyDetecting) {
+            if (currentDetections.size() != 0)
+                telemetry.addLine("not detecting it");
+            else
+                telemetry.addLine("not detecting anything");
+        } else {
+            tagToTelemetry(detectedTag);
+            telemetry.addData("currently detecting", currentlyDetecting);
         }
-    }
+        if(timeTo1stDetection != 0)
+            telemetry.addData("Time to 1st detection", "%.1f s", timeTo1stDetection);
 
+        if(detectedTag != null) {
+            x = detectedTag.pose.z*INCHES_PER_METER - 1.6;
+            y = -detectedTag.pose.x*INCHES_PER_METER - 6;
+        }
+        telemetry.addData("\nPress a to move", "\tx = %.1f in. forward,\n\t\t\t\t\t\t\ty = %.1f in. %s", x, Math.abs(y), y > 0 ? "left" : "right");
+    }
+    void goToBackdrop() {
+        startPose = robot.drive.getPoseEstimate();
+        robot.claw1.down();
+        robot.outtake.goToUpPosition();
+        robot.outtake.rotator.rotateFully();
+        robot.drive.followTrajectorySequence(robot.drive.trajectorySequenceBuilder(startPose)
+                .splineToConstantHeading(new Vector2d(x, y), .3)
+                .forward(2, SampleMecanumDrive.getVelocityConstraint(2, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
+                .build()
+        );
+        robot.claw1.up();
+        robot.claw2.up();
+        robot.outtake.goToPosition(robot.outtake.getPosition() + 350, .1);
+        state = State.AT_BACKDROP;
+    }
+    void reset() {
+        robot.drive.followTrajectorySequence(robot.drive.trajectorySequenceBuilder(robot.drive.getPoseEstimate())
+                .addTemporalMarker(.2, () -> {
+                    robot.outtake.rotator.retractFully();
+                })
+                .addTemporalMarker(.7, () -> {
+                    robot.outtake.goToDownPosition();
+                })
+                .back(1)
+                .splineToConstantHeading(new Vector2d(startPose.getX(), startPose.getY()), Math.PI)
+                .build()
+        );
+        state = State.DETECTING;
+    }
     void tagToTelemetry(AprilTagDetection detection)
     {
-        double x = detection.pose.x*FEET_PER_METER;
-        double y = detection.pose.y*FEET_PER_METER;
-        double z = detection.pose.z*FEET_PER_METER;
-        telemetry.addLine(String.format("(%.2f, %.2f, %.2f)", x, y, z));
+        double x = detection.pose.x * INCHES_PER_METER;
+        double y = detection.pose.y * INCHES_PER_METER;
+        double z = detection.pose.z * INCHES_PER_METER;
+        telemetry.addData("Position", "(%.2f, %.2f, %.2f) in.", x, y, z);
     }
 }
