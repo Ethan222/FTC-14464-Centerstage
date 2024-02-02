@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 public class TeleOp extends LinearOpMode {
     private static boolean singleDriverMode = false;
     public static double SLOW_SPEED = .3;
-    private ScheduledExecutorService executorService;
+
     @SuppressLint("DefaultLocale")
     @Override
     public void runOpMode() throws InterruptedException {
@@ -37,7 +37,7 @@ public class TeleOp extends LinearOpMode {
         robot.drive.setPoseEstimate(new Pose2d());
         robot.launcher.rotator.setPosition(robot.launcher.rotator.getRightPosition());
 
-        executorService = Executors.newSingleThreadScheduledExecutor();
+        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
         ElapsedTime wheelTimer = new ElapsedTime();
         ElapsedTime loopTimer = new ElapsedTime();
