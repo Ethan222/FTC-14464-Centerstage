@@ -23,6 +23,7 @@ package org.firstinspires.ftc.teamcode.Auto.TensorFlow;
 
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -34,8 +35,8 @@ import org.firstinspires.ftc.teamcode.Auto.roadrunner.drive.SampleMecanumDrive;
 import org.firstinspires.ftc.teamcode.Auto.roadrunner.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.subsystems.Outtake;
 import org.firstinspires.ftc.teamcode.subsystems.Robot;
-
-@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "old no april tag auto", group = "auto", preselectTeleOp = "TeleOp")
+@Disabled
+@com.qualcomm.robotcore.eventloop.opmode.Autonomous(name = "old (no april tags)", group = "auto", preselectTeleOp = "TeleOp")
 public class TensorFlowAuto extends LinearOpMode
 {
     private enum Side {
@@ -160,7 +161,7 @@ public class TensorFlowAuto extends LinearOpMode
         if(side == Side.FRONT)
             telemetry.addData("Go through stage door", goThroughStageDoor);
         telemetry.addData("Place on backdrop", placeOnBackdrop);
-        Telemetry.Item status = telemetry.addData("Status", "loading...");
+        Telemetry.Item status = telemetry.addData("State", "loading...");
         telemetry.update();
 
         // trajectories
@@ -358,7 +359,7 @@ public class TensorFlowAuto extends LinearOpMode
                             .lineToConstantHeading(truss.plus(new Vector2d(12+21, 0)))
                             .addDisplacementMarker(() -> {
                                 robot.outtake.rotator.rotateFully();
-                                robot.outtake.goToPosition(Outtake.UP_POSITION_2);
+                                robot.outtake.goToPosition(Outtake.POSITION_2);
                             })
                             .splineToSplineHeading(backdropPose, backdropPose.getHeading())
                             .waitSeconds(1)

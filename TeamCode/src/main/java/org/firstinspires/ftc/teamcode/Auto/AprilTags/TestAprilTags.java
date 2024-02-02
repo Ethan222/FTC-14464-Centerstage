@@ -38,8 +38,8 @@ import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 
 import java.util.ArrayList;
-@TeleOp(group = "test")
-public class TestAprilTagDetection extends LinearOpMode
+@TeleOp(name = "Test April Tags", group = "test")
+public class TestAprilTags extends LinearOpMode
 {
     Robot robot;
     OpenCvCamera camera;
@@ -51,15 +51,10 @@ public class TestAprilTagDetection extends LinearOpMode
 
     // Lens intrinsics
     // UNITS ARE PIXELS
-    // NOTE: this calibration is for the C920 webcam at 800x448.
-    // You will need to do your own calibration for other configurations!
-    double fx = 578.272;
-    double fy = 578.272;
-    double cx = 402.145;
-    double cy = 221.506;
+    // NOTE: this calibration is for the C920 webcam at 800x448. You will need to do your own calibration for other configurations!
+    double fx = 578.272, fy = 578.272, cx = 402.145, cy = 221.506;
 
-    // UNITS ARE METERS
-    double tagsize = 0.166;
+    double tagsize = 0.166; // UNITS ARE METERS
 
     enum State {
         DETECTING, AT_BACKDROP
@@ -106,7 +101,7 @@ public class TestAprilTagDetection extends LinearOpMode
 
         while(!isStopRequested() && !(gamepad1.start && gamepad1.back)) {
             if(state == State.DETECTING) {
-                telemetry.addData("Claw (RB/LB)", robot.claw1.getStatus());
+                telemetry.addData("Claw (RB/LB)", robot.claw1.getState());
                 telemetry.addLine();
                 updateDrive();
                 updateAprilTagID();
@@ -172,7 +167,7 @@ public class TestAprilTagDetection extends LinearOpMode
         }
 
         telemetry.addData("Looking for", "%s %s (id %d)", backdrop.alliance, location, tagIdToDetect);
-        if(detectedTag == null || !currentlyDetecting) {
+        if(detectedTag == null) {
             if (currentDetections.size() != 0)
                 telemetry.addLine("not detecting it");
             else
@@ -185,7 +180,7 @@ public class TestAprilTagDetection extends LinearOpMode
             telemetry.addData("Time to 1st detection", "%.1f s", timeTo1stDetection);
 
         if(detectedTag != null) {
-            x = detectedTag.pose.z*INCHES_PER_METER - 1.6;
+            x = detectedTag.pose.z*INCHES_PER_METER - 1.7;
             y = -detectedTag.pose.x*INCHES_PER_METER - 6;
         }
         telemetry.addData("\nPress a to move", "\tx = %.1f in. forward,\n\t\t\t\t\t\t\ty = %.1f in. %s", x, Math.abs(y), y > 0 ? "left" : "right");
