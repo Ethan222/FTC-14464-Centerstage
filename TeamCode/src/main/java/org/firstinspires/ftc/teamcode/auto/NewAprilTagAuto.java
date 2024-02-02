@@ -31,6 +31,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.TeleOp.TeleOp;
 import org.firstinspires.ftc.teamcode.auto.AprilTags.AprilTagDetectionPipeline;
 import org.firstinspires.ftc.teamcode.auto.AprilTags.AprilTagIDs;
 import org.firstinspires.ftc.teamcode.auto.TensorFlow.TensorFlowObjectDetector;
@@ -527,6 +528,8 @@ public class NewAprilTagAuto extends LinearOpMode
 
         status.setValue("parked in %.0f seconds", getRuntime());
         telemetry.update();
+
+        TeleOp.setStartPose(robot.drive.getPoseEstimate());
 
         while(opModeIsActive()) {
             if(gamepad.b && !gamepad.start)

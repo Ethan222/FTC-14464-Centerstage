@@ -3,11 +3,15 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+
 // controls 2 motors that hang
 public class HangSubsystem {
     public final static String DOWN = "DOWN", UP = "UP", IN_BETWEEN = "IN BETWEEN";
     private final Motor[] motors;
     public CustomServo rotator;
+    private Telemetry.Item motorTelemetry;
+
     public HangSubsystem(HardwareMap hm, String[] motorNames, String servoName) {
         motors = new Motor[]{
                 new Motor(hm, motorNames[0]),
@@ -19,6 +23,7 @@ public class HangSubsystem {
     public void setPowers(double power) {
         for(Motor motor : motors)
             motor.setPower(power);
+        updateMotorTelemetry();
     }
     public void up(double power) {
         setPowers(power);
@@ -31,6 +36,11 @@ public class HangSubsystem {
     }
     public void down() {
         down(1);
+    }
+    public double[] getPowers() {
+        return new double[] {
+                motors[0].getPower(), motors[1].getPower()
+        };
     }
     public String getPowersAsString() {
         return motors[0].getPowerAsString() + ", " + motors[1].getPowerAsString();
@@ -53,8 +63,6 @@ public class HangSubsystem {
         return motors[0].isIdle() && motors[1].isIdle();
     }
 
-
-
     public void rotateUp(double increment) {
         rotator.changePosition(increment);
     }
@@ -75,5 +83,12 @@ public class HangSubsystem {
             return UP;
         else
             return IN_BETWEEN;
+    }
+
+    public void setMotorTelemetry(Telemetry.Item item) {
+        motorTelemetry = item;
+    }
+    public void updateMotorTelemetry() {
+        motorTelemetry.setValue("[%s] (%s)", getPowersAsString(), getPositionsAsStrings());
     }
 }

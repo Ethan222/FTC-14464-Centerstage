@@ -4,6 +4,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+
 // controls the motor that raises the outtake
 public class Outtake extends Motor { // inherits from the Motor parent class
     public OuttakeRotator rotator;
@@ -38,5 +40,8 @@ public class Outtake extends Motor { // inherits from the Motor parent class
     }
     public void accelerateDown() {
         accelerateDown(DEFAULT_ACCELERATION);
+    }
+    public void updateTelemetry(Telemetry.Item item) {
+        item.setValue("%s %s (%d) [%s]", getState().toString(), isHolding() ? "(holding at " + getHoldPosition() + ")" : "", getPosition(), getPowerAsString());
     }
 }

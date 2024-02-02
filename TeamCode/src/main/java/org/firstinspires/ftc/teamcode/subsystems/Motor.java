@@ -5,6 +5,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+
 // Generic motor class that controls one motor
 @Config
 public class Motor {
@@ -18,7 +20,7 @@ public class Motor {
     private boolean holding;
     private int holdPosition;
     public static int HOLD_PRECISION = 5;
-
+    private Telemetry.Item telemetry;
     // constructors
     public Motor(HardwareMap hm, String name, boolean usingEncoder, int downPsn, int upPsn) {
         motor = hm.get(DcMotorEx.class, name); // get motor from the hardwareMap
@@ -32,7 +34,8 @@ public class Motor {
         this(hm, name, false);
     }
     public void setPower(double power) {
-            motor.setPower(power);
+        motor.setPower(power);
+        updateTelemetry();
     }
     public void changePower(double power) { setPower(getPower() + power); }
     public void stop() { setPower(0); }
@@ -130,5 +133,12 @@ public class Motor {
             return State.UP;
         else
             return State.UNSURE;
+    }
+
+    public void setTelemetry(Telemetry.Item item) {
+        telemetry = item;
+    }
+    public void updateTelemetry() {
+        telemetry.setValue("%s %s [%s]", getState(), isUsingEncoder() ? String.format("(%d)", getPosition()) : null, getPowerAsString());
     }
 }

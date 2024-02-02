@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+
 // class to control the intake mechanism
 public class Intake extends Motor { // inherits from parent class Motor
     public CustomServo lowerer;     // servo to raise/lower the intake
@@ -37,5 +39,9 @@ public class Intake extends Motor { // inherits from parent class Motor
             return State.DOWN;
         else
             return State.UNSURE;
+    }
+
+    public void updateTelemetry(Telemetry.Item item) {
+        item.setValue("%s (%.2f) [%s]", getState().toString(), lowerer.getPosition(), getPowerAsString());
     }
 }
