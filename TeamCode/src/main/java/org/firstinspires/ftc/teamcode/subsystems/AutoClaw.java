@@ -2,35 +2,40 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 // claw that releases a pixel in auto
 public class AutoClaw extends CustomServo {
-    public final static String IN = "IN", OUT = "OUT", PARTLY_OUT = "PARTLY OUT";
+    public static final String IN = "IN", OUT = "OUT", PARTLY_OUT = "PARTLY OUT";
     private static final double INCREMENT = .01;    // how fast the claw will move
-    private double IN_PSN, OUT_PSN;
+    private static final double IN_PSN = .33, OUT_PSN = .58;
+    private final ScheduledExecutorService executorService;
     // constructor
-    public AutoClaw(HardwareMap hm, String name, double inPsn, double outPsn) {
-        super(hm, name, inPsn, outPsn); // calls parent constructor
-        IN_PSN = inPsn;
-        OUT_PSN = outPsn;
-    }
     public AutoClaw(HardwareMap hm, String name) {
-        this(hm, name, 0, 1);
+        super(hm, name, Math.min(IN_PSN, OUT_PSN), Math.max(IN_PSN, OUT_PSN)); // calls parent constructor
+        executorService = Executors.newSingleThreadScheduledExecutor();
+    }
+    public void outIncrementally() { changePosition(INCREMENT); }
+    public void inIncrementally() { changePosition(-INCREMENT); }
+    public void out() {
+        setPosition(OUT_PSN);
     }
     public void in() {
-        goToLeft();
-    }       // completely closes the gripper
-    public void out() {
-        goToRight();
-    }      // completely opens the gripper
-    public void inIncrementally() { changePosition(-INCREMENT); }       // grips a little at a time
-    public void outIncrementally() { changePosition(INCREMENT); }
+        setPosition(IN_PSN);
+    }
+    public void outAndIn() {
+        out();
+        executorService.schedule(this::in, 500, TimeUnit.MILLISECONDS);
+    }
 
     // returns the current status of the gripper as a String
-    public String getStatus() {
-        String status = super.getStatus();
-        if(status.equals(CustomServo.LEFT))
+    public String getState() {
+        double psn = getPosition();
+        if(Math.abs(psn - IN_PSN) < .02)
             return IN;
-        else if(status.equals(CustomServo.RIGHT))
+        else if(Math.abs(psn - OUT_PSN) < .02)
             return OUT;
         else
             return PARTLY_OUT;

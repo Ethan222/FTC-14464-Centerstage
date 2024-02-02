@@ -27,7 +27,7 @@ public class OuttakeRotator extends CustomServo {
     public void retractIncrementally() { changePosition(-INCREMENT); }
 
     // returns the current status as a String
-    public String getStatus() {
+    public String getState() {
         double psn = getPosition();
         if(Math.abs(psn - RETRACTED_PSN) < .03)
             return RETRACTED;

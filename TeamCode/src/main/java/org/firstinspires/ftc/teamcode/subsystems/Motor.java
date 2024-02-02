@@ -8,11 +8,11 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 // Generic motor class that controls one motor
 @Config
 public class Motor {
-    public enum Status {
+    public enum State {
         DOWN, UP, UNSURE
     }
     protected final DcMotorEx motor;
-    public static double DEFAULT_ACCELERATION = .01;
+    public static double DEFAULT_ACCELERATION = .1;
     private boolean usingEncoder;
     private int downPosition, upPosition;
     private boolean holding;
@@ -122,13 +122,13 @@ public class Motor {
     public boolean isHolding() { return holding; }
     public int getHoldPosition() { return holdPosition; }
 
-    public Status getStatus() {
+    public State getState() {
         double position = getPosition();
         if(Math.abs(position - downPosition) < 50)
-            return Status.DOWN;
+            return State.DOWN;
         else if(Math.abs(position - upPosition) < 50)
-            return Status.UP;
+            return State.UP;
         else
-            return Status.UNSURE;
+            return State.UNSURE;
     }
 }

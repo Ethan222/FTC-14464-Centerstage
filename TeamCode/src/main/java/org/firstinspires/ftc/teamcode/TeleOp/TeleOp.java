@@ -9,16 +9,23 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.subsystems.Claw;
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.subsystems.HangSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.Motor;
+import org.firstinspires.ftc.teamcode.subsystems.Outtake;
 import org.firstinspires.ftc.teamcode.subsystems.OuttakeRotator;
 import org.firstinspires.ftc.teamcode.subsystems.Robot;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 @Config
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(group = "drive")
 public class TeleOp extends LinearOpMode {
     private static boolean singleDriverMode = false;
     public static double SLOW_SPEED = .3;
+    private ScheduledExecutorService executorService;
     @SuppressLint("DefaultLocale")
     @Override
     public void runOpMode() throws InterruptedException {
@@ -27,12 +34,16 @@ public class TeleOp extends LinearOpMode {
 
         Robot robot = new Robot(hardwareMap);
         robot.drive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        robot.drive.setPoseEstimate(new Pose2d());
+        robot.launcher.rotator.setPosition(robot.launcher.rotator.getRightPosition());
+
+        executorService = Executors.newSingleThreadScheduledExecutor();
+
+        ElapsedTime wheelTimer = new ElapsedTime();
+        ElapsedTime loopTimer = new ElapsedTime();
 
         int direction = 1;
-        double speed = 1;
-
-        ElapsedTime armTimer = new ElapsedTime(), hangTimer = new ElapsedTime();
-        ElapsedTime loopTimer = new ElapsedTime();
+        double speed = 1, heading;
 
         Gamepad gamepad;
 
@@ -48,7 +59,8 @@ public class TeleOp extends LinearOpMode {
         }
 
         // as soon as it starts, lower intake
-        robot.intake.lower();
+        if(!singleDriverMode)
+            robot.intake.lower();
 
         while (opModeIsActive() && !(gamepad1.start && gamepad1.back) && !(gamepad2.start && gamepad2.back)) {
             if(!singleDriverMode || !gamepad1.back) {
@@ -62,10 +74,25 @@ public class TeleOp extends LinearOpMode {
             }
             robot.drive.update();
 
+            heading = robot.drive.getPoseEstimate().getHeading();
+            if(heading > Math.PI)
+                heading -= 2 * Math.PI;
+            telemetry.addData("Heading", "%.1f deg", heading * 180 / Math.PI);
+            Telemetry.Item item = telemetry.addData("turning", "");
+
+            if(gamepad1.dpad_down && !singleDriverMode && wheelTimer.seconds() > 1 && Math.abs(heading) > .1) {
+                double newHeading = -heading;
+                item.setValue("%.0f deg", newHeading * 180 / Math.PI);
+                robot.drive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                robot.drive.turnAsync(heading);
+                wheelTimer.reset();
+            }
+            telemetry.addLine();
+
             // reverse direction
-            if((!singleDriverMode && gamepad1.left_bumper) || (gamepad1.back && gamepad1.left_bumper))
+            if((!singleDriverMode && gamepad1.left_bumper) || (gamepad1.start && gamepad1.left_bumper))
                 direction = -1;
-            else if((!singleDriverMode && gamepad1.right_bumper) || (gamepad1.back && gamepad1.right_bumper))
+            else if((!singleDriverMode && gamepad1.right_bumper) || (gamepad1.start && gamepad1.right_bumper))
                 direction = 1;
 
             // slow mode
@@ -94,7 +121,7 @@ public class TeleOp extends LinearOpMode {
                 robot.claw2.up();
             }
             if(gamepad.right_trigger > 0 && !gamepad.back &&
-                    robot.outtake.getStatus() == Motor.Status.DOWN && robot.outtake.rotator.getStatus().equals(OuttakeRotator.RETRACTED))
+                    robot.outtake.getState() == Motor.State.DOWN && robot.outtake.rotator.getState().equals(OuttakeRotator.RETRACTED))
                 robot.intake.in(gamepad.right_trigger);
             else if(gamepad.left_trigger > 0 && !gamepad.back)
                 robot.intake.out(gamepad.left_trigger);
@@ -121,23 +148,6 @@ public class TeleOp extends LinearOpMode {
             else if(gamepad.y && !gamepad.start && !gamepad.back)
                 robot.claw2.up();
 
-            // left/right on d-pad rotate
-            if(gamepad.dpad_right && gamepad.start)
-                robot.outtake.rotator.EXTENDED_PSN = robot.outtake.rotator.getPosition();
-            else if(gamepad.dpad_left && gamepad.start)
-                robot.outtake.rotator.RETRACTED_PSN = robot.outtake.rotator.getPosition();
-            else if(gamepad.dpad_right && gamepad.back)
-                robot.outtake.rotator.rotateIncrementally();
-            else if(gamepad.dpad_left && gamepad.back)
-                robot.outtake.rotator.retractIncrementally();
-            else if(gamepad.dpad_right) {
-                // make sure both claws are down first
-                robot.claw1.down();
-                robot.claw2.down();
-                robot.outtake.rotator.rotateFully();
-            } else if(gamepad.dpad_left)
-                robot.outtake.rotator.retractFully();
-
             // raise outtake
             if((gamepad.dpad_up && !gamepad.back) || (gamepad.dpad_down && !gamepad.back))
                 robot.outtake.runUsingEncoder();
@@ -153,23 +163,22 @@ public class TeleOp extends LinearOpMode {
                     // when arm goes up, also rotate outtake & close claws
                     robot.claw1.down();
                     robot.claw2.down();
-                    robot.outtake.rotator.rotateFully();
+                    if(!robot.outtake.rotator.getState().equals(OuttakeRotator.RETRACTED))
+                        robot.outtake.rotator.rotateFully();
                     robot.outtake.stopHolding();
-                    robot.outtake.goToUpPosition();
-                    armTimer.reset();
+                    if(robot.outtake.getPosition() < Outtake.POSITION_1)
+                        robot.outtake.goToPosition(Outtake.POSITION_1);
+                    else
+                        robot.outtake.goToPosition(Outtake.POSITION_2);
                 } else if (gamepad.dpad_down) {
                     robot.outtake.stopHolding();
                     robot.outtake.goToDownPosition();
-                    armTimer.reset();
+                    executorService.schedule(robot.outtake::stop, 2, TimeUnit.SECONDS);
                     // when arm goes down, also retract outtake
                     robot.outtake.rotator.retractFully();
-                } else if (robot.outtake.isIdle() || armTimer.seconds() > 2) {
-                    if(robot.outtake.getStatus().equals(Motor.Status.DOWN) || robot.outtake.getStatus().equals(Motor.Status.MOVING_DOWN)) {
-                        robot.outtake.stopHolding();
-                        robot.outtake.stop();
-                    }
-//                    else
-//                        robot.outtake.hold();
+                } else if (robot.outtake.isIdle()) {
+                    robot.outtake.stopHolding();
+                    robot.outtake.stop();
                 }
             } else {
                 if(gamepad2.left_stick_y != 0) {
@@ -181,8 +190,8 @@ public class TeleOp extends LinearOpMode {
                 } else if(gamepad.dpad_down) {
                     robot.outtake.stopHolding();
                     robot.outtake.accelerateDown();
-                } else //if(robot.outtake.getStatus().equals(Motor.Status.DOWN)) {
-                    robot.outtake.stopHolding();
+                } else //if(robot.outtake.getStatus().equals(Motor.State.DOWN)) {
+//                    robot.outtake.stopHolding();
                     robot.outtake.decelerate();
 //                } else
 //                    robot.outtake.hold();
@@ -190,6 +199,23 @@ public class TeleOp extends LinearOpMode {
             double armSlowSpeed = .3;
             if(robot.outtake.getPosition() - robot.outtake.getDownPosition() < 400 && robot.outtake.getPower() < -armSlowSpeed)
                 robot.outtake.setPower(-armSlowSpeed);
+
+            // rotate outtake
+            if(gamepad.dpad_right && gamepad.start)
+                robot.outtake.rotator.EXTENDED_PSN = robot.outtake.rotator.getPosition();
+            else if(gamepad.dpad_left && gamepad.start)
+                robot.outtake.rotator.RETRACTED_PSN = robot.outtake.rotator.getPosition();
+            else if(gamepad.dpad_right && gamepad.back)
+                robot.outtake.rotator.rotateIncrementally();
+            else if(gamepad.dpad_left && gamepad.back)
+                robot.outtake.rotator.retractIncrementally();
+            else if(gamepad.dpad_right) {
+                // make sure both claws are down first
+                robot.claw1.down();
+                robot.claw2.down();
+                robot.outtake.rotator.rotateFully();
+            } else if(gamepad.dpad_left)
+                robot.outtake.rotator.retractFully();
 
             // hang
 //            if(gamepad.start && gamepad.right_stick_y < 0)
@@ -220,7 +246,7 @@ public class TeleOp extends LinearOpMode {
                     robot.hangSubsystem.setPowers(.2 * gamepad.right_stick_y < 0 ? 1 : -1);
                 else
                     robot.hangSubsystem.setPowers(0);
-                if(gamepad.right_stick_y < -.9 && robot.hangSubsystem.getRotatorStatus().equals(HangSubsystem.DOWN))
+                if(gamepad.right_stick_y < -.9 && robot.hangSubsystem.getRotatorState().equals(HangSubsystem.DOWN))
                     robot.hangSubsystem.rotateUp();
             }
 
@@ -235,31 +261,40 @@ public class TeleOp extends LinearOpMode {
             else if(gamepad2.right_stick_x < -threshold || (singleDriverMode && gamepad1.back && gamepad1.right_stick_x < -threshold))
                 robot.hangSubsystem.rotateDown();
 
-            // gamepad1 a/b control launcher
-            if((gamepad1.a && !singleDriverMode && !gamepad1.start && !gamepad1.back) || (gamepad.right_bumper && !gamepad.back))
+            // launcher
+            if((gamepad1.a && !singleDriverMode && !gamepad1.start && !gamepad1.back) || (gamepad.right_bumper && !gamepad.start && !gamepad.back))
                 robot.launcher.launch();
-            else if((gamepad1.b && !singleDriverMode && !gamepad1.start && !gamepad1.back) || (gamepad.left_bumper && !gamepad.back))
+            else if((gamepad1.b && !singleDriverMode && !gamepad1.start && !gamepad1.back) || (gamepad.left_bumper && !gamepad.start && !gamepad.back))
                 robot.launcher.reset();
+            if((gamepad.right_bumper && gamepad.back) || (!singleDriverMode && gamepad1.y))
+                robot.launcher.rotateUp();
+            else if((gamepad.left_bumper && gamepad.back) || (!singleDriverMode && gamepad1.x))
+                robot.launcher.rotateDown();
 
             // auto claw
-            if(gamepad.back && gamepad.y)
-                robot.autoClaw.out();
-            else if(gamepad.back && gamepad.x)
+            if(gamepad.start && gamepad.y)
+                robot.autoClaw.outAndIn();
+            else if(gamepad.start && gamepad.x)
                 robot.autoClaw.in();
+            else if(gamepad.back && gamepad.y)
+                robot.autoClaw.outIncrementally();
+            else if(gamepad.back && gamepad.x)
+                robot.autoClaw.inIncrementally();
 
-            telemetry.addData("Single driver mode (back + a/b)", singleDriverMode);
+            telemetry.addData("Single driver mode", singleDriverMode);
             telemetry.addData("Direction (RB/LB)", direction == 1 ? "forward (INTAKE)" : "reverse (OUTTAKE)");
             telemetry.addData("Wheel speed (RT)", speed);
 //            telemetry.addData("Average wheel power", robot.drive.getAverageDriveMotorPower());
-            telemetry.addData("\nintake", "%s (%.2f) [%s]", robot.intake.getStatus().toString(), robot.intake.lowerer.getPosition(), robot.intake.getPowerAsString());
-            telemetry.addData("\nclaw 1", "%s (%.2f)", robot.claw1.getStatus(), robot.claw1.getPosition());
-            telemetry.addData("claw 2", "%s (%.2f)", robot.claw2.getStatus(), robot.claw2.getPosition());
-            telemetry.addData("outtake", "%s %s (%d) [%s]", robot.outtake.getStatus().toString(), robot.outtake.isHolding() ? "(holding at " + robot.outtake.getHoldPosition() + ")" : "", robot.outtake.getPosition(), robot.outtake.getPowerAsString());
-            telemetry.addData("- rotator", "%s (%.3f)", robot.outtake.rotator.getStatus(), robot.outtake.rotator.getPosition());
+            telemetry.addData("\nintake", "%s (%.2f) [%s]", robot.intake.getState().toString(), robot.intake.lowerer.getPosition(), robot.intake.getPowerAsString());
+            telemetry.addData("\nclaw 1", "%s (%.2f)", robot.claw1.getState(), robot.claw1.getPosition());
+            telemetry.addData("claw 2", "%s (%.2f)", robot.claw2.getState(), robot.claw2.getPosition());
+            telemetry.addData("outtake", "%s %s (%d) [%s]", robot.outtake.getState().toString(), robot.outtake.isHolding() ? "(holding at " + robot.outtake.getHoldPosition() + ")" : "", robot.outtake.getPosition(), robot.outtake.getPowerAsString());
+            telemetry.addData("- rotator", "%s (%.3f)", robot.outtake.rotator.getState(), robot.outtake.rotator.getPosition());
             telemetry.addData("\nhang", "[%s] (%s)", robot.hangSubsystem.getPowersAsString(), robot.hangSubsystem.getPositionsAsStrings());
-            telemetry.addData("- rotator", "%s (%.2f)", robot.hangSubsystem.getRotatorStatus(), robot.hangSubsystem.rotator.getPosition());
-            telemetry.addData("\nlauncher", "%s (%.2f)", robot.launcher.getStatus(), robot.launcher.getPosition());
-            telemetry.addData("auto claw", "%s (%.2f)", robot.autoClaw.getStatus(), robot.autoClaw.getPosition());
+            telemetry.addData("- rotator", "%s (%.2f)", robot.hangSubsystem.getRotatorState(), robot.hangSubsystem.rotator.getPosition());
+            telemetry.addData("launcher", "%s [%.2f] (%.2f)", robot.launcher.getState(), robot.launcher.launcher.getPercent(), robot.launcher.launcher.getPosition());
+            telemetry.addData("- rotator", "%s [%.2f] (%.2f)", robot.launcher.getRotationState(), robot.launcher.getRotationPercent(), robot.launcher.getRotation());
+            telemetry.addData("\nauto claw", "%s (%.2f)", robot.autoClaw.getState(), robot.autoClaw.getPosition());
             telemetry.addData("\nLoop time", "%.0f ms", loopTimer.milliseconds());
 //            telemetry.addLine().addData("Gamepad1 at rest", gamepad1.atRest()).addData("gamepad2 at rest", gamepad2.atRest());
             loopTimer.reset();

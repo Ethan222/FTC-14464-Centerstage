@@ -26,8 +26,8 @@ public class Claw extends CustomServo {
     public void upIncrementally() { changePosition(-INCREMENT); }
 
     // returns the current status of the claw as a String
-    public String getStatus() {
-        String status = super.getStatus();
+    public String getState() {
+        String status = super.getState();
         if(status.equals(LEFT))
             return UP_PSN < DOWN_PSN ? UP : DOWN;
         else if(status.equals(RIGHT))

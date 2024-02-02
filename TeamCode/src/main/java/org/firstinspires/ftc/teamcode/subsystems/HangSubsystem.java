@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
@@ -68,8 +67,8 @@ public class HangSubsystem {
     public void rotateDown() {
         rotator.goToLeft();
     }
-    public String getRotatorStatus() {
-        String status = rotator.getStatus();
+    public String getRotatorState() {
+        String status = rotator.getState();
         if(status.equals(CustomServo.LEFT))
             return DOWN;
         else if(status.equals(CustomServo.RIGHT))
