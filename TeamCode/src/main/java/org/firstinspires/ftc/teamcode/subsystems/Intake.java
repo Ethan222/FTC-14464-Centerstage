@@ -41,7 +41,8 @@ public class Intake extends Motor { // inherits from parent class Motor
             return State.UNSURE;
     }
 
-    public void updateTelemetry(Telemetry.Item item) {
-        item.setValue("%s (%.2f) [%s]", getState().toString(), lowerer.getPosition(), getPowerAsString());
+    public void updateTelemetry() {
+        if(telemetry != null)
+            telemetry.setValue("%s (%.2f) [%s]", getState().toString(), lowerer.getPosition(), getPowerAsString());
     }
 }

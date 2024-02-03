@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import android.annotation.SuppressLint;
+
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -20,7 +22,7 @@ public class Motor {
     private boolean holding;
     private int holdPosition;
     public static int HOLD_PRECISION = 5;
-    private Telemetry.Item telemetry;
+    protected Telemetry.Item telemetry;
     // constructors
     public Motor(HardwareMap hm, String name, boolean usingEncoder, int downPsn, int upPsn) {
         motor = hm.get(DcMotorEx.class, name); // get motor from the hardwareMap
@@ -138,7 +140,9 @@ public class Motor {
     public void setTelemetry(Telemetry.Item item) {
         telemetry = item;
     }
+    @SuppressLint("DefaultLocale")
     public void updateTelemetry() {
-        telemetry.setValue("%s %s [%s]", getState(), isUsingEncoder() ? String.format("(%d)", getPosition()) : null, getPowerAsString());
+        if(telemetry != null)
+            telemetry.setValue("%s %s [%s]", getState(), isUsingEncoder() ? String.format("(%d)", getPosition()) : null, getPowerAsString());
     }
 }

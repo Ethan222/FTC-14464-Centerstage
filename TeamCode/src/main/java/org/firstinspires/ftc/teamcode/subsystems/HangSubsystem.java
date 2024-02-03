@@ -89,6 +89,7 @@ public class HangSubsystem {
         motorTelemetry = item;
     }
     public void updateMotorTelemetry() {
-        motorTelemetry.setValue("[%s] (%s)", getPowersAsString(), getPositionsAsStrings());
+        if(motorTelemetry != null)
+            motorTelemetry.setValue("[%s] (%s)", getPowersAsString(), getPositionsAsStrings());
     }
 }

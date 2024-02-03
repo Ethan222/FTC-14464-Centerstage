@@ -58,13 +58,14 @@ public class CustomServo {
         }
     }
     public double getPercent() {
-        return (getPosition() - getLeftPosition()) / (getRightPosition() - getLeftPosition());
+        return (getPosition() - getLeftPosition()) / (getRightPosition() - getLeftPosition()) * 100;
     }
 
     public void setTelemetry(Telemetry.Item item) {
         telemetry = item;
     }
     public void updateTelemetry() {
-        telemetry.setValue("%s (%.2f)", getState(), getPosition());
+        if(telemetry != null)
+            telemetry.setValue("%s (%.2f)", getState(), getPosition());
     }
 }

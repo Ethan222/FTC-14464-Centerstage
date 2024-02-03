@@ -15,11 +15,11 @@ public class Robot {
     public Robot(HardwareMap hardwareMap) {
         drive = new SampleMecanumDrive(hardwareMap);
         intake = new Intake(hardwareMap, "intake", "servo4");
-        claw1 = new Claw(hardwareMap, "servo1", .39, .64);
-        claw2 = new Claw(hardwareMap, "servo2", .7, 1);
+        claw1 = new Claw(hardwareMap, "servo1", .56, .78);
+        claw2 = new Claw(hardwareMap, "servo2", .8, 1);
         outtake = new Outtake(hardwareMap, "armMotor", "servo0");
         hangSubsystem = new HangSubsystem(hardwareMap, new String[]{"hangMotor", "hang2"}, "servo5");
-        autoClaw = new AutoClaw(hardwareMap, "servo3");
-        launcher = new DroneLauncher(hardwareMap, "launcherRotator", "droneLauncher");
+        autoClaw = new AutoClaw(hardwareMap, "droneLauncher");
+        launcher = new DroneLauncher(hardwareMap, "launcherRotator", "servo3");
     }
 }
