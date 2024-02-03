@@ -16,7 +16,6 @@ import org.firstinspires.ftc.teamcode.subsystems.Outtake;
 import org.firstinspires.ftc.teamcode.subsystems.OuttakeRotator;
 import org.firstinspires.ftc.teamcode.subsystems.Robot;
 
-import java.util.Arrays;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -26,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 public class TeleOp extends LinearOpMode {
     private static boolean singleDriverMode = false;
     public static double WHEEL_SLOW_SPEED = .3;
-    public static final double ARM_SLOW_SPEED = .1;
+    public static final double ARM_SLOW_SPEED = .2;
     private static Pose2d startPose = new Pose2d();
     @SuppressLint("DefaultLocale")
     @Override
@@ -60,6 +59,7 @@ public class TeleOp extends LinearOpMode {
         }
 
         telemetry.setAutoClear(false);
+        telemetry.setMsTransmissionInterval(150);
         Telemetry.Item singleDriverModeTelemetry = telemetry.addData("Single driver mode", singleDriverMode);
         Telemetry.Item directionTelemetry = telemetry.addData("Direction (RB/LB)", "forward (INTAKE)");
         Telemetry.Item speedTelemetry = telemetry.addData("Wheel speed (RT)", speed);
@@ -71,9 +71,8 @@ public class TeleOp extends LinearOpMode {
         robot.outtake.setTelemetry(telemetry.addData("outtake", "(%d) [0.0]", robot.outtake.getPosition()));
         robot.outtake.updateTelemetry();
         robot.outtake.rotator.setTelemetry(telemetry.addData("- rotator", null));
-        robot.hangSubsystem.setMotorTelemetry(telemetry.addData("\nhang", null));
+        robot.hangSubsystem.setTelemetry(telemetry.addData("\nhang", null), telemetry.addData("- rotator", null));
         robot.hangSubsystem.updateMotorTelemetry();
-        robot.hangSubsystem.rotator.setTelemetry(telemetry.addData("- rotator", null));
         robot.launcher.setLauncherTelemetry(telemetry.addData("launcher", null));
         robot.launcher.updateLauncherTelemetry();
         robot.launcher.setRotatorTelemetry(telemetry.addData("- rotator", null));
@@ -203,7 +202,7 @@ public class TeleOp extends LinearOpMode {
                     robot.claw2.down();
                     if(!robot.outtake.rotator.getState().equals(OuttakeRotator.EXTENDED))
                         robot.outtake.rotator.rotateFully();
-//                    robot.outtake.stopHolding();
+                    robot.outtake.stopHolding();
                     executorService.schedule(() -> {
                         if(robot.outtake.getPosition() < Outtake.POSITION_1)
                             robot.outtake.goToPosition(Outtake.POSITION_1);
@@ -211,37 +210,42 @@ public class TeleOp extends LinearOpMode {
                             robot.outtake.goToPosition(Outtake.POSITION_2);
                     }, 500, TimeUnit.MILLISECONDS);
                 } else if (gamepad.dpad_down) {
-//                    robot.outtake.stopHolding();
+                    robot.outtake.stopHolding();
                     robot.outtake.goToDownPosition();
                     executorService.schedule(robot.outtake::stop, 2, TimeUnit.SECONDS);
                     // when arm goes down, also retract outtake
-                    executorService.schedule(robot.outtake.rotator::retractFully, 700, TimeUnit.MILLISECONDS);
-                } else if (robot.outtake.isIdle() && robot.outtake.getPower() != 0) {
-//                    robot.outtake.stopHolding();
-                    robot.outtake.stop();
+                    executorService.schedule(robot.outtake.rotator::retractFully, 800, TimeUnit.MILLISECONDS);
+                } else if(robot.outtake.isIdle()) {
+                    if (robot.outtake.getState() == Motor.State.DOWN) {
+                        robot.outtake.stopHolding();
+                        robot.outtake.stop();
+                    } else
+                        robot.outtake.hold();
                 }
             } else {
                 if(gamepad2.left_stick_y != 0) {
-//                    robot.outtake.stopHolding();
+                    robot.outtake.stopHolding();
                     robot.outtake.setPower(-gamepad2.left_stick_y);
                 } else if(gamepad.dpad_up && (robot.outtake.getState() != Motor.State.DOWN || robot.outtake.rotator.getState().equals(OuttakeRotator.EXTENDED))) {
-//                    robot.outtake.stopHolding();
+                    robot.outtake.stopHolding();
                     robot.outtake.accelerateUp();
                 } else if(gamepad.dpad_down) {
-//                    robot.outtake.stopHolding();
+                    robot.outtake.stopHolding();
                     robot.outtake.accelerateDown();
-                } else if(robot.outtake.getPower() != 0) //if(robot.outtake.getStatus().equals(Motor.State.DOWN)) {
-//                    robot.outtake.stopHolding();
+                } else if (robot.outtake.getState().equals(Motor.State.DOWN)) {
+                    robot.outtake.stopHolding();
                     robot.outtake.decelerate();
-//                } else
-//                    robot.outtake.hold();
+                } else
+                    robot.outtake.hold();
             }
             // rotate to avoid the bar
             if((robot.outtake.getPower() > 0 && robot.outtake.getState() == Motor.State.DOWN && robot.outtake.rotator.getState().equals(OuttakeRotator.RETRACTED)) ||
-                    (robot.outtake.getPower() < 0 && robot.outtake.getPosition() - robot.outtake.getDownPosition() < 300 && robot.outtake.getState() != Motor.State.DOWN && robot.outtake.rotator.getState().equals(OuttakeRotator.RETRACTED)))
+                    (robot.outtake.getPower() < 0 && robot.outtake.getPosition() - robot.outtake.getDownPosition() < 400 && robot.outtake.getPosition() - robot.outtake.getDownPosition() > 200 && robot.outtake.rotator.getState().equals(OuttakeRotator.RETRACTED)))
                 robot.outtake.rotator.rotateFully();
+            else if(robot.outtake.getPower() < 0 && robot.outtake.getState() == Motor.State.DOWN && !robot.outtake.rotator.getState().equals(OuttakeRotator.RETRACTED))
+                robot.outtake.rotator.retractFully();
             // slow down when nearing bottom
-            if(robot.outtake.getPosition() - robot.outtake.getDownPosition() < 700 && robot.outtake.getPower() < -ARM_SLOW_SPEED)
+            if(robot.outtake.getPosition() - robot.outtake.getDownPosition() < 200 && robot.outtake.getPower() < -ARM_SLOW_SPEED)
                 robot.outtake.setPower(-ARM_SLOW_SPEED);
 
             // rotate outtake

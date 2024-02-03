@@ -9,6 +9,10 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 // Generic motor class that controls one motor
 @Config
 public class Motor {
@@ -16,13 +20,15 @@ public class Motor {
         DOWN, UP, UNSURE
     }
     protected final DcMotorEx motor;
-    public static double DEFAULT_ACCELERATION = .1;
+    public static double DEFAULT_ACCELERATION = .6;
     private boolean usingEncoder;
     private int downPosition, upPosition;
     private boolean holding;
     private int holdPosition;
-    public static int HOLD_PRECISION = 5;
+    public static int HOLD_PRECISION = 30;
+
     protected Telemetry.Item telemetry;
+    private final ScheduledExecutorService executorService;
     // constructors
     public Motor(HardwareMap hm, String name, boolean usingEncoder, int downPsn, int upPsn) {
         motor = hm.get(DcMotorEx.class, name); // get motor from the hardwareMap
@@ -30,42 +36,57 @@ public class Motor {
         upPosition = upPsn;
         if(usingEncoder)
             motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        executorService = Executors.newSingleThreadScheduledExecutor();
     }
     public Motor(HardwareMap hm, String name, boolean usingEncoder) { this(hm, name, usingEncoder, 0, 0); }
     public Motor(HardwareMap hm, String name) {
         this(hm, name, false);
     }
     public void setPower(double power) {
-        motor.setPower(power);
+        if(power > 1)
+            motor.setPower(1);
+        else
+            motor.setPower(Math.max(power, -1));
         updateTelemetry();
     }
     public void changePower(double power) { setPower(getPower() + power); }
     public void stop() { setPower(0); }
     public double getPower() { return motor.getPower(); }
+    @SuppressLint("DefaultLocale")
     public String getPowerAsString() {
         return String.format("%.1f", getPower());
     }
 
     // acceleration
-    public void acceleratePositive(double acceleration) {
-        if(getPower() < 1)
-            changePower(acceleration);
+    public void accelerateTo(double targetPower) {
+        if(getPower() == targetPower)
+            return;
+
+        Runnable commandToRun;
+        if(targetPower > getPower())
+            commandToRun = this::acceleratePositive;
+        else
+            commandToRun = this::accelerateNegative;
+        int n = (int)Math.ceil((targetPower - getPower()) / DEFAULT_ACCELERATION);
+        for(int i = 0; i < n; i++) {
+            executorService.schedule(commandToRun, i * 50L, TimeUnit.MILLISECONDS);
+        }
+    }
+    public void accelerate(double acceleration) {
+        changePower(acceleration);
     }
     public void acceleratePositive() {
-        acceleratePositive(DEFAULT_ACCELERATION);
-    }
-    public void accelerateNegative(double acceleration) {
-        if(getPower() > -1)
-            changePower(-acceleration);
+        accelerate(DEFAULT_ACCELERATION);
     }
     public void accelerateNegative() {
-        accelerateNegative(DEFAULT_ACCELERATION);
+        accelerate(-DEFAULT_ACCELERATION);
     }
+
     public void decelerate(double deceleration) {
         if(getPower() > 0)
-            accelerateNegative(deceleration);
+            accelerate(-deceleration);
         else if(getPower() < 0)
-            acceleratePositive(deceleration);
+            accelerate(deceleration);
     }
     public void decelerate() {
         decelerate(DEFAULT_ACCELERATION);
@@ -93,9 +114,9 @@ public class Motor {
         motor.setTargetPosition(position);
         motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         if(position > getPosition())
-            setPower(power);
+            accelerateTo(power);
         else
-            setPower(-power);
+            accelerateTo(-power);
     }
     public void goToPosition(int position) { goToPosition(position, 1); }
     public void goToUpPosition() {
@@ -106,9 +127,11 @@ public class Motor {
     }
     public void setDownPosition() {
         downPosition = getPosition();
+        updateTelemetry();
     }
     public void setUpPosition() {
         upPosition = getPosition();
+        updateTelemetry();
     }
     public double getDownPosition() { return downPosition; }
     public double getUpPosition() { return upPosition; }
@@ -118,6 +141,7 @@ public class Motor {
         if(!holding) {
             holdPosition = getPosition();
             holding = true;
+            decelerate();
         } else if (Math.abs(getPosition() - holdPosition) > HOLD_PRECISION) {
             goToPosition(holdPosition);
         } else

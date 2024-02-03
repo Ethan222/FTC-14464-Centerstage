@@ -4,8 +4,6 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-
 // controls the motor that raises the outtake
 public class Outtake extends Motor { // inherits from the Motor parent class
     public OuttakeRotator rotator;
@@ -15,7 +13,7 @@ public class Outtake extends Motor { // inherits from the Motor parent class
         super(hardwareMap, motorName, true, 0, POSITION_1);       // calls parent constructor
         motor.setDirection(DcMotorSimple.Direction.REVERSE);
         motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rotator = new OuttakeRotator(hardwareMap, servoName, .2, .57+.005);
+        rotator = new OuttakeRotator(hardwareMap, servoName, .25, .57+.005);
     }
     public void up(double power) {
         setPower(power);
@@ -30,13 +28,13 @@ public class Outtake extends Motor { // inherits from the Motor parent class
         down(1);
     }
     public void accelerateUp(double acceleration) {
-        acceleratePositive(acceleration);
+        accelerate(acceleration);
     }
     public void accelerateUp() {
         accelerateUp(DEFAULT_ACCELERATION);
     }
     public void accelerateDown(double acceleration) {
-        accelerateNegative(acceleration);
+        accelerate(-acceleration);
     }
     public void accelerateDown() {
         accelerateDown(DEFAULT_ACCELERATION);

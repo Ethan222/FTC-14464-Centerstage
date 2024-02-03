@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 public class AutoClaw extends CustomServo {
     public static final String IN = "IN", OUT = "OUT", PARTLY_OUT = "PARTLY OUT";
     private static final double INCREMENT = .01;    // how fast the claw will move
-    private static final double IN_PSN = .2, OUT_PSN = .56;
+    private static final double IN_PSN = 0, OUT_PSN = .56;
     private final ScheduledExecutorService executorService;
     // constructor
     public AutoClaw(HardwareMap hm, String name) {

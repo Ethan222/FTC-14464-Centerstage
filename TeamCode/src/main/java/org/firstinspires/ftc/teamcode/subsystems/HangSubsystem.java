@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
@@ -10,7 +11,7 @@ public class HangSubsystem {
     public final static String DOWN = "DOWN", UP = "UP", IN_BETWEEN = "IN BETWEEN";
     private final Motor[] motors;
     public CustomServo rotator;
-    private Telemetry.Item motorTelemetry;
+    private Telemetry.Item motorTelemetry, rotatorTelemetry;
 
     public HangSubsystem(HardwareMap hm, String[] motorNames, String servoName) {
         motors = new Motor[]{
@@ -18,7 +19,9 @@ public class HangSubsystem {
                 new Motor(hm, motorNames[1])
         };
         motors[1].motor.setDirection(DcMotorSimple.Direction.REVERSE);
-        rotator = new CustomServo(hm, servoName, .5, 1);
+        for(Motor motor : motors)
+            motor.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rotator = new CustomServo(hm, servoName, 0, 1);
     }
     public void setPowers(double power) {
         for(Motor motor : motors)
@@ -65,15 +68,19 @@ public class HangSubsystem {
 
     public void rotateUp(double increment) {
         rotator.changePosition(increment);
+        updateRotatorTelemetry();
     }
     public void rotateUp() {
         rotator.goToRight();
+        updateRotatorTelemetry();
     }
     public void rotateDown(double increment) {
         rotator.changePosition(-increment);
+        updateRotatorTelemetry();
     }
     public void rotateDown() {
         rotator.goToLeft();
+        updateRotatorTelemetry();
     }
     public String getRotatorState() {
         String status = rotator.getState();
@@ -85,11 +92,16 @@ public class HangSubsystem {
             return IN_BETWEEN;
     }
 
-    public void setMotorTelemetry(Telemetry.Item item) {
-        motorTelemetry = item;
+    public void setTelemetry(Telemetry.Item motor, Telemetry.Item servo) {
+        motorTelemetry = motor;
+        rotatorTelemetry = servo;
     }
     public void updateMotorTelemetry() {
         if(motorTelemetry != null)
             motorTelemetry.setValue("[%s] (%s)", getPowersAsString(), getPositionsAsStrings());
+    }
+    public void updateRotatorTelemetry() {
+        if(rotatorTelemetry != null)
+            rotatorTelemetry.setValue("%s (%.2f)", getRotatorState(), rotator.getPosition());
     }
 }
