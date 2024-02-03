@@ -18,7 +18,7 @@ public class HangSubsystem {
                 new Motor(hm, motorNames[0]),
                 new Motor(hm, motorNames[1])
         };
-        motors[1].motor.setDirection(DcMotorSimple.Direction.REVERSE);
+        motors[0].motor.setDirection(DcMotorSimple.Direction.REVERSE);
         for(Motor motor : motors)
             motor.motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rotator = new CustomServo(hm, servoName, 0, 1);

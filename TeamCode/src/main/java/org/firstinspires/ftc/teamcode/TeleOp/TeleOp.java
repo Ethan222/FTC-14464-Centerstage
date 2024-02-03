@@ -38,7 +38,7 @@ public class TeleOp extends LinearOpMode {
         robot.drive.setPoseEstimate(startPose);
 
         ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-        ElapsedTime wheelTimer = new ElapsedTime(), loopTimer = new ElapsedTime();
+        ElapsedTime wheelTimer = new ElapsedTime(), loopTimer = new ElapsedTime(), armTimer = new ElapsedTime();
 
         int direction = 1;
         double speed = 1, heading;
@@ -200,21 +200,20 @@ public class TeleOp extends LinearOpMode {
                     // when arm goes up, also rotate outtake & close claws
                     robot.claw1.down();
                     robot.claw2.down();
-                    if(!robot.outtake.rotator.getState().equals(OuttakeRotator.EXTENDED))
+                    if(robot.outtake.getState() == Motor.State.DOWN && !robot.outtake.rotator.getState().equals(OuttakeRotator.EXTENDED))
                         robot.outtake.rotator.rotateFully();
                     robot.outtake.stopHolding();
-                    executorService.schedule(() -> {
-                        if(robot.outtake.getPosition() < Outtake.POSITION_1)
-                            robot.outtake.goToPosition(Outtake.POSITION_1);
-                        else
-                            robot.outtake.goToPosition(Outtake.POSITION_2);
-                    }, 500, TimeUnit.MILLISECONDS);
+                    if(robot.outtake.getPosition() < Outtake.POSITION_1)
+                        robot.outtake.goToPosition(Outtake.POSITION_1);
+                    else
+                        robot.outtake.goToPosition(Outtake.POSITION_2);
                 } else if (gamepad.dpad_down) {
                     robot.outtake.stopHolding();
                     robot.outtake.goToDownPosition();
-                    executorService.schedule(robot.outtake::stop, 2, TimeUnit.SECONDS);
+                    executorService.schedule(robot.outtake::setDownPosition, 2, TimeUnit.SECONDS);
                     // when arm goes down, also retract outtake
-                    executorService.schedule(robot.outtake.rotator::retractFully, 800, TimeUnit.MILLISECONDS);
+                    robot.outtake.rotator.retractFully();
+                    armTimer.reset();
                 } else if(robot.outtake.isIdle()) {
                     if (robot.outtake.getState() == Motor.State.DOWN) {
                         robot.outtake.stopHolding();
@@ -232,20 +231,15 @@ public class TeleOp extends LinearOpMode {
                 } else if(gamepad.dpad_down) {
                     robot.outtake.stopHolding();
                     robot.outtake.accelerateDown();
+                    executorService.schedule(robot.outtake::setDownPosition, 1500, TimeUnit.MILLISECONDS);
                 } else if (robot.outtake.getState().equals(Motor.State.DOWN)) {
                     robot.outtake.stopHolding();
                     robot.outtake.decelerate();
                 } else
                     robot.outtake.hold();
             }
-            // rotate to avoid the bar
-            if((robot.outtake.getPower() > 0 && robot.outtake.getState() == Motor.State.DOWN && robot.outtake.rotator.getState().equals(OuttakeRotator.RETRACTED)) ||
-                    (robot.outtake.getPower() < 0 && robot.outtake.getPosition() - robot.outtake.getDownPosition() < 400 && robot.outtake.getPosition() - robot.outtake.getDownPosition() > 200 && robot.outtake.rotator.getState().equals(OuttakeRotator.RETRACTED)))
-                robot.outtake.rotator.rotateFully();
-            else if(robot.outtake.getPower() < 0 && robot.outtake.getState() == Motor.State.DOWN && !robot.outtake.rotator.getState().equals(OuttakeRotator.RETRACTED))
-                robot.outtake.rotator.retractFully();
             // slow down when nearing bottom
-            if(robot.outtake.getPosition() - robot.outtake.getDownPosition() < 200 && robot.outtake.getPower() < -ARM_SLOW_SPEED)
+            if(robot.outtake.getPosition() - robot.outtake.getDownPosition() < 100 && robot.outtake.getPower() < -ARM_SLOW_SPEED)
                 robot.outtake.setPower(-ARM_SLOW_SPEED);
 
             // rotate outtake

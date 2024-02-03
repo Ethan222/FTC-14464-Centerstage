@@ -20,12 +20,12 @@ public class Motor {
         DOWN, UP, UNSURE
     }
     protected final DcMotorEx motor;
-    public static double DEFAULT_ACCELERATION = .6;
+    public static double DEFAULT_ACCELERATION = .2;
     private boolean usingEncoder;
     private int downPosition, upPosition;
     private boolean holding;
     private int holdPosition;
-    public static int HOLD_PRECISION = 30;
+    public static int HOLD_PRECISION = 60;
 
     protected Telemetry.Item telemetry;
     private final ScheduledExecutorService executorService;
@@ -69,7 +69,7 @@ public class Motor {
             commandToRun = this::accelerateNegative;
         int n = (int)Math.ceil((targetPower - getPower()) / DEFAULT_ACCELERATION);
         for(int i = 0; i < n; i++) {
-            executorService.schedule(commandToRun, i * 50L, TimeUnit.MILLISECONDS);
+            executorService.schedule(commandToRun, i * 5L, TimeUnit.MILLISECONDS);
         }
     }
     public void accelerate(double acceleration) {
@@ -141,7 +141,7 @@ public class Motor {
         if(!holding) {
             holdPosition = getPosition();
             holding = true;
-            decelerate();
+            accelerateTo(0);
         } else if (Math.abs(getPosition() - holdPosition) > HOLD_PRECISION) {
             goToPosition(holdPosition);
         } else
