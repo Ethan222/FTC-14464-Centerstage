@@ -2,8 +2,6 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-
 // controls the servo that rotates the outtake mechanism
 public class OuttakeRotator extends CustomServo {
     public final static String EXTRA_RETRACTED = "EXTRA RETRACTED", RETRACTED = "RETRACTED", PARTLY_EXTENDED = "PARTLY EXTENDED",

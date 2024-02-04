@@ -2,8 +2,6 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-
 // represents a servo that controls a gripper
 public class Claw extends CustomServo {
     public final static String UP = "UP", DOWN = "DOWN", PARTLY_DOWN = "PARTLY DOWN";

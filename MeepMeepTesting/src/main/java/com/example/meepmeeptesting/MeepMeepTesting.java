@@ -251,23 +251,15 @@ public class MeepMeepTesting {
 
         RoadRunnerBotEntity test1 = new DefaultBotBuilder(meepMeep)
                 .setColorScheme(new ColorSchemeBlueLight())
-                .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
-                .followTrajectorySequence(drive -> drive.trajectorySequenceBuilder(new Pose2d())
-                        .splineTo(new Vector2d(30, 30), Math.PI/2)
-                .build()
-        );
-        RoadRunnerBotEntity test2 = new DefaultBotBuilder(meepMeep)
-                .setColorScheme(new ColorSchemeBlueLight())
-                .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
-                .followTrajectorySequence(drive -> drive.trajectorySequenceBuilder(new Pose2d())
-                        .splineToLinearHeading(new Pose2d(30, 30, Math.PI/2), Math.PI/2)
-                .build()
-        );
-        RoadRunnerBotEntity test3 = new DefaultBotBuilder(meepMeep)
-                .setColorScheme(new ColorSchemeBlueLight())
-                .setConstraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15)
-                .followTrajectorySequence(drive -> drive.trajectorySequenceBuilder(new Pose2d())
-                        .splineToSplineHeading(new Pose2d(30, 30, Math.PI/2), Math.PI/2)
+                .setConstraints(20, 60, Math.toRadians(180), Math.toRadians(180), 13.5)
+                .followTrajectorySequence(drive -> drive.trajectorySequenceBuilder(new Pose2d(-36, 64, -Math.PI / 2))
+                        .splineToSplineHeading(new Pose2d(-43, 28, -Math.PI/2), -Math.PI / 2)
+                        .back(3)
+                        .waitSeconds(1)
+                        .back(.3)
+                        .splineToConstantHeading(new Vector2d(-43+7, 28+3+1), -Math.PI/3)
+                        .splineToConstantHeading(new Vector2d(-3-30, 9.5), -Math.PI/2)
+                        .turn(Math.PI/2)
                 .build()
         );
 
@@ -279,8 +271,6 @@ public class MeepMeepTesting {
 //                .addEntity(redBackLeft)
 //                .addEntity(redFrontLeft)
                 .addEntity(test1)
-                .addEntity(test2)
-                .addEntity(test3)
                 .start();
     }
 }

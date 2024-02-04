@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
+import java.util.Locale;
 
 // class to control the intake mechanism
 public class Intake extends Motor { // inherits from parent class Motor
@@ -41,8 +41,7 @@ public class Intake extends Motor { // inherits from parent class Motor
             return State.UNSURE;
     }
 
-    public void updateTelemetry() {
-        if(telemetry != null)
-            telemetry.setValue("%s (%.2f) [%s]", getState().toString(), lowerer.getPosition(), getPowerAsString());
+    public String getTelemetry() {
+        return String.format(Locale.ENGLISH, "%s (%.2f) [%s]", getState().toString(), lowerer.getPosition(), getPowerAsString());
     }
 }

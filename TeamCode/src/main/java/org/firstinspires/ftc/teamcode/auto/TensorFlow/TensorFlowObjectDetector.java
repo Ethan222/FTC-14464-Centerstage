@@ -16,7 +16,7 @@ import java.util.List;
 public class TensorFlowObjectDetector {
     private static final String MODEL_ASSET = "blue_red_prop_model_3.tflite";
     private static final String[] LABELS = { "blueProp", "redProp" };
-    private static final float MIN_CONFIDENCE = .55f;
+    private static final float MIN_CONFIDENCE = .5f;
     private static final double CENTER_DIVISION = 350;
     private static final double MAX_SIZE = 250;
     private final TfodProcessor tfod; // stores instance of TFOD processor

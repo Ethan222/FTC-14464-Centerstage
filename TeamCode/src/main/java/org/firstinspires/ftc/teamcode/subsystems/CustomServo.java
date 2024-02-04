@@ -3,7 +3,7 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
+import java.util.Locale;
 
 // Generic class to represent a servo
 public class CustomServo {
@@ -11,7 +11,6 @@ public class CustomServo {
     private final Servo servo;                                // field representing the actual Servo object
     private final double LEFT_POSITION, RIGHT_POSITION;         // fields representing the farthest left and right the servo can go
     private double DEFAULT_INCREMENT = .01;
-    private Telemetry.Item telemetry;
     public CustomServo(HardwareMap hm, String name, double leftPsn, double rightPsn, double increment) {
         servo = hm.get(Servo.class, name);
         LEFT_POSITION = leftPsn;
@@ -29,7 +28,6 @@ public class CustomServo {
             servo.setPosition(LEFT_POSITION);
         else
             servo.setPosition(Math.min(psn, RIGHT_POSITION));
-        updateTelemetry();
     }
     public void changePosition(double chg) {        // method to change the servo's position by a given amount
         setPosition(getPosition() + chg);
@@ -61,11 +59,7 @@ public class CustomServo {
         return (getPosition() - getLeftPosition()) / (getRightPosition() - getLeftPosition()) * 100;
     }
 
-    public void setTelemetry(Telemetry.Item item) {
-        telemetry = item;
-    }
-    public void updateTelemetry() {
-        if(telemetry != null)
-            telemetry.setValue("%s (%.2f)", getState(), getPosition());
+    public String getTelemetry() {
+        return String.format(Locale.ENGLISH, "%s (%.2f)", getState(), getPosition());
     }
 }

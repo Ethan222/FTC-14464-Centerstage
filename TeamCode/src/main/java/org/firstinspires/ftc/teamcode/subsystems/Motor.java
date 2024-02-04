@@ -7,8 +7,6 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -26,8 +24,6 @@ public class Motor {
     private boolean holding;
     private int holdPosition;
     public static int HOLD_PRECISION = 60;
-
-    protected Telemetry.Item telemetry;
     private final ScheduledExecutorService executorService;
     // constructors
     public Motor(HardwareMap hm, String name, boolean usingEncoder, int downPsn, int upPsn) {
@@ -47,7 +43,6 @@ public class Motor {
             motor.setPower(1);
         else
             motor.setPower(Math.max(power, -1));
-        updateTelemetry();
     }
     public void changePower(double power) { setPower(getPower() + power); }
     public void stop() { setPower(0); }
@@ -114,9 +109,9 @@ public class Motor {
         motor.setTargetPosition(position);
         motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         if(position > getPosition())
-            accelerateTo(power);
+            setPower(power);
         else
-            accelerateTo(-power);
+            setPower(-power);
     }
     public void goToPosition(int position) { goToPosition(position, 1); }
     public void goToUpPosition() {
@@ -127,11 +122,9 @@ public class Motor {
     }
     public void setDownPosition() {
         downPosition = getPosition();
-        updateTelemetry();
     }
     public void setUpPosition() {
         upPosition = getPosition();
-        updateTelemetry();
     }
     public double getDownPosition() { return downPosition; }
     public double getUpPosition() { return upPosition; }
@@ -161,12 +154,8 @@ public class Motor {
             return State.UNSURE;
     }
 
-    public void setTelemetry(Telemetry.Item item) {
-        telemetry = item;
-    }
     @SuppressLint("DefaultLocale")
-    public void updateTelemetry() {
-        if(telemetry != null)
-            telemetry.setValue("%s %s [%s]", getState(), isUsingEncoder() ? String.format("(%d)", getPosition()) : null, getPowerAsString());
+    public String getTelemetry() {
+        return String.format("%s %s [%s]", getState(), isUsingEncoder() ? String.format("(%d)", getPosition()) : null, getPowerAsString());
     }
 }
