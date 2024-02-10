@@ -68,6 +68,9 @@ public class NewAprilTagAuto extends LinearOpMode
 
     private Location propLocation = Location.LEFT;
 
+    private Robot robot;
+
+    private boolean aprilTagDetectionInitialized = false;
     private OpenCvCamera camera;
     private AprilTagDetectionPipeline aprilTagDetectionPipeline;
     private static final double INCHES_PER_METER = 13.12336;
@@ -76,19 +79,18 @@ public class NewAprilTagAuto extends LinearOpMode
     private List<AprilTagDetection> currentAprilTagDetections;
     private List<Location> detectedTags;
 
+    ElapsedTime timer;
     @SuppressLint("DefaultLocale")
     @Override
     public void runOpMode() {
-        Robot robot = new Robot(hardwareMap);
+        robot = new Robot(hardwareMap);
         TensorFlowObjectDetector propDetector = new TensorFlowObjectDetector(hardwareMap);
         ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-        ElapsedTime timer = new ElapsedTime();
-        boolean initialized = false;
-        double minInitTime = 5.5;
-        boolean propLocationOverride = false;
+        timer = new ElapsedTime();
+        boolean initialized = false,  propLocationOverride = false;
+        double minInitTime = 5.5, waitTime = 15;
 
 //        telemetry.setMsTransmissionInterval(150);
-//        telemetry.setAutoClear(true);
 
         Telemetry.Item status = telemetry.addData("Status", null).setRetained(true);
         telemetry.addLine().addData("Runtime", "%.0f", this::getRuntime).addData("loop time", "%.2f ms", timer::milliseconds).setRetained(true);
@@ -199,21 +201,21 @@ public class NewAprilTagAuto extends LinearOpMode
         if(!opModeIsActive())
             return;
 
-        double waitTime = Math.max(minInitTime - getRuntime(), 0);
+        double beginningWaitTime = Math.max(minInitTime - getRuntime(), (side == Side.NEAR && wait ? waitTime : 0));
         resetRuntime();
         robot.claw1.down();
         robot.claw2.down();
         telemetry.clearAll();
-        while(getRuntime() < waitTime) {
+        while(getRuntime() < beginningWaitTime) {
             if(!propLocationOverride) {
-                telemetry.addLine(String.format("Detecting prop location...%.1f", waitTime - getRuntime()));
+                telemetry.addLine(String.format("Detecting prop location...%.1f", beginningWaitTime - getRuntime()));
                 propDetector.update();
                 propLocation = propDetector.getLocation();
                 telemetry.addData("Prop location", propLocation);
                 telemetry.addLine();
                 propDetector.telemetryAll(telemetry);
             } else {
-                telemetry.addLine(String.format("Waiting...%.1f", waitTime - getRuntime()));
+                telemetry.addLine(String.format("Waiting...%.1f", beginningWaitTime - getRuntime()));
                 telemetry.addData("Prop location", propLocation);
             }
             telemetry.update();
@@ -241,12 +243,16 @@ public class NewAprilTagAuto extends LinearOpMode
 
         // trajectories todo
         Pose2d startPose = null, backdropPose = null, stackPose = null, parkPose = null;
+        Pose2d aprilTagOffset = new Pose2d(-5, 0, 0);
         Vector2d truss = null;
-        TrajectorySequence spikeMarkTraj = null, toAprilTagDetection = null, toBackdrop, parkTraj = null;
+        Vector2d trussFront = null, trussBack;
+        TrajectorySequence spikeMarkTraj = null, toAprilTagDetection = null, toBackdrop = null, parkTraj = null;
+        TrajectorySequence frontToStack = null, frontToWait = null;
         TrajectorySequence backdropToStack, stackToBackdrop;
         double spikeMarkBackDistance = 1.5, backdropForwardDistance = 4.6, backdropBackDistance = 5;
         double approachSpeed = 2, moveAwaySpeed = 8;
 
+        double trussFrontX = -38;
         double backdropX = 49, backdropY = 0;
         switch (alliance) {
             // blue common todo
@@ -269,9 +275,8 @@ public class NewAprilTagAuto extends LinearOpMode
 //                        backdropX -= 3.5;
                         backdropY += 35;
                 }
-                backdropPose = new Pose2d(backdropX - 5, backdropY - 0, 0);
                 stackPose = new Pose2d(-56, 23, 0);
-                truss = goThroughStageDoor ? new Vector2d(-3, 9.5) : new Vector2d(-3, 63);
+                trussFront = new Vector2d(trussFrontX, goThroughStageDoor ? 9.5 : 63);
                 break;
             // red common todo
             case RED:
@@ -294,10 +299,11 @@ public class NewAprilTagAuto extends LinearOpMode
 //                        backdropX += 2.7;
                         backdropY -= 8;
                 }
-                backdropPose = new Pose2d(backdropX - 3, backdropY, 0);
                 stackPose = new Pose2d(-56, -35, 0);
-                truss = goThroughStageDoor ? new Vector2d(-6, -6) : new Vector2d(-6, -60);
+                trussFront = new Vector2d(trussFrontX, goThroughStageDoor ? -6 : -60);
         }
+        backdropPose = new Pose2d(backdropX, backdropY, 0);
+        trussBack = trussFront.plus(new Vector2d(33, 0));
 
         switch(side) {
             case NEAR:
@@ -355,13 +361,30 @@ public class NewAprilTagAuto extends LinearOpMode
                 }
 
                 // back traj todo
-                toAprilTagDetection = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
-                        .addTemporalMarker(() -> robot.outtake.rotator.rotateFully())
-                        .addTemporalMarker(.5, () -> robot.outtake.goToUpPosition())
-                        .back(spikeMarkBackDistance)
-                        .splineToSplineHeading(backdropPose, 0)
-                        .build();
-                if(!placeOnBackdrop) {
+                if(placeOnBackdrop) {
+                    if(useAprilTags)
+                        toAprilTagDetection = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
+                                .addTemporalMarker(() -> robot.outtake.rotator.rotateFully())
+                                .addTemporalMarker(.5, () -> robot.outtake.goToUpPosition())
+                                .back(spikeMarkBackDistance)
+                                .splineToSplineHeading(backdropPose.plus(aprilTagOffset), 0)
+                                .build();
+                    else
+                        toBackdrop = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
+                                .addTemporalMarker(.5, () -> robot.outtake.rotator.rotateFully())
+                                .addTemporalMarker(1, () -> robot.outtake.goToPosition(side == Side.NEAR ? Outtake.POSITION_1 : Outtake.POSITION_2))
+                                .back(spikeMarkBackDistance)
+                                .splineToSplineHeading(backdropPose, 0)
+                                .forward(backdropForwardDistance, SampleMecanumDrive.getVelocityConstraint(approachSpeed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
+                                .build();
+                    if(pickFromStack)
+                        backdropToStack = robot.drive.trajectorySequenceBuilder(toBackdrop.end())
+                                .back(backdropBackDistance, SampleMecanumDrive.getVelocityConstraint(moveAwaySpeed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
+                                .splineTo(trussBack, Math.PI)
+                                .splineTo(trussFront, Math.PI)
+                                .splineToSplineHeading(stackPose, Math.PI)
+                                .build();
+                } else {
                     parkTraj = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
                             .back(spikeMarkBackDistance)
                             .splineToSplineHeading(parkPose, (alliance == Alliance.BLUE ? 1 : -1) * Math.PI/6)
@@ -424,54 +447,48 @@ public class NewAprilTagAuto extends LinearOpMode
                 }
 
                 // front traj todo
-                waitTime = placeOnBackdrop ? (useAprilTags ? 5+1 : 12) - waitTime : 0;
-                if(alliance == Alliance.BLUE && propLocation == Location.CENTER && goThroughStageDoor)
-                    toAprilTagDetection = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
+                if(pickFromStack) {
+                    frontToStack = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
                             .back(spikeMarkBackDistance)
-                            .splineToConstantHeading(truss.plus(new Vector2d(-46, 3)), -Math.PI/2)
-                            .splineToConstantHeading(truss.plus(new Vector2d(-33, 0)), 0)
-                            .waitSeconds(waitTime)
-                            .lineToConstantHeading(truss.plus(new Vector2d(33, 0)))
-                            .addDisplacementMarker(() -> robot.outtake.rotator.rotateFully())
-                            .UNSTABLE_addTemporalMarkerOffset(.5, () -> robot.outtake.goToPosition(Outtake.POSITION_2))
-                            .splineToSplineHeading(backdropPose, Math.PI/2 * (alliance == Alliance.BLUE ? 1 : -1))
+                            .splineToSplineHeading(stackPose, Math.PI)
                             .build();
-                else if(alliance == Alliance.BLUE && propLocation == Location.RIGHT && goThroughStageDoor) {
-                    startPose = spikeMarkTraj.end();
-                    toAprilTagDetection = robot.drive.trajectorySequenceBuilder(startPose)
-                            .back(.3)
-                            .splineToConstantHeading(new Vector2d(startPose.getX() + 9+1, startPose.getY()+1), -Math.PI/3)
-                            .splineToConstantHeading(truss.plus(new Vector2d(-30, 0)), -Math.PI/2)
-                            .turn(Math.PI/2)
-                            .waitSeconds(waitTime)
-                            .lineToConstantHeading(truss.plus(new Vector2d(33, 0)))
-                            .addDisplacementMarker(() -> robot.outtake.rotator.rotateFully())
-                            .UNSTABLE_addTemporalMarkerOffset(.5, () -> robot.outtake.goToPosition(Outtake.POSITION_2))
-                            .splineToSplineHeading(backdropPose, Math.PI/2 * (alliance == Alliance.BLUE ? 1 : -1))
+                    frontToWait = robot.drive.trajectorySequenceBuilder(frontToStack.end())
+                            .splineTo(trussFront, 0)
                             .build();
+                } else {
+                    if (goThroughStageDoor && (propLocation == Location.CENTER || propLocation == (alliance == Alliance.BLUE ? Location.RIGHT : Location.LEFT)))
+                        frontToWait = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
+                                .back(spikeMarkBackDistance)
+                                .splineToConstantHeading(trussFront.plus(new Vector2d(-10, 3 * (alliance == Alliance.BLUE ? 1 : -1))), Math.PI/2 * (alliance == Alliance.BLUE ? -1 : 1))
+                                .splineToConstantHeading(trussFront, 0)
+                                .build();
+                    else
+                        frontToWait = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
+                                .back(spikeMarkBackDistance)
+                                .lineToConstantHeading(trussFront)
+                                .build();
+                }
+                if(placeOnBackdrop) {
+                    if(useAprilTags) {
+                        assert frontToWait != null;
+                        toAprilTagDetection = robot.drive.trajectorySequenceBuilder(frontToWait.end())
+                                .lineToConstantHeading(trussBack)
+                                .addDisplacementMarker(() -> robot.outtake.rotator.rotateFully())
+                                .UNSTABLE_addTemporalMarkerOffset(.5, () -> robot.outtake.goToPosition(Outtake.POSITION_2))
+                                .splineToSplineHeading(backdropPose.plus(aprilTagOffset), Math.PI/2 * (alliance == Alliance.BLUE ? 1 : -1))
+                                .build();
+                    }
                 } else
-                    toAprilTagDetection = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
-                            .back(spikeMarkBackDistance)
-                            .lineToConstantHeading(truss.plus(new Vector2d(-35, 0)))
-                            .waitSeconds(waitTime)
-                            .lineToConstantHeading(truss.plus(new Vector2d(33, 0)))
-                            .addDisplacementMarker(() -> robot.outtake.rotator.rotateFully())
-                            .UNSTABLE_addTemporalMarkerOffset(.5, () -> robot.outtake.goToPosition(Outtake.POSITION_2))
-                            .splineToSplineHeading(backdropPose, Math.PI/2 * (alliance == Alliance.BLUE ? 1 : -1))
-                            .build();
-                if(!placeOnBackdrop)
-                    parkTraj = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
-                            .back(spikeMarkBackDistance)
-                            .lineToConstantHeading(truss.plus(new Vector2d(-33, 0)))
-                            .lineToConstantHeading(truss.plus(new Vector2d(12, 0)))
+                    parkTraj = robot.drive.trajectorySequenceBuilder(frontToWait.end())
+                            .lineToConstantHeading(trussBack)
                             .splineToSplineHeading(parkPose, 0)
                             .build();
         }
 
         // start of movement todo
-        if(alliance == Alliance.BLUE && side == Side.FAR)
-            startPose = new Pose2d(-36, 64, -Math.PI / 2);
-        telemetry.log().add("start pose is (%.0f, %.0f)", startPose.getX(), startPose.getY());
+//        if(alliance == Alliance.BLUE && side == Side.FAR)
+//            startPose = new Pose2d(-36, 64, -Math.PI / 2);
+//        telemetry.log().add("start pose is (%.0f, %.0f)", startPose.getX(), startPose.getY());
         robot.drive.setPoseEstimate(startPose);
 
         status.setValue("moving to spike mark");
@@ -484,26 +501,39 @@ public class NewAprilTagAuto extends LinearOpMode
         timer.reset();
         while(timer.seconds() < .5 && opModeIsActive());
 
-        if(placeOnBackdrop) {
-            status.setValue("moving to april tag detection at %.0f seconds", getRuntime() + (side == Side.FAR ? waitTime + 2 : 0));
-            telemetry.update();
-            robot.drive.followTrajectorySequence(toAprilTagDetection);
+        if (side == Side.FAR) {
+            if(pickFromStack) {
+                robot.drive.followTrajectorySequence(frontToStack);
+                pickFromStack();
+            }
+            assert robot.drive.getPoseEstimate().vec().distTo(frontToWait.start().vec()) < 1;
+            robot.drive.followTrajectorySequence(frontToWait);
+        }
 
-            startPose = robot.drive.getPoseEstimate();
-            double x = backdropX - startPose.getX(), y = backdropY - startPose.getY();
-            AprilTagPose tagPose = null;
+        if(placeOnBackdrop) {
+            status.setValue("moving to april tag detection at %.0f seconds", getRuntime() + (side == Side.FAR ? beginningWaitTime + 2 : 0));
+            telemetry.update();
+            robot.drive.followTrajectorySequenceAsync(toAprilTagDetection);
+
             if(useAprilTags) {
                 // april tag detection todo
-                initializeAprilTagDetection();
+                if(!aprilTagDetectionInitialized)
+                    initializeAprilTagDetection();
 
                 backdrop = AprilTagIDs.getBackdrop(alliance);
                 int idOfInterest = backdrop.getId(propLocation);
                 Telemetry.Item results = telemetry.addData("\nResults", null);
 
-                double maxAprilTagDetectionTime = side == Side.NEAR ? 4.0 : 2.5+1;
+                assert toAprilTagDetection != null;
+                startPose = toAprilTagDetection.end();
+                double x = -aprilTagOffset.getX(), y = -aprilTagOffset.getY();
+                AprilTagPose tagPose = null;
+
+                double maxAprilTagDetectionTime = (side == Side.NEAR ? 4.0 : 2.5+1) + 2;
                 double timeLeft = maxAprilTagDetectionTime;
                 timer.reset();
-                while (tagPose == null && timeLeft > 0 && opModeIsActive()) {
+                while (tagPose == null && timeLeft > 0 && robot.drive.isBusy() && opModeIsActive()) {
+                    robot.drive.update();
                     status.setValue("looking for %s %s (id %d)...%.1f s", alliance, propLocation, idOfInterest, timeLeft);
                     tagPose = getAprilTagPose(idOfInterest, results);
                     telemetry.update();
@@ -514,15 +544,15 @@ public class NewAprilTagAuto extends LinearOpMode
                     x = tagPose.z * INCHES_PER_METER - 3.5;
                     y = -tagPose.x * INCHES_PER_METER - 5;
                 }
+                telemetry.addData("Moving","x = %.1f forward, y = %.1f %s", x, Math.abs(y), y > 0 ? "left" : "right");
+                telemetry.update();
+                toBackdrop = robot.drive.trajectorySequenceBuilder(startPose)
+                        .addTemporalMarker(() -> robot.outtake.rotator.rotateFully())
+                        .addTemporalMarker(.5, () -> robot.outtake.goToPosition(side == Side.NEAR ? Outtake.POSITION_1 : Outtake.POSITION_2))
+                        .splineToLinearHeading(new Pose2d(startPose.getX() + x, startPose.getY() + y, 0), 0)
+                        .forward(backdropForwardDistance, SampleMecanumDrive.getVelocityConstraint(approachSpeed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
+                        .build();
             }
-            telemetry.addData("Moving","x = %.1f forward, y = %.1f %s", x, Math.abs(y), y > 0 ? "left" : "right");
-            telemetry.update();
-            toBackdrop = robot.drive.trajectorySequenceBuilder(startPose)
-                    .addTemporalMarker(() -> robot.outtake.rotator.rotateFully())
-                    .addTemporalMarker(.5, () -> robot.outtake.goToPosition(side == Side.NEAR ? Outtake.POSITION_1 : Outtake.POSITION_2))
-                    .splineToLinearHeading(new Pose2d(startPose.getX() + x, startPose.getY() + y, 0), 0)
-                    .forward(backdropForwardDistance, SampleMecanumDrive.getVelocityConstraint(approachSpeed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
-                    .build();
 
             status.setValue("moving to backdrop");
             telemetry.update();
@@ -564,15 +594,14 @@ public class NewAprilTagAuto extends LinearOpMode
         telemetry.update();
         robot.drive.followTrajectorySequence(parkTraj);
 
-        // todo
         if(!placeOnBackdrop) {
             robot.outtake.rotator.rotateFully();
             timer.reset();
-            while(timer.seconds() < .8 && opModeIsActive());
+            while(timer.seconds() < .5 && opModeIsActive());
             robot.claw1.up();
             robot.claw2.up();
             timer.reset();
-            while(timer.seconds() < 1 && opModeIsActive());
+            while(timer.seconds() < 1.2 && opModeIsActive());
             robot.autoClaw.outAndIn();
         }
 
@@ -584,6 +613,7 @@ public class NewAprilTagAuto extends LinearOpMode
         timer.reset();
         while (timer.seconds() < 1 && opModeIsActive());
     }
+
     private void initializeAprilTagDetection() {
         try {
             int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
@@ -603,6 +633,7 @@ public class NewAprilTagAuto extends LinearOpMode
                     telemetry.update();
                 }
             });
+            aprilTagDetectionInitialized = true;
         } catch(Exception e) {
             telemetry.addData("Camera initialization failed", e);
             telemetry.update();
@@ -629,5 +660,12 @@ public class NewAprilTagAuto extends LinearOpMode
     @SuppressLint("DefaultLocale")
     private String aprilTagPoseToString(AprilTagPose pose) {
         return String.format("(%.02f, %.02f, %.02f)", pose.x, pose.y, pose.z);
+    }
+
+    private void pickFromStack() {
+        robot.intake.in();
+        timer.reset();
+        while(timer.seconds() < 1 && opModeIsActive());
+        robot.intake.stop();
     }
 }
