@@ -32,7 +32,7 @@ import org.firstinspires.ftc.teamcode.auto.TensorFlow.TensorFlowObjectDetector;
 import org.firstinspires.ftc.teamcode.auto.enums.Alliance;
 import org.firstinspires.ftc.teamcode.auto.enums.Location;
 import org.firstinspires.ftc.teamcode.auto.roadrunner.drive.DriveConstants;
-import org.firstinspires.ftc.teamcode.auto.roadrunner.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.auto.roadrunner.drive.MecanumDrive;
 import org.firstinspires.ftc.teamcode.auto.roadrunner.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.subsystems.Outtake;
 import org.firstinspires.ftc.teamcode.subsystems.Robot;
@@ -277,13 +277,13 @@ public class TensorFlowAuto extends LinearOpMode
                         .splineToSplineHeading(backdropPose, backdropPose.getHeading())
                         .waitSeconds(1)
                         .forward(4-.5,
-                                SampleMecanumDrive.getVelocityConstraint(slowSpeed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
-                                SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
+                                MecanumDrive.getVelocityConstraint(slowSpeed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                                MecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
                         .build();
                 if(placeOnBackdrop) {
                     parkTraj = robot.drive.trajectorySequenceBuilder(toBackdrop.end())
                             .waitSeconds(1)
-                            .back(backdropBackDistance, SampleMecanumDrive.getVelocityConstraint(slowSpeed * 5, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
+                            .back(backdropBackDistance, MecanumDrive.getVelocityConstraint(slowSpeed * 5, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), MecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
                             .addDisplacementMarker(() -> {
                                 robot.outtake.rotator.retractFully();
                                 robot.outtake.goToDownPosition();
@@ -365,8 +365,8 @@ public class TensorFlowAuto extends LinearOpMode
                             .splineToSplineHeading(backdropPose, backdropPose.getHeading())
                             .waitSeconds(1)
                             .forward(4.3,
-                                    SampleMecanumDrive.getVelocityConstraint(slowSpeed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
-                                    SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
+                                    MecanumDrive.getVelocityConstraint(slowSpeed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                                    MecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
                             .build();
                 else
                     toBackdrop = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
@@ -381,18 +381,18 @@ public class TensorFlowAuto extends LinearOpMode
                         .splineToSplineHeading(backdropPose, backdropPose.getHeading())
                         .waitSeconds(1)
                         .forward(4.3,
-                                SampleMecanumDrive.getVelocityConstraint(slowSpeed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
-                                SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
+                                MecanumDrive.getVelocityConstraint(slowSpeed, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH),
+                                MecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
                         .build();
                 if(placeOnBackdrop) {
                     parkTraj = robot.drive.trajectorySequenceBuilder(toBackdrop.end())
                             .waitSeconds(1)
-                            .back(backdropBackDistance, SampleMecanumDrive.getVelocityConstraint(slowSpeed * 3, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
+                            .back(backdropBackDistance, MecanumDrive.getVelocityConstraint(slowSpeed * 3, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), MecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
                             .addTemporalMarker(2, () -> {
                                 robot.outtake.rotator.retractFully();
                                 robot.outtake.goToDownPosition();
                             })
-                            .forward(1, SampleMecanumDrive.getVelocityConstraint(slowSpeed * 3, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
+                            .forward(1, MecanumDrive.getVelocityConstraint(slowSpeed * 3, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), MecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
                             .build();
                 } else
                     parkTraj = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())

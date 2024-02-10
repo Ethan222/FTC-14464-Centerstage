@@ -15,7 +15,7 @@ public class Outtake extends Motor { // inherits from the Motor parent class
         super(hardwareMap, motorName, true, 0, POSITION_1);       // calls parent constructor
         motor.setDirection(DcMotorSimple.Direction.REVERSE);
         motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rotator = new OuttakeRotator(hardwareMap, servoName, .26, .58);
+        rotator = new OuttakeRotator(hardwareMap, servoName, .45, .8);
     }
     public void up(double power) {
         setPower(power);

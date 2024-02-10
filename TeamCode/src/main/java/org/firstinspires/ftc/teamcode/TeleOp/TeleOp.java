@@ -110,9 +110,9 @@ public class TeleOp extends LinearOpMode {
                 usingRoadrunner = false;
 
             // reverse direction todo
-            if((!singleDriverMode && gamepad1.left_bumper) || (gamepad1.start && gamepad1.left_bumper))
+            if(gamepad1.start && gamepad1.left_bumper)
                 direction = -1;
-            else if((!singleDriverMode && gamepad1.right_bumper) || (gamepad1.start && gamepad1.right_bumper))
+            else if(gamepad1.start && gamepad1.right_bumper)
                 direction = 1;
 
             // slow mode todo
@@ -184,19 +184,18 @@ public class TeleOp extends LinearOpMode {
                     // when arm goes up, also rotate outtake & close claws
                     robot.claw1.down();
                     robot.claw2.down();
-                    if(robot.outtake.getState() == Motor.State.DOWN && !robot.outtake.rotator.getState().equals(OuttakeRotator.EXTENDED))
-                        robot.outtake.rotator.rotateFully();
                     robot.outtake.stopHolding();
                     if(robot.outtake.getPosition() < Outtake.POSITION_1)
                         robot.outtake.goToPosition(Outtake.POSITION_1);
                     else
                         robot.outtake.goToPosition(Outtake.POSITION_2);
+                    if(robot.outtake.getState() == Motor.State.DOWN && !robot.outtake.rotator.getState().equals(OuttakeRotator.EXTENDED))
+                        robot.outtake.rotator.rotateFully();
                 } else if (gamepad.dpad_down) {
                     robot.outtake.stopHolding();
-                    robot.outtake.goToDownPosition();
-//                    executorService.schedule(robot.outtake::setDownPosition, 2, TimeUnit.SECONDS);
                     // when arm goes down, also retract outtake
-                    executorService.schedule(robot.outtake.rotator::retractFully, 700, TimeUnit.MILLISECONDS);
+                    robot.outtake.rotator.retractFully();
+                    robot.outtake.goToDownPosition();
                 } else if(robot.outtake.isIdle()) {
                     if (robot.outtake.getState() == Motor.State.UP)
                         robot.outtake.hold();
@@ -215,7 +214,7 @@ public class TeleOp extends LinearOpMode {
                 } else if(gamepad.dpad_down) {
                     robot.outtake.stopHolding();
                     robot.outtake.accelerateDown();
-                    executorService.schedule(robot.outtake::setDownPosition, 1500, TimeUnit.MILLISECONDS);
+//                    executorService.schedule(robot.outtake::setDownPosition, 1500, TimeUnit.MILLISECONDS);
                 } else {
                     robot.outtake.stopHolding();
                     robot.outtake.decelerate();

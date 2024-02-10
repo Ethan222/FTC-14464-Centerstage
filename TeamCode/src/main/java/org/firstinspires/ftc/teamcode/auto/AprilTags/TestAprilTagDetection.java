@@ -30,7 +30,7 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.teamcode.auto.enums.Alliance;
 import org.firstinspires.ftc.teamcode.auto.enums.Location;
 import org.firstinspires.ftc.teamcode.auto.roadrunner.drive.DriveConstants;
-import org.firstinspires.ftc.teamcode.auto.roadrunner.drive.SampleMecanumDrive;
+import org.firstinspires.ftc.teamcode.auto.roadrunner.drive.MecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.Robot;
 import org.openftc.apriltag.AprilTagDetection;
 import org.openftc.easyopencv.OpenCvCamera;
@@ -192,7 +192,7 @@ public class TestAprilTagDetection extends LinearOpMode
         robot.outtake.rotator.rotateFully();
         robot.drive.followTrajectorySequence(robot.drive.trajectorySequenceBuilder(startPose)
                 .splineToConstantHeading(new Vector2d(x, y), .3)
-                .forward(2, SampleMecanumDrive.getVelocityConstraint(2, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), SampleMecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
+                .forward(2, MecanumDrive.getVelocityConstraint(2, DriveConstants.MAX_ANG_VEL, DriveConstants.TRACK_WIDTH), MecanumDrive.getAccelerationConstraint(DriveConstants.MAX_ACCEL))
                 .build()
         );
         robot.claw1.up();
