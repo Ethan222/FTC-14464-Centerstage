@@ -171,6 +171,12 @@ public class Auto extends LinearOpMode
                         useAprilTags = false;
                 }
 
+                // PARK
+                if(gamepad1.right_stick_y < -.1)
+                    parkPosition = ParkPosition.CENTER;
+                else if(gamepad1.right_stick_y > .1)
+                    parkPosition = ParkPosition.CORNER;
+
                 // PROP LOCATION OVERRIDE
                 if (gamepad1.dpad_left || gamepad1.dpad_up || gamepad1.dpad_right) {
                     propLocationOverride = true;
@@ -324,7 +330,7 @@ public class Auto extends LinearOpMode
                 .splineTo(trussFront, 0)
                 .splineTo(trussBack, 0)
                 .addDisplacementMarker(() -> robot.outtake.rotator.rotateFully())
-                .UNSTABLE_addTemporalMarkerOffset(.4, () -> robot.outtake.goToPosition(Outtake.POSITION_2))
+                .UNSTABLE_addTemporalMarkerOffset(.4, () -> robot.outtake.goToPosition(Outtake.POSITIONS[1]))
                 .splineToSplineHeading(useAprilTags ? backdropPose.plus(aprilTagOffset) : backdropPose, Math.PI/2 * (alliance == Alliance.BLUE ? 1 : -1))
                 .addTrajectory(approachBackdrop)
                 .build();
@@ -396,7 +402,7 @@ public class Auto extends LinearOpMode
                     else
                         toBackdrop = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
                                 .addTemporalMarker(.5, () -> robot.outtake.rotator.rotateFully())
-                                .addTemporalMarker(1, () -> robot.outtake.goToPosition(side == Side.NEAR ? Outtake.POSITION_1 : Outtake.POSITION_2))
+                                .addTemporalMarker(1, () -> robot.outtake.goToPosition(side == Side.NEAR ? Outtake.POSITIONS[0] : Outtake.POSITIONS[1]))
                                 .back(spikeMarkBackDistance)
                                 .splineToSplineHeading(backdropPose, 0)
                                 .addTrajectory(approachBackdrop)
@@ -490,14 +496,14 @@ public class Auto extends LinearOpMode
                         toAprilTagDetection = robot.drive.trajectorySequenceBuilder(frontToWait.end())
                                 .lineToConstantHeading(trussBack)
                                 .addDisplacementMarker(() -> robot.outtake.rotator.rotateFully())
-                                .UNSTABLE_addTemporalMarkerOffset(.5, () -> robot.outtake.goToPosition(Outtake.POSITION_2))
+                                .UNSTABLE_addTemporalMarkerOffset(.5, () -> robot.outtake.goToPosition(Outtake.POSITIONS[1]))
                                 .splineToSplineHeading(backdropPose.plus(aprilTagOffset), Math.PI / 2 * (alliance == Alliance.BLUE ? 1 : -1))
                                 .build();
                     else
                         toBackdrop = robot.drive.trajectorySequenceBuilder(frontToWait.end())
                                 .lineToConstantHeading(trussBack)
                                 .addDisplacementMarker(() -> robot.outtake.rotator.rotateFully())
-                                .UNSTABLE_addTemporalMarkerOffset(.5, () -> robot.outtake.goToPosition(Outtake.POSITION_2))
+                                .UNSTABLE_addTemporalMarkerOffset(.5, () -> robot.outtake.goToPosition(Outtake.POSITIONS[1]))
                                 .splineToSplineHeading(backdropPose, Math.PI/2 * (alliance == Alliance.BLUE ? 1 : -1))
                                 .addTrajectory(approachBackdrop)
                                 .build();
@@ -527,6 +533,7 @@ public class Auto extends LinearOpMode
         if (side == Side.FAR) {
             if(pickFromStack) {
                 robot.drive.followTrajectorySequence(frontToStack);
+                pause();
                 pickFromStack();
             }
             robot.drive.followTrajectorySequence(robot.drive.trajectorySequenceBuilder(robot.drive.getPoseEstimate())
@@ -538,11 +545,10 @@ public class Auto extends LinearOpMode
                 while(getRuntime() < waitTime && opModeIsActive()) {
                     telemetry.update();
                 }
-            }
+            } else pause();
         }
 
         if(placeOnBackdrop) {
-
             if(useAprilTags) {
                 // april tag detection todo
                 status.setValue("moving to april tag detection at %.0f seconds", getRuntime());
@@ -580,7 +586,7 @@ public class Auto extends LinearOpMode
                 telemetry.update();
                 toBackdrop = robot.drive.trajectorySequenceBuilder(startPose)
                         .addTemporalMarker(() -> robot.outtake.rotator.rotateFully())
-                        .addTemporalMarker(.5, () -> robot.outtake.goToPosition(side == Side.NEAR ? Outtake.POSITION_1 : Outtake.POSITION_2))
+                        .addTemporalMarker(.5, () -> robot.outtake.goToPosition(side == Side.NEAR ? Outtake.POSITIONS[0] : Outtake.POSITIONS[1]))
                         .splineToLinearHeading(new Pose2d(startPose.getX() + x, startPose.getY() + y, 0), 0)
                         .addTrajectory(approachBackdrop)
                         .build();
@@ -596,10 +602,12 @@ public class Auto extends LinearOpMode
 
             if(side == Side.NEAR && pickFromStack) {
                 robot.drive.followTrajectorySequence(backdropToStack);
+                pause();
                 pickFromStack();
                 robot.drive.followTrajectorySequence(robot.drive.trajectorySequenceBuilder(robot.drive.getPoseEstimate())
                         .splineToSplineHeading(stackToBackdrop.start(), 0)
                         .build());
+                pause();
                 robot.drive.followTrajectorySequence(stackToBackdrop);
                 placeOnBackdrop();
             }
@@ -724,5 +732,11 @@ public class Auto extends LinearOpMode
         while(timer.seconds() < 2 && opModeIsActive());
         robot.outtake.goToPosition(robot.outtake.getPosition() + 350+50, .1);
         while(!robot.outtake.isIdle() && opModeIsActive());
+    }
+
+    private void pause() {
+        telemetry.addLine("Paused, press a to continue");
+        telemetry.update();
+        while(!gamepad1.a && opModeIsActive());
     }
 }

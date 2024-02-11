@@ -360,7 +360,7 @@ public class TensorFlowAuto extends LinearOpMode
                             .lineToConstantHeading(truss.plus(new Vector2d(12+21, 0)))
                             .addDisplacementMarker(() -> {
                                 robot.outtake.rotator.rotateFully();
-                                robot.outtake.goToPosition(Outtake.POSITION_2);
+                                robot.outtake.goToPosition(Outtake.POSITIONS[1]);
                             })
                             .splineToSplineHeading(backdropPose, backdropPose.getHeading())
                             .waitSeconds(1)

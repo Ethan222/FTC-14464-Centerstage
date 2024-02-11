@@ -139,6 +139,7 @@ public class TeleOp extends LinearOpMode {
                 robot.outtake.rotator.retractFully();
                 robot.claw1.up();
                 robot.claw2.up();
+                robot.intake.lower();
             }
             if(gamepad.right_trigger > 0 && !gamepad.back && robot.outtake.getState() == Motor.State.DOWN && robot.outtake.rotator.getState().equals(OuttakeRotator.RETRACTED))
                 robot.intake.in(gamepad.right_trigger);
@@ -177,7 +178,7 @@ public class TeleOp extends LinearOpMode {
 
             if (robot.outtake.isUsingEncoder()) {
                 if (gamepad.dpad_up && gamepad.start)
-                    robot.outtake.setPosition2();
+                    robot.outtake.setPosition(1);
                 else if (gamepad.dpad_down && gamepad.start)
                     robot.outtake.setDownPosition();
                 else if (gamepad.dpad_up) {
@@ -185,10 +186,12 @@ public class TeleOp extends LinearOpMode {
                     robot.claw1.down();
                     robot.claw2.down();
                     robot.outtake.stopHolding();
-                    if(robot.outtake.getPosition() < Outtake.POSITION_1)
-                        robot.outtake.goToPosition(Outtake.POSITION_1);
+                    if(robot.outtake.getPosition() < Outtake.POSITIONS[0])
+                        robot.outtake.goToPosition(Outtake.POSITIONS[0]);
+                    else if(robot.outtake.getPosition() < Outtake.POSITIONS[1])
+                        robot.outtake.goToPosition(Outtake.POSITIONS[1]);
                     else
-                        robot.outtake.goToPosition(Outtake.POSITION_2);
+                        robot.outtake.goToPosition(Outtake.POSITIONS[2]);
                     if(robot.outtake.getState() == Motor.State.DOWN && !robot.outtake.rotator.getState().equals(OuttakeRotator.EXTENDED))
                         robot.outtake.rotator.rotateFully();
                 } else if (gamepad.dpad_down) {
