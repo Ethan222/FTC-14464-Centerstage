@@ -90,7 +90,7 @@ public class DriveConstants {
      */
     // max velocity tuner said max velocity is 54
     public static double MAX_VEL = 43; // 80% of max velocity
-    public static double MAX_ACCEL = 53;
+    public static double MAX_ACCEL = 26;
     public static double MAX_ANG_VEL = Math.toRadians(200);
     public static double MAX_ANG_ACCEL = Math.toRadians(280);
 

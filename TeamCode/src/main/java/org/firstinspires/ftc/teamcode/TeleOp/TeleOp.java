@@ -101,7 +101,7 @@ public class TeleOp extends LinearOpMode {
                 robot.drive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                 Pose2d startPose = robot.drive.getPoseEstimate();
                 robot.drive.followTrajectoryAsync(robot.drive.trajectoryBuilder(startPose)
-                        .lineToSplineHeading(new Pose2d(startPose.getX(), startPose.getY(), 0))
+                        .lineToSplineHeading(new Pose2d(startPose.getX()-.1, startPose.getY(), 0))
                         .build()
                 );
                 wheelTimer.reset();

@@ -63,9 +63,10 @@ public class Auto extends LinearOpMode
         CORNER, CENTER
     }
     private static Alliance alliance = Alliance.BLUE;
-    private static Side side = Side.NEAR;
-    private static boolean wait = false, goThroughStageDoor = true, placeOnBackdrop = true, useAprilTags = true, pickFromStack = false;
-    private static ParkPosition parkPosition = ParkPosition.CORNER;
+    private static Side side = Side.FAR;
+    private static boolean wait = false, goThroughStageDoor = true, placeOnBackdrop = false, useAprilTags = true, pickFromStack = true;
+    private static ParkPosition parkPosition = ParkPosition.CENTER;
+    private static boolean debugMode = true;
 
     private Location propLocation = Location.LEFT;
 
@@ -93,15 +94,16 @@ public class Auto extends LinearOpMode
         double minInitTime = 5.5, waitTime = 15;
 
         Telemetry.Item status = telemetry.addData("Status", null).setRetained(true);
-        telemetry.addLine().addData("Runtime", "%.0f", this::getRuntime).addData("loop time", "%.2f ms", timer::milliseconds).setRetained(true);
-        telemetry.addData("\nAlliance", () -> alliance).setRetained(true);
-        telemetry.addData("Side", () -> side).setRetained(true);
-        telemetry.addData("Wait (RB/LB)", () -> Boolean.toString(wait).toUpperCase()).setRetained(true);
-        telemetry.addData("Go through stage door (LS)", () -> (side == Side.FAR || pickFromStack) ? Boolean.toString(goThroughStageDoor).toUpperCase() : "N/A").setRetained(true);
-        telemetry.addData("Place on backdrop (RT/LT)", () -> Boolean.toString(placeOnBackdrop).toUpperCase()).setRetained(true);
-        telemetry.addData("Pick from stack (back + RT/LT)", () -> Boolean.toString(pickFromStack).toUpperCase()).setRetained(true);
-        telemetry.addData("Use april tags (back + RB/LB)", () -> (placeOnBackdrop || pickFromStack) ? Boolean.toString(useAprilTags).toUpperCase() : "N/A").setRetained(true);
-        telemetry.addData("Park (RS)", () -> ((placeOnBackdrop && (wait || pickFromStack)) ? "N/A" : parkPosition));
+        telemetry.addLine().addData("Runtime", "%.0f", this::getRuntime).addData("loop time", "%.1f ms", timer::milliseconds);
+        telemetry.addData("Debug mode (start + X/Y)", () -> debugMode + (debugMode ? " (turn off timer)" : ""));
+        telemetry.addData("\nAlliance", () -> alliance);
+        telemetry.addData("Side", () -> side);
+        telemetry.addData("Wait (RB/LB)", () -> wait);
+        telemetry.addData("Go through STAGE DOOR (LS)", () -> (side == Side.FAR || pickFromStack) ? goThroughStageDoor : "n/a");
+        telemetry.addData("Place on BACKDROP (RT/LT)", () -> placeOnBackdrop);
+        telemetry.addData("Pick from STACK (back + RT/LT)", () -> pickFromStack);
+        telemetry.addData("Use APRIL TAGS (back + RB/LB)", () -> (placeOnBackdrop || pickFromStack) ? useAprilTags : "n/a");
+        telemetry.addData("Park (RS)", () -> ((placeOnBackdrop && (wait || pickFromStack)) ? "n/a" : parkPosition));
         Telemetry.Item propLocationTelemetry = telemetry.addData("\nProp location", null).setRetained(true);
 
         // init loop todo
@@ -121,30 +123,42 @@ public class Auto extends LinearOpMode
             // gamepad input
             {
                 // ALLIANCE
-                if(gamepad1.x)
+                if(gamepad1.x && !gamepad1.start)
                     alliance = Alliance.BLUE;
                 else if(gamepad1.b && !gamepad1.start)
                     alliance = Alliance.RED;
 
                 // SIDE
-                if(gamepad1.y) {
+                if(gamepad1.a && !gamepad1.start) {
                     side = Side.NEAR;
                     wait = false;
                     parkPosition = ParkPosition.CORNER;
-                } else if(gamepad1.a && !gamepad1.start) {
+                } else if(gamepad1.y && !gamepad1.start) {
                     side = Side.FAR;
                     wait = true;
                 }
 
+                // WAIT
+                if(gamepad1.right_bumper && !gamepad1.back)
+                    wait = true;
+                else if(gamepad1.left_bumper && !gamepad1.back)
+                    wait = false;
+
                 // GO THROUGH STAGE DOOR
-                if(gamepad1.left_stick_y < -.5)
+                if(gamepad1.left_stick_y < -.5) {
                     goThroughStageDoor = true;
-                else if(gamepad1.left_stick_y > .5)
+                    if(!placeOnBackdrop)
+                        parkPosition = ParkPosition.CENTER;
+                } else if(gamepad1.left_stick_y > .5) {
                     goThroughStageDoor = false;
+                    if(!placeOnBackdrop)
+                        parkPosition = ParkPosition.CORNER;
+                }
 
                 // PLACE ON BACKDROP
-                if (gamepad1.right_trigger > .1) placeOnBackdrop = true;
-                else if(gamepad1.left_trigger > .1) {
+                if (gamepad1.right_trigger > .1 && !gamepad1.back)
+                    placeOnBackdrop = true;
+                else if(gamepad1.left_trigger > .1 && !gamepad1.back) {
                     placeOnBackdrop = false;
                     parkPosition = (side == Side.NEAR ? ParkPosition.CORNER : ParkPosition.CENTER);
                 }
@@ -154,7 +168,6 @@ public class Auto extends LinearOpMode
                     pickFromStack = true;
                     wait = false;
                     goThroughStageDoor = true;
-                    placeOnBackdrop = true;
                 } else if(gamepad1.left_trigger > .1 && gamepad1.back) {
                     pickFromStack = false;
                     if(side == Side.NEAR) {
@@ -176,6 +189,12 @@ public class Auto extends LinearOpMode
                     parkPosition = ParkPosition.CENTER;
                 else if(gamepad1.right_stick_y > .1)
                     parkPosition = ParkPosition.CORNER;
+
+                // DEBUG MODE
+                if(gamepad1.start && gamepad1.x)
+                    debugMode = true;
+                else if(gamepad1.start && gamepad1.y)
+                    debugMode = false;
 
                 // PROP LOCATION OVERRIDE
                 if (gamepad1.dpad_left || gamepad1.dpad_up || gamepad1.dpad_right) {
@@ -210,7 +229,7 @@ public class Auto extends LinearOpMode
         double beginningWaitTime = Math.max(minInitTime - getRuntime(), (side == Side.NEAR && wait ? waitTime : 0));
         resetRuntime();
         telemetry.clearAll();
-        status = telemetry.addData("\nStatus", "loading...");
+        status.setValue("loading...");
         if(propLocationOverride) {
             status.setValue("waiting...%.1f", () -> beginningWaitTime - getRuntime());
             telemetry.addData("Prop location", propLocation).setRetained(true);
@@ -250,23 +269,19 @@ public class Auto extends LinearOpMode
             telemetry.addLine((useAprilTags ? "Use" : "Don't use") + " april tags");
         if((!wait && !pickFromStack) || !placeOnBackdrop)
             telemetry.addData("Park in", parkPosition);
+        if(debugMode)
+            telemetry.addLine("DEBUG");
         status = telemetry.addData("\nStatus", "loading...");
         telemetry.update();
 
         // trajectories todo
         Pose2d startPose = null, backdropPose, stackPose = null, parkPose = null;
-        Pose2d aprilTagOffset = new Pose2d(-5, 0, 0);
+        Pose2d aprilTagOffset = new Pose2d(-5-2, 0, 0);
         Vector2d trussFront = null, trussBack;
         TrajectorySequence spikeMarkTraj = null, toAprilTagDetection = null, toBackdrop = null, parkTraj = null;
         TrajectorySequence frontToStack = null, frontToWait = null;
         TrajectorySequence backdropToStack, stackToBackdrop;
         double spikeMarkBackDistance = 1.5, backdropForwardDistance = 4.6;
-        Trajectory approachBackdrop = robot.drive.trajectoryBuilder(new Pose2d())
-                .forward(backdropForwardDistance, MecanumDrive.getVelConstraint(2), MecanumDrive.getAccelConstraint())
-                .build();
-        Trajectory leaveBackdrop = robot.drive.trajectoryBuilder(new Pose2d())
-                .back(5, MecanumDrive.getVelConstraint(8), MecanumDrive.getAccelConstraint())
-                .build();
 
         double trussFrontX = -38;
         double backdropX = 49, backdropY = 0;
@@ -291,8 +306,9 @@ public class Auto extends LinearOpMode
 //                        backdropX -= 3.5;
                         backdropY += 35;
                 }
-                stackPose = new Pose2d(-56, 23, 0);
+                stackPose = new Pose2d(-57, 6, 0);
                 trussFront = new Vector2d(trussFrontX, goThroughStageDoor ? 9.5 : 63);
+                parkPose = parkPosition == ParkPosition.CORNER ? new Pose2d(66, 63, 0) : new Pose2d(62+2, 9-1, 0);
                 break;
             // red common todo
             case RED:
@@ -317,8 +333,15 @@ public class Auto extends LinearOpMode
                 }
                 stackPose = new Pose2d(-56, -35, 0);
                 trussFront = new Vector2d(trussFrontX, goThroughStageDoor ? -6 : -60);
+                parkPose = parkPosition == ParkPosition.CORNER ? new Pose2d(47, -59, 0) : new Pose2d(52, -10, 0);
         }
         backdropPose = new Pose2d(backdropX, backdropY, 0);
+        Trajectory approachBackdrop = robot.drive.trajectoryBuilder(backdropPose)
+                .forward(backdropForwardDistance, MecanumDrive.getVelConstraint(2+3), MecanumDrive.getAccelConstraint())
+                .build();
+        Trajectory leaveBackdrop = robot.drive.trajectoryBuilder(backdropPose.plus(new Pose2d(backdropForwardDistance, 0)))
+                .back(backdropForwardDistance, MecanumDrive.getVelConstraint(8), MecanumDrive.getAccelConstraint())
+                .build();
         trussBack = trussFront.plus(new Vector2d(33, 0));
         backdropToStack = robot.drive.trajectorySequenceBuilder(backdropPose.plus(new Pose2d(backdropForwardDistance)))
                 .addTrajectory(leaveBackdrop)
@@ -341,17 +364,16 @@ public class Auto extends LinearOpMode
                     // blue back todo
                     case BLUE:
                         startPose = new Pose2d(12, 64, -Math.PI / 2);
-                        parkPose = new Pose2d(55, 59.9, 0);
                         switch (propLocation) {
                             case LEFT:
                                 spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                                        .splineToSplineHeading(new Pose2d(21.3, 40, -Math.PI / 2), -Math.PI / 2)
-                                        .back(2.5)
+                                        .splineTo(new Vector2d(24, 40), -Math.PI / 2)
+                                        .back(3+.5)
                                         .build();
                                 break;
                             case CENTER:
                                 spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                                        .splineToSplineHeading(new Pose2d(12, 32.7, -Math.PI / 2), -Math.PI / 2)
+                                        .splineTo(new Vector2d(12, 32.7), -Math.PI / 2)
                                         .back(4.5)
                                         .build();
                                 break;
@@ -361,13 +383,11 @@ public class Auto extends LinearOpMode
                                         .splineToSplineHeading(new Pose2d(7, 37, Math.PI), Math.PI)
                                         .back(2)
                                         .build();
-//                                parkPose = parkPose.plus(new Pose2d(0, 5, 0));
                         }
                         break;
                     // red back todo
                     case RED:
                         startPose = new Pose2d(12, -61, Math.PI / 2);
-                        parkPose = new Pose2d(47, -59, 0);
                         switch (propLocation) {
                             case LEFT:
                                 spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
@@ -419,7 +439,6 @@ public class Auto extends LinearOpMode
                     // blue front todo
                     case BLUE:
                         startPose = new Pose2d(-36, 64, -Math.PI / 2);
-                        parkPose = goThroughStageDoor ? new Pose2d(46, 14, 0) : new Pose2d(52, 62, 0);
                         switch (propLocation) {
                             case LEFT:
                                 spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
@@ -430,24 +449,24 @@ public class Auto extends LinearOpMode
                                 break;
                             case CENTER:
                                 spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                                        .splineToSplineHeading(new Pose2d(-40, 23+1.5, 0), 0)
-                                        .back(2+1)
-                                        .build();
-                                spikeMarkBackDistance += 3;
-                                break;
-                            case RIGHT:
-                                telemetry.log().add("start pose should be (%.0f, %.0f)", startPose.getX(), startPose.getY());
-                                spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
-                                        .splineToSplineHeading(new Pose2d(-47, 40, -Math.PI/2), -Math.PI / 2)
+                                        .splineToSplineHeading(new Pose2d(-40, 24.5+1, 0), -Math.PI/2)
                                         .back(3)
                                         .build();
+//                                spikeMarkBackDistance += 3;
+                                break;
+                            case RIGHT:
+//                                telemetry.log().add("start pose should be (%.0f, %.0f)", startPose.getX(), startPose.getY());
+                                spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
+                                        .splineToLinearHeading(new Pose2d(-55, 33, 0), -Math.PI/2)
+                                        .back(3)
+                                        .build();
+                                spikeMarkBackDistance = 0.1;
                                 break;
                         }
                         break;
                     // red front todo
                     case RED:
                         startPose = new Pose2d(-36, -61, Math.PI / 2);
-                        parkPose = goThroughStageDoor ? new Pose2d(52, -10, 0) : new Pose2d(47, -59, 0);
                         switch (propLocation) {
                             case LEFT:
                                 spikeMarkTraj = robot.drive.trajectorySequenceBuilder(startPose)
@@ -471,11 +490,17 @@ public class Auto extends LinearOpMode
 
                 // front traj todo
                 if(pickFromStack) {
-                    frontToStack = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
-                            .back(spikeMarkBackDistance)
-                            .splineToSplineHeading(stackPose, Math.PI)
-                            .build();
-                    frontToWait = robot.drive.trajectorySequenceBuilder(frontToStack.end())
+                    if(propLocation == Location.RIGHT)
+                        frontToStack = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
+                                .strafeRight(12)
+                                .splineToConstantHeading(stackPose.vec(), -Math.PI/2)
+                                .build();
+                    else
+                        frontToStack = robot.drive.trajectorySequenceBuilder(spikeMarkTraj.end())
+                                .back(spikeMarkBackDistance)
+                                .splineToConstantHeading(stackPose.vec(), Math.PI)
+                                .build();
+                    frontToWait = robot.drive.trajectorySequenceBuilder(stackPose.plus(new Pose2d(5+3, 15-7 * (alliance == Alliance.BLUE ? 1 : -1))))
                             .splineTo(trussFront, 0)
                             .build();
                 } else {
@@ -529,23 +554,26 @@ public class Auto extends LinearOpMode
         robot.autoClaw.outAndIn();
         timer.reset();
         while(timer.seconds() < .5 && opModeIsActive());
+        if(debugMode)
+            pause(status);
 
         if (side == Side.FAR) {
             if(pickFromStack) {
                 robot.drive.followTrajectorySequence(frontToStack);
-                pause();
+                if(debugMode)
+                    pause(status);
                 pickFromStack();
             }
-            robot.drive.followTrajectorySequence(robot.drive.trajectorySequenceBuilder(robot.drive.getPoseEstimate())
-                    .lineTo(frontToWait.start().vec())
-                    .build());
+//            robot.drive.followTrajectorySequence(robot.drive.trajectorySequenceBuilder(robot.drive.getPoseEstimate())
+//                    .lineTo(frontToWait.start().vec())
+//                    .build());
             robot.drive.followTrajectorySequence(frontToWait);
             if(wait) {
                 status.setValue("waiting...%.1f", () -> waitTime - getRuntime());
                 while(getRuntime() < waitTime && opModeIsActive()) {
                     telemetry.update();
                 }
-            } else pause();
+            } else if(debugMode) pause(status);
         }
 
         if(placeOnBackdrop) {
@@ -567,10 +595,10 @@ public class Auto extends LinearOpMode
                 double x = -aprilTagOffset.getX(), y = -aprilTagOffset.getY();
                 AprilTagPose tagPose = null;
 
-                double maxAprilTagDetectionTime = (side == Side.NEAR ? 4.0 : 2.5+1) + 2;
+                double maxAprilTagDetectionTime = wait ? 6 : 8;
                 double timeLeft = maxAprilTagDetectionTime;
                 timer.reset();
-                while (tagPose == null && timeLeft > 0 && robot.drive.isBusy() && opModeIsActive()) {
+                while (((tagPose == null && timeLeft > 0) || robot.drive.isBusy()) && opModeIsActive()) {
                     robot.drive.update();
                     status.setValue("looking for %s %s (id %d)...%.1f s", alliance, propLocation, idOfInterest, timeLeft);
                     tagPose = getAprilTagPose(idOfInterest, results);
@@ -602,12 +630,14 @@ public class Auto extends LinearOpMode
 
             if(side == Side.NEAR && pickFromStack) {
                 robot.drive.followTrajectorySequence(backdropToStack);
-                pause();
+                if(debugMode)
+                    pause(status);
                 pickFromStack();
                 robot.drive.followTrajectorySequence(robot.drive.trajectorySequenceBuilder(robot.drive.getPoseEstimate())
                         .splineToSplineHeading(stackToBackdrop.start(), 0)
                         .build());
-                pause();
+                if(debugMode)
+                    pause(status);
                 robot.drive.followTrajectorySequence(stackToBackdrop);
                 placeOnBackdrop();
             }
@@ -625,12 +655,12 @@ public class Auto extends LinearOpMode
                         .build();
             else
                 parkTraj = robot.drive.trajectorySequenceBuilder(toBackdrop.end())
-                    .waitSeconds(1)
-                    .addTrajectory(leaveBackdrop)
+//                    .waitSeconds(1-.5)
+                    .back(backdropForwardDistance, MecanumDrive.getVelConstraint(10), MecanumDrive.getAccelConstraint())
                     .addTemporalMarker(1.5, () -> robot.outtake.goToDownPosition())
-                    .addTemporalMarker(2.1, () -> robot.outtake.rotator.retractFully())
-                    .addTemporalMarker(2.3, () -> robot.outtake.stop())
-                    .splineToLinearHeading(parkPose, (alliance == Alliance.BLUE ? 1 : -1) * Math.PI/6)
+                    .addTemporalMarker(1.8, () -> robot.outtake.rotator.retractFully())
+                    .addTemporalMarker(2.1, () -> robot.outtake.stop())
+                    .splineToConstantHeading(parkPose.vec(), 0)
                     .build();
         }
 
@@ -638,24 +668,13 @@ public class Auto extends LinearOpMode
         telemetry.update();
         robot.drive.followTrajectorySequence(parkTraj);
 
-        if(!placeOnBackdrop) {
-            robot.outtake.rotator.rotateFully();
-            timer.reset();
-            while(timer.seconds() < .5 && opModeIsActive());
-            robot.claw1.up();
-            robot.claw2.up();
-            timer.reset();
-            while(timer.seconds() < 1.2 && opModeIsActive());
-            robot.autoClaw.outAndIn();
-        }
-
         status.setValue("parked in %.0f seconds", getRuntime());
         telemetry.update();
 
         TeleOp.setStartPose(robot.drive.getPoseEstimate());
 
         timer.reset();
-        while (timer.seconds() < 1 && opModeIsActive());
+        while (timer.seconds() < 2 && opModeIsActive());
     }
 
     private void initializeAprilTagDetection() {
@@ -711,7 +730,7 @@ public class Auto extends LinearOpMode
         robot.intake.lower();
         robot.intake.in();
         robot.drive.followTrajectorySequence(robot.drive.trajectorySequenceBuilder(robot.drive.getPoseEstimate())
-                .strafeRight(10, MecanumDrive.getVelConstraint(.2* DriveConstants.MAX_VEL), MecanumDrive.getAccelConstraint())
+                .strafeLeft(10, MecanumDrive.getVelConstraint(.2* DriveConstants.MAX_VEL), MecanumDrive.getAccelConstraint())
                 .build());
         timer.reset();
         while(timer.seconds() < 1 && opModeIsActive());
@@ -726,17 +745,19 @@ public class Auto extends LinearOpMode
     }
     private void placeOnBackdrop() {
         timer.reset();
-        while(timer.seconds() < 1 && opModeIsActive());
+        while(timer.seconds() < 0.6/2 && opModeIsActive());
         robot.claw1.up();
         robot.claw2.up();
-        while(timer.seconds() < 2 && opModeIsActive());
-        robot.outtake.goToPosition(robot.outtake.getPosition() + 350+50, .1);
+//        while(timer.seconds() < 2 && opModeIsActive());
+        robot.outtake.goToPosition(robot.outtake.getPosition() + 350+50, .1*3);
         while(!robot.outtake.isIdle() && opModeIsActive());
     }
 
-    private void pause() {
-        telemetry.addLine("Paused, press a to continue");
+    private void pause(Telemetry.Item status) {
+        status.setValue("paused, press any button to continue");
         telemetry.update();
-        while(!gamepad1.a && opModeIsActive());
+        while(gamepad1.atRest() && opModeIsActive());
+        status.setValue("resuming");
+        telemetry.update();
     }
 }
