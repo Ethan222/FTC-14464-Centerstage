@@ -9,16 +9,19 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.subsystems.Claw;
+import org.firstinspires.ftc.teamcode.subsystems.ColorSensor;
 import org.firstinspires.ftc.teamcode.subsystems.HangSubsystem;
 import org.firstinspires.ftc.teamcode.subsystems.Motor;
 import org.firstinspires.ftc.teamcode.subsystems.Outtake;
 import org.firstinspires.ftc.teamcode.subsystems.OuttakeRotator;
 import org.firstinspires.ftc.teamcode.subsystems.Robot;
 
-import java.sql.Time;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 @Config
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(group = "drive")
@@ -29,6 +32,7 @@ public class TeleOp extends LinearOpMode {
     private static Pose2d startPose = new Pose2d();
     private int direction = 1;
     private double speed = 1, heading;
+    private List<ColorSensor.Color> currentPixels;
     @SuppressLint("DefaultLocale")
     @Override
     public void runOpMode() throws InterruptedException {
@@ -41,10 +45,10 @@ public class TeleOp extends LinearOpMode {
 
         ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
         ElapsedTime wheelTimer = new ElapsedTime(), loopTimer = new ElapsedTime(), armTimer = new ElapsedTime();
-
         boolean usingRoadrunner = false;
-
         Gamepad gamepad;
+        currentPixels = new ArrayList<>();
+        boolean pixelCurrentlyInIntake = false;
 
         while(opModeInInit() && !(gamepad1.start && gamepad1.back) && !(gamepad2.start && gamepad2.back)) {
             telemetry.addLine("Initialized");
@@ -67,6 +71,11 @@ public class TeleOp extends LinearOpMode {
         telemetry.addData("Direction (RB/LB)", this::getDirection).addData("Wheel speed (RT)", () -> speed);
 //        telemetry.addData("Heading", () -> String.format("%.1f deg", heading * 180 / Math.PI));
         telemetry.addData("\nintake", robot.intake::getTelemetry);
+        telemetry.addData("color", () -> {
+            ColorSensor.Color color = robot.colorSensor.getColor();
+            return color == null ? "" : (String.format("%s %s", color, Arrays.toString(robot.colorSensor.getRGB())));
+        });
+        telemetry.addData("current pixels", () -> currentPixels);
         telemetry.addData("\nclaw 1", robot.claw1::getTelemetry);
         telemetry.addData("claw 2", robot.claw2::getTelemetry);
         telemetry.addData("outtake", robot.outtake::getTelemetry);
@@ -308,6 +317,16 @@ public class TeleOp extends LinearOpMode {
                 robot.autoClaw.outIncrementally();
             else if(gamepad.back && gamepad.x)
                 robot.autoClaw.inIncrementally();
+
+            // color sensor
+            ColorSensor.Color color = robot.colorSensor.getColor();
+            if(color != null && !pixelCurrentlyInIntake) {
+                pixelCurrentlyInIntake = true;
+                currentPixels.add(color);
+            } else if(pixelCurrentlyInIntake && (color == null || !color.equals(currentPixels.get(currentPixels.size()-1))))
+                pixelCurrentlyInIntake = false;
+            if(robot.outtake.rotator.getState().equals(OuttakeRotator.EXTENDED) && robot.claw2.getState().equals(Claw.UP))
+                currentPixels.clear();
 
             telemetry.update();
             loopTimer.reset();

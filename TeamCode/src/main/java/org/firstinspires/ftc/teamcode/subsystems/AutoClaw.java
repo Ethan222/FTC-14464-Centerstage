@@ -27,7 +27,7 @@ public class AutoClaw extends CustomServo {
     }
     public void outAndIn() {
         out();
-        executorService.schedule(this::in, 500, TimeUnit.MILLISECONDS);
+        executorService.schedule(this::in, 200, TimeUnit.MILLISECONDS);
     }
 
     // returns the current status of the gripper as a String

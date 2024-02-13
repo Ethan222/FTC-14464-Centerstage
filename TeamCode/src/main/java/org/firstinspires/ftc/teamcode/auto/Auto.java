@@ -729,11 +729,10 @@ public class Auto extends LinearOpMode
         robot.outtake.rotator.retractFully();
         robot.intake.lower();
         robot.intake.in();
-        robot.drive.followTrajectorySequence(robot.drive.trajectorySequenceBuilder(robot.drive.getPoseEstimate())
+        robot.drive.followTrajectorySequenceAsync(robot.drive.trajectorySequenceBuilder(robot.drive.getPoseEstimate())
                 .strafeLeft(10, MecanumDrive.getVelConstraint(.2* DriveConstants.MAX_VEL), MecanumDrive.getAccelConstraint())
                 .build());
-        timer.reset();
-        while(timer.seconds() < 1 && opModeIsActive());
+        while(robot.drive.isBusy() && robot.colorSensor.getColor() == null);
         robot.intake.raise();
         robot.drive.followTrajectorySequence(robot.drive.trajectorySequenceBuilder(robot.drive.getPoseEstimate())
                 .forward(10)

@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.teamcode.auto.roadrunner.drive.MecanumDrive;
@@ -12,6 +13,7 @@ public class Robot {
     public HangSubsystem hangSubsystem;
     public AutoClaw autoClaw;
     public DroneLauncher launcher;
+    public ColorSensor colorSensor;
     public Robot(HardwareMap hardwareMap) {
         drive = new MecanumDrive(hardwareMap);
         intake = new Intake(hardwareMap, "intake", "servo4");
@@ -21,5 +23,6 @@ public class Robot {
         hangSubsystem = new HangSubsystem(hardwareMap, new String[]{"hangMotor", "hang2"}, "servo5");
         autoClaw = new AutoClaw(hardwareMap, "droneLauncher");
         launcher = new DroneLauncher(hardwareMap, "launcherRotator", "servo3");
+        colorSensor = new ColorSensor(hardwareMap, "colorSensor");
     }
 }
