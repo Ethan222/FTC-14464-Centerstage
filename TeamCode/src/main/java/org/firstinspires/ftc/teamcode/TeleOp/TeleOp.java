@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.TeleOp;
 
 import android.annotation.SuppressLint;
 
-import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -23,10 +22,9 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-@Config
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(group = "drive")
 public class TeleOp extends LinearOpMode {
-    private static boolean singleDriverMode = false;
+    private static boolean singleDriverMode = true;
     public static double WHEEL_SLOW_SPEED = .3;
     public static final double ARM_SLOW_SPEED = .3;
     private static Pose2d startPose = new Pose2d();
