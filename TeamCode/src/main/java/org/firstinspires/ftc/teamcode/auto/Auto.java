@@ -26,6 +26,7 @@ import android.annotation.SuppressLint;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.acmerobotics.roadrunner.geometry.Vector2d;
 import com.acmerobotics.roadrunner.trajectory.Trajectory;
+import com.acmerobotics.roadrunner.trajectory.constraints.TrajectoryVelocityConstraint;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -63,10 +64,10 @@ public class Auto extends LinearOpMode
         CORNER, CENTER
     }
     private static Alliance alliance = Alliance.BLUE;
-    private static Side side = Side.FAR;
-    private static boolean wait = false, goThroughStageDoor = true, placeOnBackdrop = false, useAprilTags = true, pickFromStack = true;
-    private static ParkPosition parkPosition = ParkPosition.CENTER;
-    private static boolean debugMode = true;
+    private static Side side = Side.NEAR;
+    private static boolean wait = false, goThroughStageDoor = true, placeOnBackdrop = true, useAprilTags = true, pickFromStack = false;
+    private static ParkPosition parkPosition = ParkPosition.CORNER;
+    private static boolean debugMode = false;
 
     private Location propLocation = Location.LEFT;
 
@@ -282,6 +283,7 @@ public class Auto extends LinearOpMode
         TrajectorySequence frontToStack = null, frontToWait = null;
         TrajectorySequence backdropToStack, stackToBackdrop;
         double spikeMarkBackDistance = 1.5, backdropForwardDistance = 4.6;
+        TrajectoryVelocityConstraint approachSpeed = MecanumDrive.getVelConstraint(2+3);
 
         double trussFrontX = -38;
         double backdropX = 49, backdropY = 0;
@@ -337,12 +339,12 @@ public class Auto extends LinearOpMode
         }
         backdropPose = new Pose2d(backdropX, backdropY, 0);
         Trajectory approachBackdrop = robot.drive.trajectoryBuilder(backdropPose)
-                .forward(backdropForwardDistance, MecanumDrive.getVelConstraint(2+3), MecanumDrive.getAccelConstraint())
+                .forward(backdropForwardDistance, approachSpeed, MecanumDrive.getAccelConstraint())
                 .build();
         Trajectory leaveBackdrop = robot.drive.trajectoryBuilder(backdropPose.plus(new Pose2d(backdropForwardDistance, 0)))
                 .back(backdropForwardDistance, MecanumDrive.getVelConstraint(8), MecanumDrive.getAccelConstraint())
                 .build();
-        trussBack = trussFront.plus(new Vector2d(33, 0));
+        trussBack = trussFront.plus(new Vector2d(33+5, 0));
         backdropToStack = robot.drive.trajectorySequenceBuilder(backdropPose.plus(new Pose2d(backdropForwardDistance)))
                 .addTrajectory(leaveBackdrop)
                 .splineTo(trussBack, Math.PI/2 * (alliance == Alliance.BLUE ? -1 : 1))
@@ -355,7 +357,7 @@ public class Auto extends LinearOpMode
                 .addDisplacementMarker(() -> robot.outtake.rotator.rotateFully())
                 .UNSTABLE_addTemporalMarkerOffset(.4, () -> robot.outtake.goToPosition(Outtake.POSITIONS[1]))
                 .splineToSplineHeading(useAprilTags ? backdropPose.plus(aprilTagOffset) : backdropPose, Math.PI/2 * (alliance == Alliance.BLUE ? 1 : -1))
-                .addTrajectory(approachBackdrop)
+                .forward(backdropForwardDistance, approachSpeed, MecanumDrive.getAccelConstraint())
                 .build();
 
         switch(side) {
@@ -554,6 +556,8 @@ public class Auto extends LinearOpMode
         robot.autoClaw.outAndIn();
         timer.reset();
         while(timer.seconds() < .5 && opModeIsActive());
+        robot.autoClaw.outAndIn();
+        while(timer.seconds() < 1 && opModeIsActive());
         if(debugMode)
             pause(status);
 
@@ -616,7 +620,7 @@ public class Auto extends LinearOpMode
                         .addTemporalMarker(() -> robot.outtake.rotator.rotateFully())
                         .addTemporalMarker(.5, () -> robot.outtake.goToPosition(side == Side.NEAR ? Outtake.POSITIONS[0] : Outtake.POSITIONS[1]))
                         .splineToLinearHeading(new Pose2d(startPose.getX() + x, startPose.getY() + y, 0), 0)
-                        .addTrajectory(approachBackdrop)
+                        .forward(backdropForwardDistance, approachSpeed, MecanumDrive.getAccelConstraint())
                         .build();
             }
 
@@ -651,7 +655,7 @@ public class Auto extends LinearOpMode
                             executorService.schedule(robot.outtake.rotator::retractFully, 700, TimeUnit.MILLISECONDS);
                             executorService.schedule(robot.outtake::stop, 800, TimeUnit.MILLISECONDS);
                         })
-                        .forward(1, MecanumDrive.getVelConstraint(10), MecanumDrive.getAccelConstraint())
+//                        .forward(1, MecanumDrive.getVelConstraint(10), MecanumDrive.getAccelConstraint())
                         .build();
             else
                 parkTraj = robot.drive.trajectorySequenceBuilder(toBackdrop.end())
