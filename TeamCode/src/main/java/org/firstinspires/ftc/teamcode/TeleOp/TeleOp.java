@@ -24,7 +24,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(group = "drive")
 public class TeleOp extends LinearOpMode {
-    private static boolean singleDriverMode = true;
+    private static boolean singleDriverMode = false;
     public static double WHEEL_SLOW_SPEED = .3;
     public static final double ARM_SLOW_SPEED = .3;
     private static Pose2d startPose = new Pose2d();
